@@ -20,7 +20,7 @@ public class ModuleService(
         Guid courseId,
         CreateModuleDto dto)
     {
-        var module = new CourseModule
+        var module = new Module
         {
             CourseId = courseId,
             Title = dto.Title,

@@ -1,32 +1,35 @@
-using Backend.Models.Assignments;
+using Backend.Models.Resources;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Data.Configurations;
 
-public class AssignmentConfiguration 
-    : IEntityTypeConfiguration<Assignment>
+public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
 {
     public void Configure(EntityTypeBuilder<Assignment> builder)
     {
-        builder.ToTable("Assignments");
-        builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.ToTable("assignments");
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Instructions)
-            .IsRequired();
+        builder.Property(x => x.InstructionsMarkdown)
+            .IsRequired()
+            .HasColumnType("text");
 
-        builder.Property(x => x.MaxPoints)
-            .HasPrecision(5, 2);
+        builder.Property(x => x.MaxScore)
+            .HasColumnType("decimal(5,2)");
 
-        builder.Property(x => x.AllowLateSubmission)
-            .IsRequired();
+        builder.Property(x => x.AllowedFileTypes)
+            .HasMaxLength(255);
 
-        builder.HasOne(x => x.Activity)
-            .WithOne(x => x.Assignment)
-            .IsRequired(false)
-            .HasForeignKey<Assignment>(x => x.ActivityId)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.Property(x => x.SubmissionType)
+            .IsRequired()
+            .HasMaxLength(20)
+            .HasConversion<string>();
+
+        // Store grading schema as JSONB
+        builder.Property(x => x.GradingSchemaJson)
+            .HasColumnType("jsonb")
+            .HasColumnName("grading_schema");
     }
 }

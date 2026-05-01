@@ -1,4 +1,4 @@
-using Backend.Models.Assessments;
+using Backend.Models.Resources;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,36 +8,29 @@ public class AssessmentConfiguration : IEntityTypeConfiguration<Assessment>
 {
     public void Configure(EntityTypeBuilder<Assessment> builder)
     {
-        builder.ToTable("Assessments");
-        builder.HasQueryFilter(c => !c.IsDeleted);
+        builder.ToTable("assessments");
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Type)
-            .HasConversion<string>();
-
-        builder.Property(x => x.TimeLimitMinutes)
-            .IsRequired();
-
-        builder.Property(x => x.MaxAttempts)
-            .IsRequired();
-
-        builder.Property(x => x.Password)
-            .HasMaxLength(100);
+        builder.Property(x => x.InstructionsMarkdown)
+            .HasColumnType("text");
 
         builder.Property(x => x.PassingScore)
-            .HasPrecision(5, 2);
+            .HasColumnType("decimal(5,2)");
 
-        builder.HasOne(x => x.Activity)
-            .WithOne(x => x.Assessment)
-            .IsRequired(false)
-            .HasForeignKey<Assessment>(x => x.ActivityId)
+        builder.HasOne(x => x.Resource)
+            .WithOne(r => r.Assessment)
+            .HasForeignKey<Assessment>(x => x.ResourceId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(x => x.Questions)
-            .WithOne(x => x.Assessment)
-            .IsRequired(false)
-            .HasForeignKey(x => x.AssessmentId)
+            .WithOne(q => q.Assessment)
+            .HasForeignKey(q => q.AssessmentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.Attempts)
+            .WithOne(a => a.Assessment)
+            .HasForeignKey(a => a.AssessmentId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

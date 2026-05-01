@@ -1,0 +1,37 @@
+using Backend.Models.Common;
+using Backend.Models.Resources;
+
+namespace Backend.Models.Courses;
+
+public enum ResourceType
+{
+    Lesson,
+    Assignment,
+    Coding,
+    Assessment
+}
+
+public class ModuleResource : BaseEntity, ISoftDeletable
+{
+    public Guid ModuleId { get; set; }
+    public ResourceType ResourceType { get; set; }
+    public string Title { get; set; } = default!;
+    public string? Description { get; set; }
+    public int OrderIndex { get; set; }
+    public bool IsPublished { get; set; } = false;
+    public DateTime? AvailableFrom { get; set; }
+    public DateTime? AvailableUntil { get; set; }
+    public string? AccessPasswordHash { get; set; }
+
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
+
+    // Navigation properties
+    public Module Module { get; set; } = default!;
+    public Lesson? Lesson { get; set; }
+    public Assignment? Assignment { get; set; }
+    public Coding? Coding { get; set; }
+    public Assessment? Assessment { get; set; }
+    public ICollection<ResourceComment> Comments { get; set; } = [];
+    public ICollection<ResourceProgress> Progress { get; set; } = [];
+}

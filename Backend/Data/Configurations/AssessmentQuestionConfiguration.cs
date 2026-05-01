@@ -1,34 +1,40 @@
-using Backend.Models.Assessments;
+using Backend.Models.Resources;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Data.Configurations;
 
-public class AssessmentQuestionConfiguration 
-    : IEntityTypeConfiguration<AssessmentQuestion>
+public class AssessmentQuestionConfiguration : IEntityTypeConfiguration<AssessmentQuestion>
 {
     public void Configure(EntityTypeBuilder<AssessmentQuestion> builder)
     {
-        builder.ToTable("AssessmentQuestions");
+        builder.ToTable("assessment_questions");
+        builder.HasQueryFilter(x => !x.IsDeleted);
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.QuestionText)
+        builder.Property(x => x.QuestionType)
             .IsRequired()
-            .HasMaxLength(2000);
+            .HasMaxLength(30);
 
-        builder.Property(x => x.Type)
-            .HasConversion<string>();
+        builder.Property(x => x.QuestionTextMarkdown)
+            .IsRequired()
+            .HasColumnType("text");
 
         builder.Property(x => x.Points)
-            .HasPrecision(5, 2);
+            .IsRequired()
+            .HasColumnType("decimal(5,2)");
+
+        // Store as JSONB in PostgreSQL
+        builder.Property(x => x.QuestionDataJson)
+            .IsRequired()
+            .HasColumnType("jsonb")
+            .HasColumnName("question_data");
 
         builder.HasIndex(x => new { x.AssessmentId, x.OrderIndex })
             .IsUnique();
 
-        builder.HasMany(x => x.Options)
-            .WithOne(x => x.Question)
-            .HasForeignKey(x => x.QuestionId)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => x.QuestionDataJson)
+            .HasMethod("GIN");
     }
 }

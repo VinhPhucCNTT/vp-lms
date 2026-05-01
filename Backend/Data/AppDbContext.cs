@@ -1,58 +1,121 @@
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-
-using Backend.Models.Users;
-using Backend.Models.Courses;
 using Backend.Models.Common;
-using Backend.Models.Assessments;
-using Backend.Models.Assignments;
-using Backend.Models.Lessons;
+using Backend.Models.Courses;
+using Backend.Models.Resources;
+using Backend.Models.Submissions;
+using Backend.Models.Users;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Data;
 
-public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+public class ApplicationDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
-        : base(options)
-    { }
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        : base(options) { }
 
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Course> Courses => Set<Course>();
+    public DbSet<Module> Modules => Set<Module>();
+    public DbSet<ModuleResource> ModuleResources => Set<ModuleResource>();
+    public DbSet<Lesson> Lessons => Set<Lesson>();
+    public DbSet<Assignment> Assignments => Set<Assignment>();
+    public DbSet<Coding> Codings => Set<Coding>();
+    public DbSet<CodingTestCase> TestCases => Set<CodingTestCase>();
     public DbSet<Assessment> Assessments => Set<Assessment>();
     public DbSet<AssessmentQuestion> AssessmentQuestions => Set<AssessmentQuestion>();
-    public DbSet<AssessmentAttempt> AssessmentAttempts => Set<AssessmentAttempt>();
-    public DbSet<AttemptAnswer> AttemptAnswers => Set<AttemptAnswer>();
-    public DbSet<QuestionOption> QuestionOptions => Set<QuestionOption>();
-
-    public DbSet<Assignment> Assignments => Set<Assignment>();
+    public DbSet<Enrollment> Enrollments => Set<Enrollment>();
+    public DbSet<TAPermissions> TAPermissions => Set<TAPermissions>();
     public DbSet<AssignmentSubmission> AssignmentSubmissions => Set<AssignmentSubmission>();
+    public DbSet<AssignmentGrade> AssignmentGrades => Set<AssignmentGrade>();
+    public DbSet<CodingSubmission> CodingSubmissions => Set<CodingSubmission>();
+    public DbSet<CodingTestResult> CodingTestResults => Set<CodingTestResult>();
+    public DbSet<AssessmentAttempt> AssessmentAttempts => Set<AssessmentAttempt>();
+    public DbSet<AssessmentResponse> AssessmentResponses => Set<AssessmentResponse>();
+    public DbSet<ResourceComment> ResourceComments => Set<ResourceComment>();
+    public DbSet<ResourceProgress> ResourceProgress => Set<ResourceProgress>();
+    public DbSet<CodeExecutionLog> CodeExecutionLogs => Set<CodeExecutionLog>();
 
-    public DbSet<Course> Courses => Set<Course>();
-    public DbSet<CourseModule> CourseModules => Set<CourseModule>();
-    public DbSet<CourseActivity> CourseActivities => Set<CourseActivity>();
-    public DbSet<CourseEnrollment> CourseEnrollments => Set<CourseEnrollment>();
-
-    public DbSet<Lesson> Lessons => Set<Lesson>();
-
-    protected override void OnModelCreating(ModelBuilder builder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(builder);
+        base.OnModelCreating(modelBuilder);
 
-        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        // Apply all configurations from this assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+        // Additional configurations that can't be in separate files
+
+        // Configure indexes for commonly queried fields
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = false"); // Only enforce uniqueness for non-deleted users
+
+        modelBuilder.Entity<Course>()
+            .HasIndex(c => c.CreatorId)
+            .HasFilter("\"IsDeleted\" = false");
+
+        modelBuilder.Entity<ModuleResource>()
+            .HasIndex(r => r.ModuleId)
+            .HasFilter("\"IsDeleted\" = false");
+
+        // Composite indexes for common queries
+        modelBuilder.Entity<CodingSubmission>()
+            .HasIndex(s => new { s.ChallengeId, s.UserId });
+
+        modelBuilder.Entity<AssessmentAttempt>()
+            .HasIndex(a => new { a.AssessmentId, a.UserId });
+
+        modelBuilder.Entity<ResourceProgress>()
+            .HasIndex(p => new { p.UserId, p.IsCompleted });
     }
 
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        foreach (var entry in ChangeTracker.Entries<ISoftDeletable>().Where(e => e.State == EntityState.Deleted)) {
-            entry.State = EntityState.Modified;
-            entry.Entity.IsDeleted = true;
-            entry.Entity.DeletedAt = DateTime.UtcNow;
+        UpdateEntities();
+        HandleSoftDelete();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    public override int SaveChanges()
+    {
+        UpdateEntities();
+        HandleSoftDelete();
+        return base.SaveChanges();
+    }
+
+    private void UpdateEntities()
+    {
+        var entries = ChangeTracker.Entries()
+            .Where(e => e.Entity is BaseEntity &&
+                       (e.State == EntityState.Added || e.State == EntityState.Modified));
+
+        foreach (var entry in entries)
+        {
+            var entity = (BaseEntity)entry.Entity;
+            var now = DateTime.UtcNow;
+
+            if (entry.State == EntityState.Added)
+                entity.CreatedAt = now;
+
+            entity.UpdatedAt = now;
         }
-
-        return await base.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<int> SaveHardChangesAsync(CancellationToken cancellationToken = default)
+    private void HandleSoftDelete()
     {
-        return await base.SaveChangesAsync(cancellationToken);
+        var deletedEntries = ChangeTracker.Entries()
+            .Where(e => e.Entity is ISoftDeletable && e.State == EntityState.Deleted);
+
+        foreach (var entry in deletedEntries)
+        {
+            entry.State = EntityState.Modified;
+            var entity = (ISoftDeletable)entry.Entity;
+            entity.IsDeleted = true;
+            entity.DeletedAt = DateTime.UtcNow;
+
+            // Mark navigation properties as unchanged to avoid cascade issues
+            foreach (var navigation in entry.Navigations)
+                if (!navigation.IsModified)
+                    navigation.IsModified = false;
+        }
     }
 }

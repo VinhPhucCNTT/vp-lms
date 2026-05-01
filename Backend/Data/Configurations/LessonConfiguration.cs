@@ -1,4 +1,4 @@
-using Backend.Models.Lessons;
+using Backend.Models.Resources;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,22 +8,17 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
 {
     public void Configure(EntityTypeBuilder<Lesson> builder)
     {
-        builder.ToTable("Lessons");
+        builder.ToTable("lessons");
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.ContentHtml)
-            .IsRequired();
+        builder.Property(x => x.ContentMarkdown)
+            .IsRequired()
+            .HasColumnType("text");
 
-        builder.Property(x => x.VideoUrl)
-            .HasMaxLength(500);
-
-        builder.Property(x => x.AttachmentUrl)
-            .HasMaxLength(500);
-
-        builder.HasOne(x => x.Activity)
-            .WithOne(x => x.Lesson)
-            .HasForeignKey<Lesson>(x => x.ActivityId)
+        builder.HasOne(x => x.Resource)
+            .WithOne(r => r.Lesson)
+            .HasForeignKey<Lesson>(x => x.ResourceId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
