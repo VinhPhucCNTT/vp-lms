@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 import type { PropsWithChildren } from "react";
 
@@ -9,14 +9,8 @@ import { AuthContext } from "./AuthContext";
 const TOKEN_KEY = "access_token";
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
-    const [token, setToken] = useState<string | null>(() =>
-        localStorage.getItem(TOKEN_KEY)
-    );
-    const [user, setUser] = useState<IUser | null>(() => {
-        const token = localStorage.getItem(TOKEN_KEY);
-
-        return token ? parseJwt(token) : null;
-    });
+    const [token, setToken] = useState<string | null>(null);
+    const [user, setUser] = useState<IUser | null>(null);
 
     const login = (newToken: string) => {
         localStorage.setItem(TOKEN_KEY, newToken);
@@ -42,6 +36,15 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         }),
         [user, token],
     );
+
+    // Get token after react-router hydration
+    useEffect(() => {
+        const storedToken = localStorage.getItem(TOKEN_KEY);
+        const parsedUser = storedToken ? parseJwt(storedToken) : null;
+
+        setToken(storedToken);
+        setUser(parsedUser);
+    }, []);
 
     return (
         <AuthContext.Provider value={value}>

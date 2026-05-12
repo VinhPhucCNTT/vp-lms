@@ -1,26 +1,72 @@
-import { AppShell, Burger, Group, Text } from "@mantine/core";
+import { AppShell, Burger, Container, Divider, Drawer, Group, ScrollArea } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
 import { Outlet } from "react-router";
 
+import classes from "./MainLayout.module.css";
+
+const links = [
+    { link: '/dashboard', label: 'Dashboard' },
+    { link: '/manage', label: 'Manage' },
+    { link: '/explore', label: 'Explore' },
+    { link: '/settings', label: 'Settings' },
+];
+
 export default function MainLayout() {
-    const [isOpen, setIsOpen] = useState(false);
+    const [opened, { toggle, close }] = useDisclosure(false);
+    const [active, setActive] = useState(links[0].link);
+
+    const items = links.map((link) => (
+        <a
+            key={link.label}
+            href={link.link}
+            className={classes.link}
+            data-active={active === link.link || undefined}
+            onClick={(event) => {
+                event.preventDefault();
+                setActive(link.link);
+            }}
+        >
+            {link.label}
+        </a>
+    ));
 
     return (
         <AppShell
             header={{ height: 60 }}
-            navbar={{ width: 300, breakpoint: 'sm', collapsed: { mobile: !isOpen } }}
             padding="md"
         >
             <AppShell.Header>
-                <Group h="100%" px="md">
-                    <Burger opened={isOpen} onClick={() => setIsOpen(!isOpen)} hiddenFrom="sm" size="sm" />
-                    Header has a burger icon below sm breakpoint
-                </Group>
+                <Container size="xl" className={classes.inner}>
+                    <div className={classes.logo}>VP-LMS</div>
+                    <Group gap={5} visibleFrom="xs">
+                        {items}
+                    </Group>
+
+                    <Burger
+                        opened={opened}
+                        onClick={toggle}
+                        hiddenFrom="xs"
+                        size="sm"
+                        aria-label="Toggle navigation"
+                    />
+                </Container>
+
+                <Drawer
+                    opened={opened}
+                    onClose={close}
+                    size="100%"
+                    padding="md"
+                    title="Navigation"
+                    hiddenFrom="xs"
+                    zIndex={1000000}
+                >
+                    <ScrollArea h="calc(100vh - 80px" mx="-md">
+                        <Divider my="sm" />
+                        {items}
+                    </ScrollArea>
+                </Drawer>
             </AppShell.Header>
-            <AppShell.Navbar p="md">
-                Navbar is collapsed on mobile at sm breakpoint. At that point it is no longer offset by
-                padding in the main element and it takes the full width of the screen when opened.
-            </AppShell.Navbar>
             <AppShell.Main>
                 <Outlet />
             </AppShell.Main>

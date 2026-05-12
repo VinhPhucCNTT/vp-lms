@@ -12,13 +12,14 @@ export default [
     route("register", featurePages("auth") + "RegisterPage.tsx"),
 
     layout("./layout/MainLayout.tsx", [
-        ...prefix("dashboard", [
-            index(featurePages("dashboard") + "DashboardIndex.tsx"),
-            route("upcoming", featurePages("dashboard") + "DashboardUpcoming.tsx"),
-            route("history", featurePages("dashboard") + "DashboardHistory.tsx"),
-        ]),
+        route("dashboard", featurePages("dashboard") + "DashboardIndex.tsx"),
 
         route("explore", featurePages("course") + "CourseExplore.tsx"),
+
+        ...prefix("manage", [
+            route("enrolled", featurePages("manage") + "ManageEnrolled.tsx"),
+            route("created", featurePages("manage") + "ManageCreated.tsx"),
+        ]),
 
         ...prefix("course", [
             index(featurePages("course") + "UserCourses.tsx"),
