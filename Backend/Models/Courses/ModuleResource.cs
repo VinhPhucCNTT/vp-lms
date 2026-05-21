@@ -7,8 +7,8 @@ public enum ResourceType
 {
     Lesson,
     Assignment,
-    Coding,
-    Assessment
+    Assessment,
+    Problem
 }
 
 public class ModuleResource : BaseEntity, ISoftDeletable
@@ -30,8 +30,8 @@ public class ModuleResource : BaseEntity, ISoftDeletable
     public Module Module { get; set; } = default!;
     public Lesson? Lesson { get; set; }
     public Assignment? Assignment { get; set; }
-    public Coding? Coding { get; set; }
     public Assessment? Assessment { get; set; }
+    public Problem? Problem { get; set; }
     public ICollection<ResourceComment> Comments { get; set; } = [];
     public ICollection<ResourceProgress> Progress { get; set; } = [];
 }

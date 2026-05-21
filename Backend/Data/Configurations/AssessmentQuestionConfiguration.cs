@@ -9,7 +9,6 @@ public class AssessmentQuestionConfiguration : IEntityTypeConfiguration<Assessme
     public void Configure(EntityTypeBuilder<AssessmentQuestion> builder)
     {
         builder.ToTable("assessment_questions");
-        builder.HasQueryFilter(x => !x.IsDeleted);
 
         builder.HasKey(x => x.Id);
 

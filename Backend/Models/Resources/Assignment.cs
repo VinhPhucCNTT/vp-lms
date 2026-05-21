@@ -4,7 +4,7 @@ using Backend.Models.Submissions;
 
 namespace Backend.Models.Resources;
 
-public class Assignment : BaseEntity
+public class Assignment : BaseEntity, ISoftDeletable
 {
     public Guid ResourceId { get; set; }
     public string InstructionsMarkdown { get; set; } = default!;
@@ -13,6 +13,9 @@ public class Assignment : BaseEntity
     public int MaxFileSizeMb { get; set; } = 10;
     public SubmissionType SubmissionType { get; set; } = SubmissionType.Both;
     public string? GradingSchemaJson { get; set; } // JSONB in PostgreSQL
+
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
     public ModuleResource Resource { get; set; } = default!;

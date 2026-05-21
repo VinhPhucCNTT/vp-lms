@@ -4,7 +4,7 @@ using Backend.Models.Users;
 
 namespace Backend.Models.Submissions;
 
-public class AssessmentAttempt : BaseEntity
+public class AssessmentAttempt : BaseEntity, ISoftDeletable
 {
     public Guid AssessmentId { get; set; }
     public Guid UserId { get; set; }
@@ -13,6 +13,9 @@ public class AssessmentAttempt : BaseEntity
     public decimal? TotalScore { get; set; }
     public bool? IsPassed { get; set; }
     public int AttemptNumber { get; set; } = 1;
+
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
     public Assessment Assessment { get; set; } = default!;

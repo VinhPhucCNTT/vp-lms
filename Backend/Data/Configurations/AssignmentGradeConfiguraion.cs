@@ -21,7 +21,8 @@ public class AssignmentGradeConfiguration : IEntityTypeConfiguration<AssignmentG
         builder.HasOne(x => x.Submission)
             .WithOne(s => s.Grade)
             .HasForeignKey<AssignmentGrade>(x => x.SubmissionId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
 
         builder.HasOne(x => x.Grader)
             .WithMany()

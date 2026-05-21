@@ -7,7 +7,7 @@ namespace Backend.Models.Submissions;
 public class CodeExecutionLog : BaseEntity
 {
     public Guid UserId { get; set; }
-    public Guid? ChallengeId { get; set; }
+    public Guid? ProblemId { get; set; }
     public string Language { get; set; } = default!;
     public string? CodeSnippet { get; set; }
     public int? ExecutionTimeMs { get; set; }
@@ -18,5 +18,5 @@ public class CodeExecutionLog : BaseEntity
 
     // Navigation properties
     public User User { get; set; } = default!;
-    public Coding? Challenge { get; set; }
+    public Problem? Problem { get; set; }
 }

@@ -8,12 +8,11 @@ public class ResourceProgressConfiguration : IEntityTypeConfiguration<ResourcePr
 {
     public void Configure(EntityTypeBuilder<ResourceProgress> builder)
     {
-        builder.ToTable("resource_progress");
+        builder.ToTable("resource_progress"); 
 
         builder.HasKey(x => x.Id);
 
-        builder.HasIndex(x => new { x.UserId, x.ResourceId })
-            .IsUnique();
+        builder.HasIndex(x => new { x.UserId, x.ResourceId, x.IsCompleted });
 
         builder.HasOne(x => x.User)
             .WithMany()
@@ -23,6 +22,7 @@ public class ResourceProgressConfiguration : IEntityTypeConfiguration<ResourcePr
         builder.HasOne(x => x.Resource)
             .WithMany(r => r.Progress)
             .HasForeignKey(x => x.ResourceId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
     }
 }

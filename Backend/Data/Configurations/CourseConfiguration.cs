@@ -9,7 +9,6 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
     public void Configure(EntityTypeBuilder<Course> builder)
     {
         builder.ToTable("courses");
-        builder.HasQueryFilter(x => !x.IsDeleted);
 
         builder.HasKey(x => x.Id);
 
@@ -20,22 +19,19 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.Property(x => x.Description)
             .HasColumnType("text");
 
-        builder.Property(x => x.Slug)
-            .IsRequired()
-            .HasMaxLength(200);
-
-        builder.HasIndex(x => x.Slug)
-            .IsUnique();
+        builder.HasIndex(x => new { x.CreatorId, x.Title });
 
         builder.HasOne(x => x.Creator)
             .WithMany(u => u.Courses)
             .HasForeignKey(x => x.CreatorId)
             .OnDelete(DeleteBehavior.Restrict);
+            // .IsRequired(false); // Soft delete by anonymization
 
         builder.HasMany(x => x.Modules)
             .WithOne(m => m.Course)
             .HasForeignKey(m => m.CourseId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
 
         builder.HasMany(x => x.Enrollments)
             .WithOne(e => e.Course)

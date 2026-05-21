@@ -31,8 +31,9 @@ public class CodeExecutionLogConfiguration : IEntityTypeConfiguration<CodeExecut
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(x => x.Challenge)
+        builder.HasOne(x => x.Problem)
             .WithMany()
-            .HasForeignKey(x => x.ChallengeId)
+            .HasForeignKey(x => x.ProblemId)
             .OnDelete(DeleteBehavior.SetNull);
     }
+}

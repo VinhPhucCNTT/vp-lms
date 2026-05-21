@@ -20,16 +20,19 @@ public class ResourceCommentConfiguration : IEntityTypeConfiguration<ResourceCom
         builder.HasOne(x => x.Resource)
             .WithMany(r => r.Comments)
             .HasForeignKey(x => x.ResourceId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
 
         builder.HasOne(x => x.User)
-            .WithMany()
+            .WithMany(u => u.Comments)
             .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(true);
 
         builder.HasOne(x => x.ParentComment)
             .WithMany(c => c.Replies)
             .HasForeignKey(x => x.ParentCommentId)
-            .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete loops
+            .OnDelete(DeleteBehavior.Restrict) // Prevent cascade delete loops
+            .IsRequired(false);
     }
 }

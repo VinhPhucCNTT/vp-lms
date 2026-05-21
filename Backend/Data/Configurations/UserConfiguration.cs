@@ -9,7 +9,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.ToTable("users");
-        builder.HasQueryFilter(x => !x.IsDeleted);
 
         builder.HasKey(x => x.Id);
 
@@ -25,7 +24,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(255);
 
-        builder.Property(x => x.FullName)
+        builder.Property(x => x.Fullname)
             .IsRequired()
             .HasMaxLength(100);
 

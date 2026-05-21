@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Data;
 
-public class ApplicationDbContext : DbContext
+public class AppDbContext : DbContext
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options) { }
 
     public DbSet<User> Users => Set<User>();
@@ -18,16 +18,16 @@ public class ApplicationDbContext : DbContext
     public DbSet<ModuleResource> ModuleResources => Set<ModuleResource>();
     public DbSet<Lesson> Lessons => Set<Lesson>();
     public DbSet<Assignment> Assignments => Set<Assignment>();
-    public DbSet<Coding> Codings => Set<Coding>();
-    public DbSet<CodingTestCase> TestCases => Set<CodingTestCase>();
+    public DbSet<Problem> Problems => Set<Problem>();
+    public DbSet<ProblemTestCase> TestCases => Set<ProblemTestCase>();
     public DbSet<Assessment> Assessments => Set<Assessment>();
     public DbSet<AssessmentQuestion> AssessmentQuestions => Set<AssessmentQuestion>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<TAPermissions> TAPermissions => Set<TAPermissions>();
     public DbSet<AssignmentSubmission> AssignmentSubmissions => Set<AssignmentSubmission>();
     public DbSet<AssignmentGrade> AssignmentGrades => Set<AssignmentGrade>();
-    public DbSet<CodingSubmission> CodingSubmissions => Set<CodingSubmission>();
-    public DbSet<CodingTestResult> CodingTestResults => Set<CodingTestResult>();
+    public DbSet<ProblemSubmission> ProblemSubmissions => Set<ProblemSubmission>();
+    public DbSet<ProblemTestResult> ProblemTestResults => Set<ProblemTestResult>();
     public DbSet<AssessmentAttempt> AssessmentAttempts => Set<AssessmentAttempt>();
     public DbSet<AssessmentResponse> AssessmentResponses => Set<AssessmentResponse>();
     public DbSet<ResourceComment> ResourceComments => Set<ResourceComment>();
@@ -39,34 +39,48 @@ public class ApplicationDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         // Apply all configurations from this assembly
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
-        // Additional configurations that can't be in separate files
-
-        // Configure indexes for commonly queried fields
-        modelBuilder.Entity<User>()
-            .HasIndex(u => u.Email)
-            .IsUnique()
-            .HasFilter("\"IsDeleted\" = false"); // Only enforce uniqueness for non-deleted users
-
-        modelBuilder.Entity<Course>()
-            .HasIndex(c => c.CreatorId)
-            .HasFilter("\"IsDeleted\" = false");
-
-        modelBuilder.Entity<ModuleResource>()
-            .HasIndex(r => r.ModuleId)
-            .HasFilter("\"IsDeleted\" = false");
-
-        // Composite indexes for common queries
-        modelBuilder.Entity<CodingSubmission>()
-            .HasIndex(s => new { s.ChallengeId, s.UserId });
-
-        modelBuilder.Entity<AssessmentAttempt>()
-            .HasIndex(a => new { a.AssessmentId, a.UserId });
-
-        modelBuilder.Entity<ResourceProgress>()
-            .HasIndex(p => new { p.UserId, p.IsCompleted });
+        ConfigureSoftDelete(modelBuilder);
     }
+
+    private static void ConfigureSoftDelete(ModelBuilder builder)
+    {
+        // Use anonymous name instead
+        // builder.Entity<User>()
+        //     .HasQueryFilter(u => !u.IsDeleted);
+
+        builder.Entity<Course>()
+            .HasQueryFilter(c => !c.IsDeleted && !c.Creator.IsDeleted);
+        builder.Entity<Enrollment>()
+            .HasQueryFilter(e => !e.IsDeleted && !e.Course.IsDeleted);
+        builder.Entity<Module>()
+            .HasQueryFilter(m => !m.IsDeleted && !m.Course.IsDeleted);
+        builder.Entity<ModuleResource>()
+            .HasQueryFilter(r => !r.IsDeleted && !r.Module.IsDeleted);
+
+        builder.Entity<Lesson>()
+            .HasQueryFilter(l => !l.IsDeleted && !l.Resource.IsDeleted);
+        builder.Entity<Assignment>()
+            .HasQueryFilter(a => !a.IsDeleted && !a.Resource.IsDeleted);
+        builder.Entity<Assessment>()
+            .HasQueryFilter(a => !a.IsDeleted && !a.Resource.IsDeleted);
+        builder.Entity<Problem>()
+            .HasQueryFilter(j => !j.IsDeleted && !j.Resource.IsDeleted);
+
+        builder.Entity<AssignmentSubmission>()
+            .HasQueryFilter(s => !s.IsDeleted && !s.Assignment.IsDeleted);
+
+        builder.Entity<AssessmentQuestion>()
+            .HasQueryFilter(q => !q.IsDeleted && !q.Assessment.IsDeleted);
+        builder.Entity<AssessmentResponse>()
+            .HasQueryFilter(r => !r.Question.IsDeleted);
+
+        // Use anonymous name instead
+        // builder.Entity<ResourceComment>()
+        //     .HasQueryFilter(c => !c.IsDeleted && !c.Resource.IsDeleted);
+    }
+
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

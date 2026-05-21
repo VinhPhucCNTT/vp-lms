@@ -9,7 +9,6 @@ public class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollment>
     public void Configure(EntityTypeBuilder<Enrollment> builder)
     {
         builder.ToTable("enrollments");
-        builder.HasQueryFilter(x => !x.IsDeleted);
 
         builder.HasKey(x => x.Id);
 
@@ -24,6 +23,7 @@ public class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollment>
         builder.HasOne(x => x.TAPermissions)
             .WithOne(tp => tp.Enrollment)
             .HasForeignKey<TAPermissions>(tp => tp.EnrollmentId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
     }
 }

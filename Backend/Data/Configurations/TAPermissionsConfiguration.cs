@@ -24,6 +24,7 @@ public class TAPermissionsConfiguration : IEntityTypeConfiguration<TAPermissions
         builder.HasOne(x => x.GrantedByUser)
             .WithMany()
             .HasForeignKey(x => x.GrantedByUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
     }
 }

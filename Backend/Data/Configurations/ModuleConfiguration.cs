@@ -9,7 +9,6 @@ public class ModuleConfiguration : IEntityTypeConfiguration<Module>
     public void Configure(EntityTypeBuilder<Module> builder)
     {
         builder.ToTable("modules");
-        builder.HasQueryFilter(x => !x.IsDeleted);
 
         builder.HasKey(x => x.Id);
 
@@ -26,6 +25,7 @@ public class ModuleConfiguration : IEntityTypeConfiguration<Module>
         builder.HasMany(x => x.Resources)
             .WithOne(r => r.Module)
             .HasForeignKey(r => r.ModuleId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
     }
 }
