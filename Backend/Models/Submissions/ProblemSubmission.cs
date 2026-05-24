@@ -1,4 +1,4 @@
-using Backend.Models.Common;
+using Backend.Common.Models;
 using Backend.Models.Resources;
 using Backend.Models.Users;
 

@@ -1,4 +1,4 @@
-using Backend.Models.Common;
+using Backend.Common.Models;
 using Backend.Models.Resources;
 
 namespace Backend.Models.Submissions;

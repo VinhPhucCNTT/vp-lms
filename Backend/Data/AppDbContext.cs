@@ -1,4 +1,4 @@
-using Backend.Models.Common;
+using Backend.Common.Models;
 using Backend.Models.Courses;
 using Backend.Models.Resources;
 using Backend.Models.Submissions;
@@ -7,11 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
-        : base(options) { }
-
     public DbSet<User> Users => Set<User>();
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Module> Modules => Set<Module>();
