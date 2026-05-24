@@ -9,7 +9,7 @@ public class Module : BaseEntity, ISoftDeletable
     public string? Description { get; set; }
     public int OrderIndex { get; set; }
     public bool IsPublished { get; set; } = false;
-    
+
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
 

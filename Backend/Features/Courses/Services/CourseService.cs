@@ -13,7 +13,23 @@ public class CourseService(
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
 
-    public async Task<QueryResponse<CourseResponse>> QueryCoursesAsync(CourseQueryRequest query)
+    public async Task<CourseResponse?> GetCourseByIdAsync(Guid courseId)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var course = await db.Courses.Include(c => c.Creator).FirstOrDefaultAsync(c => c.Id == courseId);
+
+        return (course == null) ? null : new CourseResponse(
+            course.CreatorId,
+            course.Creator.Username,
+            course.Title,
+            course.Description,
+            course.ThumbnailUrl,
+            course.AllowAnonymousAccess,
+            course.EnrollmentOpen
+        );
+    }
+
+    public async Task<QueryResponse<CourseResponse>> QueryCoursesAsync(CourseRequest query)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var courses = db.Courses.Include(c => c.Creator).AsQueryable();
@@ -42,22 +58,6 @@ public class CourseService(
             .ToListAsync();
 
         return new QueryResponse<CourseResponse>(query.PageNumber, query.PageSize, await courses.CountAsync(), list);
-    }
-
-    public async Task<CourseResponse?> GetCourseByIdAsync(Guid courseId)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var course = await db.Courses.Include(c => c.Creator).FirstOrDefaultAsync(c => c.Id == courseId);
-
-        return (course == null) ? null : new CourseResponse(
-            course.CreatorId,
-            course.Creator.Username,
-            course.Title,
-            course.Description,
-            course.ThumbnailUrl,
-            course.AllowAnonymousAccess,
-            course.EnrollmentOpen
-        );
     }
 
     public async Task<CourseSetResult> CreateCourseAsync(Guid userId, CourseSetRequest dto)

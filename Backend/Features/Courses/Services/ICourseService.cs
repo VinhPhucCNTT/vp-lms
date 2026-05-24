@@ -5,9 +5,9 @@ namespace Backend.Features.Courses.Services;
 
 public interface ICourseService
 {
-    Task<QueryResponse<CourseResponse>> QueryCoursesAsync(CourseQueryRequest query);
-
     Task<CourseResponse?> GetCourseByIdAsync(Guid courseId);
+
+    Task<QueryResponse<CourseResponse>> QueryCoursesAsync(CourseRequest query);
 
     Task<CourseSetResult> CreateCourseAsync(Guid userId, CourseSetRequest dto);
 
