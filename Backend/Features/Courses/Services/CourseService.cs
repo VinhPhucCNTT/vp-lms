@@ -55,6 +55,8 @@ public class CourseService(
                 c.ThumbnailUrl,
                 c.AllowAnonymousAccess,
                 c.EnrollmentOpen))
+            .Skip((query.PageNumber - 1) * query.PageSize)
+            .Take(query.PageSize)
             .ToListAsync();
 
         return new QueryResponse<CourseResponse>(query.PageNumber, query.PageSize, await courses.CountAsync(), list);
