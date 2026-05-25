@@ -12,7 +12,7 @@ public record CModuleRequest(
     int PageSize,
     string? Title,
     string? Description,
-    bool IsPublished
+    bool? IsPublished
 );
 
 public record CModuleSetRequest(
