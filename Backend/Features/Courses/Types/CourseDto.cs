@@ -18,21 +18,3 @@ public record CourseRequest(
     bool? AllowAnonymousAccess,
     bool? EnrollmentOpen
 );
-
-public record CourseSetRequest(
-    string Title,
-    string? Description,
-    string? ThumbnailUrl,
-    bool IsPublished,
-    bool AllowAnonymousAccess,
-    bool EnrollmentOpen
-);
-
-public record CourseSetResponse(
-    string Title,
-    string? Description,
-    string? ThumbnailUrl,
-    bool IsPublished,
-    bool AllowAnonymousAccess,
-    bool EnrollmentOpen
-);

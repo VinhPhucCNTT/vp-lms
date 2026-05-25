@@ -5,9 +5,13 @@ namespace Backend.Features.Courses.Services;
 
 public interface ICCourseService
 {
-    Task<MResult<CourseSetResponse, CourseSetError>> CreateCourseAsync(Guid userId, CourseSetRequest dto);
+    Task<MResult<CCourseResponse, CCourseGetError>> GetCourseByIdAsync(Guid userId, Guid courseId);
 
-    Task<MResult<CourseSetResponse, CourseSetError>> UpdateCourseAsync(Guid userId, Guid courseId, CourseSetRequest dto);
+    Task<QueryResponse<CCourseResponse>> QueryCoursesAsync(Guid userId, CCourseRequest query);
 
-    Task<CourseDeleteStatus> DeleteCourseAsync(Guid userId, Guid courseId);
+    Task<MResult<CCourseSetResponse, CCourseSetError>> CreateCourseAsync(Guid userId, CCourseSetRequest dto);
+
+    Task<MResult<CCourseSetResponse, CCourseSetError>> UpdateCourseAsync(Guid userId, Guid courseId, CCourseSetRequest dto);
+
+    Task<CCourseDeleteStatus> DeleteCourseAsync(Guid userId, Guid courseId);
 }
