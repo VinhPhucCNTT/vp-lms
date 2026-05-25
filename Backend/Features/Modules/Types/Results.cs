@@ -6,13 +6,6 @@ public enum CModuleGetError
     NotFound = 1
 }
 
-public enum CModuleQueryError
-{
-    Unauthorized = 0,
-    InvalidRequest = 1,
-    InternalError = 2
-}
-
 public enum CModuleSetError
 {
     Unauthorized = 0,

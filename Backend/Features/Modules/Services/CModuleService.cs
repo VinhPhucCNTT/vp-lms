@@ -28,17 +28,13 @@ public class CModuleService(
             new CModuleResponse(module.Title, module.Description, module.OrderIndex, module.IsPublished));
     }
 
-    public async Task<MResult<QueryResponse<CModuleResponse>, CModuleQueryError>> QueryModulesAsync(Guid userId, Guid courseId, CModuleRequest query)
+    public async Task<QueryResponse<CModuleResponse>> QueryModulesAsync(Guid userId, Guid courseId, CModuleRequest query)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var modules = db.Modules.Include(m => m.Course).Where(m => m.CourseId == courseId);
+        var modules = db.Modules.Include(m => m.Course).Where(m => m.CourseId == courseId && m.Course.CreatorId == userId);
 
         if (!await modules.AnyAsync())
-            return MResult<QueryResponse<CModuleResponse>, CModuleQueryError>
-                .Failure(CModuleQueryError.InvalidRequest);
-        if (await modules.AnyAsync(m => m.Course.CreatorId != userId))
-            return MResult<QueryResponse<CModuleResponse>, CModuleQueryError>
-                .Failure(CModuleQueryError.Unauthorized);
+            return new QueryResponse<CModuleResponse>(query.PageNumber, query.PageSize, 0, []);
 
         if (!string.IsNullOrEmpty(query.Title))
             modules = modules.Where(m => m.Title.Equals(query.Title, StringComparison.OrdinalIgnoreCase));
@@ -60,8 +56,7 @@ public class CModuleService(
             .Take(query.PageSize)
             .ToListAsync();
 
-        return MResult<QueryResponse<CModuleResponse>, CModuleQueryError>
-            .Success(new QueryResponse<CModuleResponse>(query.PageNumber, query.PageSize, await modules.CountAsync(), list));
+        return new QueryResponse<CModuleResponse>(query.PageNumber, query.PageSize, await modules.CountAsync(), list);
     }
 
     public async Task<MResult<CModuleSetResponse, CModuleSetError>> AddModuleAsync(Guid userId, Guid courseId, CModuleSetRequest dto)

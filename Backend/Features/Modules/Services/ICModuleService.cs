@@ -7,7 +7,7 @@ public interface ICModuleService
 {
     Task<MResult<CModuleResponse, CModuleGetError>> GetModuleByIdAsync(Guid userId, Guid moduleId);
 
-    Task<MResult<QueryResponse<CModuleResponse>, CModuleQueryError>> QueryModulesAsync(Guid userId, Guid courseId, CModuleRequest query);
+    Task<QueryResponse<CModuleResponse>> QueryModulesAsync(Guid userId, Guid courseId, CModuleRequest query);
 
     Task<MResult<CModuleSetResponse, CModuleSetError>> AddModuleAsync(Guid userId, Guid courseId, CModuleSetRequest dto);
 
