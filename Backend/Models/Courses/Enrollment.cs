@@ -21,6 +21,5 @@ public class Enrollment : BaseEntity, ISoftDeletable
 public enum EnrollmentRole
 {
     Student,
-    TA,
-    Creator
+    TA
 }

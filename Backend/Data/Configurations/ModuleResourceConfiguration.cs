@@ -25,7 +25,7 @@ public class ModuleResourceConfiguration : IEntityTypeConfiguration<ModuleResour
         builder.Property(x => x.Description)
             .HasColumnType("text");
 
-        builder.Property(x => x.AccessPasswordHash)
+        builder.Property(x => x.AccessPassword)
             .HasMaxLength(255);
 
         builder.HasIndex(x => x.ModuleId)

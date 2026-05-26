@@ -21,7 +21,7 @@ public class ModuleResource : BaseEntity, ISoftDeletable
     public bool IsPublished { get; set; } = false;
     public DateTime? AvailableFrom { get; set; }
     public DateTime? AvailableUntil { get; set; }
-    public string? AccessPasswordHash { get; set; }
+    public string? AccessPassword { get; set; }
 
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
