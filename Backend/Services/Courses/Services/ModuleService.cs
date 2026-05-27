@@ -1,40 +1,35 @@
 using Backend.Core.Common;
 using Backend.Data;
 using Backend.Services.Modules.Types;
-using Backend.Core.Entities.Courses;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services.Modules.Services;
 
-public class CModuleService(
+public class ModuleService(
     IDbContextFactory<AppDbContext> dbFactory
-) : ICModuleService
+)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
 
-    public async Task<MResult<CModuleResponse, CModuleGetError>> GetModuleByIdAsync(Guid userId, Guid moduleId)
+    public async Task<ModuleResponse?> GetModuleByIdAsync(Guid moduleId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var module = await db.Modules.Include(m => m.Course).FirstOrDefaultAsync(m => m.Id == moduleId);
+        var module = await db.Modules.FirstOrDefaultAsync(m => m.Id == moduleId);
 
-        if (module == null)
-            return MResult<CModuleResponse, CModuleGetError>
-                .Failure(CModuleGetError.NotFound);
-        if (module.Course.CreatorId != userId)
-            return MResult<CModuleResponse, CModuleGetError>
-                .Failure(CModuleGetError.Unauthorized);
-
-        return MResult<CModuleResponse, CModuleGetError>.Success(
-            new CModuleResponse(module.Title, module.Description, module.OrderIndex, module.IsPublished));
+        return (module == null) ? null :
+            new ModuleResponse(
+                module.Title,
+                module.Description,
+                module.OrderIndex
+            );
     }
 
-    public async Task<QueryResponse<CModuleResponse>> QueryModulesAsync(Guid userId, Guid courseId, CModuleRequest query)
+    public async Task<QueryResponse<ModuleResponse>?> QueryModulesAsync(Guid courseId, ModuleRequest query)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var modules = db.Modules.Include(m => m.Course).Where(m => m.CourseId == courseId && m.Course.CreatorId == userId);
-
-        if (!await modules.AnyAsync())
-            return new QueryResponse<CModuleResponse>(query.PageNumber, query.PageSize, 0, []);
+        if (!await db.Courses.AnyAsync(c => c.Id == courseId))
+            return null;
+        var modules = db.Modules.Where(m => m.CourseId == courseId).AsQueryable();
 
         if (!string.IsNullOrEmpty(query.Title))
             modules = modules.Where(m => m.Title.Equals(query.Title, StringComparison.OrdinalIgnoreCase));
@@ -42,21 +37,16 @@ public class CModuleService(
         if (!string.IsNullOrEmpty(query.Description))
             modules = modules.Where(m => m.Description != null && m.Description.Equals(query.Description, StringComparison.OrdinalIgnoreCase));
 
-        if (query.IsPublished != null)
-            modules = modules.Where(m => m.IsPublished == query.IsPublished);
-
         var list = await modules
-            .Select(m => new CModuleResponse(
+            .Select(m => new ModuleResponse(
                 m.Title,
                 m.Description,
-                m.OrderIndex,
-                m.IsPublished
-            ))
+                m.OrderIndex))
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
             .ToListAsync();
 
-        return new QueryResponse<CModuleResponse>(query.PageNumber, query.PageSize, await modules.CountAsync(), list);
+        return new QueryResponse<ModuleResponse>(query.PageNumber, query.PageSize, await modules.CountAsync(), list);
     }
 
     public async Task<MResult<CModuleSetResponse, CModuleSetError>> AddModuleAsync(Guid userId, Guid courseId, CModuleSetRequest dto)
