@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 
-using Backend.Features.Auth.Dtos;
-using Backend.Features.Auth.Services;
+using Backend.Services.Auth.Dtos;
+using Backend.Services.Auth.Services;
 
 namespace Backend.Endpoints;
 

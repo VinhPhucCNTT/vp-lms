@@ -1,8 +1,8 @@
-using Backend.Common.Models;
-using Backend.Models.Courses;
-using Backend.Models.Resources;
-using Backend.Models.Submissions;
-using Backend.Models.Users;
+using Backend.Core.Common.Models;
+using Backend.Core.Entities.Courses;
+using Backend.Core.Entities.Resources;
+using Backend.Core.Entities.Submissions;
+using Backend.Core.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Data;

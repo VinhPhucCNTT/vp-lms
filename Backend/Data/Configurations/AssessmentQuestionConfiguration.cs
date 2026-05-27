@@ -1,4 +1,4 @@
-using Backend.Models.Resources;
+using Backend.Core.Entities.Resources;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
