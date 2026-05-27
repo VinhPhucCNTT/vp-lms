@@ -13,9 +13,8 @@ using Isopoh.Cryptography.Argon2;
 namespace Backend.Services.Auth;
 
 public class AuthService(
-        IConfiguration config,
-        IDbContextFactory<AppDbContext> contextFactory
-        )
+    IConfiguration config,
+    IDbContextFactory<AppDbContext> contextFactory)
 {
     private readonly IConfiguration _config = config;
     private readonly IDbContextFactory<AppDbContext> _contextFactory = contextFactory;
