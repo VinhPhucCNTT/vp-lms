@@ -9,6 +9,8 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Backend.Endpoints;
 using Sqids;
+using Backend.Services.Common;
+using Backend.Services.Auth.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,6 +85,8 @@ builder.Services.AddAuthentication(options =>
 });
 
 // Inject services
+builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 
