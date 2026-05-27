@@ -32,6 +32,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired(false)
             .HasMaxLength(500);
 
-        builder.HasIndex(x => new { x.Username, x.Email });
+        builder.HasIndex(x => new { x.IsActive, x.Username, x.Email });
     }
 }
