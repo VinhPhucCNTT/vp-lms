@@ -1,5 +1,3 @@
-using Backend.Data;
-
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -7,10 +5,12 @@ using Scalar.AspNetCore;
 using FluentValidation;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using Backend.Endpoints;
 using Sqids;
+
+using Backend.Data;
+using Backend.Endpoints;
 using Backend.Services.Common;
-using Backend.Services.Auth.Services;
+using Backend.Services.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 

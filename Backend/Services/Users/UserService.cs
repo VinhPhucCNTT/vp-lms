@@ -159,7 +159,7 @@ public class UserService(
         return true;
     }
 
-    private void AnonymizeUser(User user)
+    static private void AnonymizeUser(User user)
     {
         var anonymizeId = Guid.NewGuid().ToString("N");
 
