@@ -32,7 +32,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired(false)
             .HasMaxLength(500);
 
-        builder.HasIndex(x => new { x.Username, x.Email })
-            .IsUnique();
+        builder.HasIndex(x => new { x.Username, x.Email });
     }
 }
