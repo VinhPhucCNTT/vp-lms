@@ -1,10 +1,15 @@
+using Backend.Core.Entities.Users;
+
 namespace Backend.Core.Types;
 
 public record UserResponse(
     Guid UserId,
     string Username,
-    string? AvatarUrl
-);
+    string? AvatarUrl)
+{
+    public static UserResponse Set(User u)
+        => new(u.Id, u.Username, u.AvatarUrl);
+}
 
 public record UserDetailResponse(
     Guid UserId,
@@ -26,7 +31,7 @@ public record UserRequest(
 public record UserStatResponse(
     int CourseCreated,
     int CourseEnrolled
-    // int CourseCompleted // TODO: Get completed courses
+// int CourseCompleted // TODO: Get completed courses
 );
 
 public record UserSetRequest(

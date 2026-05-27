@@ -11,7 +11,7 @@ public record CourseResponse(
 
 public record CourseDetailResponse(
     Guid CreatorId,
-    // UserResponse Creator,
+    UserResponse Creator,
     string Title,
     string? Description,
     string? ThumbnailUrl,

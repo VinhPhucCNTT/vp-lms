@@ -1,9 +1,10 @@
 
 using Backend.Data;
 using Backend.Core.Common;
-using Backend.Services.Courses.Types;
 using Microsoft.EntityFrameworkCore;
 using Backend.Services.Common;
+using Backend.Core.Types;
+using Backend.Core.Entities.Courses;
 
 namespace Backend.Services.Courses;
 
@@ -18,29 +19,30 @@ public class CourseService(
     public async Task<CourseDetailResponse?> GetCourseByIdAsync(Guid courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var course = await db.Courses.Include(c => c.Creator).FirstOrDefaultAsync(c => c.Id == courseId);
-
-        return (course == null) ? null : new CourseDetailResponse(
-            course.CreatorId,
-            course.Creator.Username,
-            course.Title,
-            course.Description,
-            course.ThumbnailUrl,
-            course.AllowAnonymousAccess,
-            course.EnrollmentOpen
-        );
+        return await db.Courses
+            .AsNoTracking()
+            .Where(c => c.Id == courseId)
+            .Select(c => new CourseDetailResponse(
+                c.CreatorId,
+                UserResponse.Set(c.Creator),
+                c.Title,
+                c.Description,
+                c.ThumbnailUrl,
+                c.AllowAnonymousAccess,
+                c.EnrollmentOpen))
+            .FirstOrDefaultAsync();
     }
 
     public async Task<QueryResponse<CourseResponse>> QueryCoursesAsync(CourseRequest query)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var courses = db.Courses.Include(c => c.Creator).AsQueryable();
+        var courses = db.Courses.AsNoTracking();
 
         if (!string.IsNullOrEmpty(query.Title))
-            courses = courses.Where(c => c.Title.Equals(query.Title, StringComparison.OrdinalIgnoreCase));
+            courses = courses.Where(c => c.Title.Contains(query.Title, StringComparison.OrdinalIgnoreCase));
 
         if (!string.IsNullOrEmpty(query.CreatorUserName))
-            courses = courses.Where(c => c.Creator.Username.Equals(query.CreatorUserName, StringComparison.OrdinalIgnoreCase));
+            courses = courses.Where(c => c.Creator.Username.Contains(query.CreatorUserName, StringComparison.OrdinalIgnoreCase));
 
         if (query.AllowAnonymousAccess != null)
             courses = courses.Where(c => c.AllowAnonymousAccess == query.AllowAnonymousAccess);
@@ -49,11 +51,11 @@ public class CourseService(
             courses = courses.Where(c => c.EnrollmentOpen == query.EnrollmentOpen);
 
         var list = await courses
+            .OrderBy(c => c.Id)
             .Select(c => new CourseResponse(
                 c.CreatorId,
                 c.Creator.Username,
                 c.Title,
-                c.Description,
                 c.ThumbnailUrl,
                 c.AllowAnonymousAccess,
                 c.EnrollmentOpen))
@@ -61,19 +63,19 @@ public class CourseService(
             .Take(query.PageSize)
             .ToListAsync();
 
-        return new QueryResponse<CourseResponse>(query.PageNumber, query.PageSize, await courses.CountAsync(), list);
+        return new QueryResponse<CourseResponse>(
+                query.PageNumber,
+                query.PageSize,
+                await courses.CountAsync(),
+                list);
     }
 
-    public async Task<MResult<CCourseSetResponse, CCourseSetError>> CreateCourseAsync(Guid userId, CCourseSetRequest dto)
+    public async Task<bool> CreateCourseAsync(CourseSetRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        if (!await db.Users.AnyAsync(u => u.Id == userId))
-            return MResult<CCourseSetResponse, CCourseSetError>
-                .Failure(CCourseSetError.InvalidRequest);
-
         var course = new Course
         {
-            CreatorId = userId,
+            CreatorId = _currentUserService.UserId,
             Title = dto.Title,
             Description = dto.Description,
             ThumbnailUrl = dto.ThumbnailUrl,
@@ -83,29 +85,15 @@ public class CourseService(
         };
         db.Courses.Add(course);
         await db.SaveChangesAsync();
-
-        return MResult<CCourseSetResponse, CCourseSetError>
-            .Success(new CCourseSetResponse(
-                course.Title,
-                course.Description,
-                course.ThumbnailUrl,
-                course.IsPublished,
-                course.AllowAnonymousAccess,
-                course.EnrollmentOpen
-            ));
+        return true;
     }
 
-    public async Task<MResult<CCourseSetResponse, CCourseSetError>> UpdateCourseAsync(Guid userId, Guid courseId, CCourseSetRequest dto)
+    public async Task<bool> UpdateCourseAsync(Guid courseId, CourseSetRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
-
-        if (course == null)
-            return MResult<CCourseSetResponse, CCourseSetError>
-                .Failure(CCourseSetError.InvalidRequest);
-        if (course.CreatorId != userId)
-            return MResult<CCourseSetResponse, CCourseSetError>
-                .Failure(CCourseSetError.Unauthorized);
+        if (course == null || course.CreatorId != _currentUserService.UserId)
+            return false;
 
         course.Title = dto.Title;
         course.Description = dto.Description;
@@ -116,31 +104,19 @@ public class CourseService(
 
         db.Courses.Update(course);
         await db.SaveChangesAsync();
-
-        return MResult<CCourseSetResponse, CCourseSetError>
-            .Success(new CCourseSetResponse(
-                course.Title,
-                course.Description,
-                course.ThumbnailUrl,
-                course.IsPublished,
-                course.AllowAnonymousAccess,
-                course.EnrollmentOpen
-            ));
+        return true;
     }
 
-    public async Task<CCourseDeleteStatus> DeleteCourseAsync(Guid userId, Guid courseId)
+    public async Task<bool> DeleteCourseAsync(Guid courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
-
-        if (course == null)
-            return CCourseDeleteStatus.InvalidRequest;
-        if (course.CreatorId != userId)
-            return CCourseDeleteStatus.Unauthorized;
+        if (course == null || course.CreatorId != _currentUserService.UserId)
+            return false;
 
         db.Courses.Remove(course);
         await db.SaveChangesAsync();
 
-        return CCourseDeleteStatus.Success;
+        return true;
     }
 }
