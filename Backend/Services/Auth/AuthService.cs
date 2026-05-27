@@ -1,5 +1,5 @@
 using Backend.Data;
-using Backend.Services.Auth.Dtos;
+using Backend.Core.Types;
 using Backend.Core.Entities.Users;
 
 using System.IdentityModel.Tokens.Jwt;
@@ -10,12 +10,12 @@ using Microsoft.IdentityModel.Tokens;
 
 using Isopoh.Cryptography.Argon2;
 
-namespace Backend.Services.Auth.Services;
+namespace Backend.Services.Auth;
 
 public class AuthService(
         IConfiguration config,
         IDbContextFactory<AppDbContext> contextFactory
-        ) : IAuthService
+        )
 {
     private readonly IConfiguration _config = config;
     private readonly IDbContextFactory<AppDbContext> _contextFactory = contextFactory;

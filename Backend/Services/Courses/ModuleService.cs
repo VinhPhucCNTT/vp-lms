@@ -1,9 +1,9 @@
 using Backend.Core.Common;
 using Backend.Data;
-using Backend.Services.Modules.Types;
+using Backend.Core.Types;
 using Microsoft.EntityFrameworkCore;
 
-namespace Backend.Services.Modules.Services;
+namespace Backend.Services.Courses;
 
 public class ModuleService(
     IDbContextFactory<AppDbContext> dbFactory

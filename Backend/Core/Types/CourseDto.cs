@@ -1,27 +1,34 @@
-namespace Backend.Services.Courses.Types;
+namespace Backend.Core.Types;
 
-public record CCourseResponse(
+public record CourseResponse(
     Guid CreatorId,
     string CreatorUserName,
+    string Title,
+    string? ThumbnailUrl,
+    bool AllowAnonymousAccess,
+    bool EnrollmentOpen
+);
+
+public record CourseDetailResponse(
+    Guid CreatorId,
+    // UserResponse Creator,
     string Title,
     string? Description,
     string? ThumbnailUrl,
     bool AllowAnonymousAccess,
-    bool EnrollmentOpen,
-    bool IsPublished
+    bool EnrollmentOpen
 );
 
-public record CCourseRequest(
+public record CourseRequest(
     int PageNumber,
     int PageSize,
     string? Title,
     string? CreatorUserName,
     bool? AllowAnonymousAccess,
-    bool? EnrollmentOpen,
-    bool? IsPublished
+    bool? EnrollmentOpen
 );
 
-public record CCourseSetRequest(
+public record CourseSetRequest(
     string Title,
     string? Description,
     string? ThumbnailUrl,
@@ -30,7 +37,7 @@ public record CCourseSetRequest(
     bool EnrollmentOpen
 );
 
-public record CCourseSetResponse(
+public record CourseSetResponse(
     string Title,
     string? Description,
     string? ThumbnailUrl,

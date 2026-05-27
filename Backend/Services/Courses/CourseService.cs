@@ -3,21 +3,24 @@ using Backend.Data;
 using Backend.Core.Common;
 using Backend.Services.Courses.Types;
 using Microsoft.EntityFrameworkCore;
+using Backend.Services.Common;
 
-namespace Backend.Services.Courses.Services;
+namespace Backend.Services.Courses;
 
 public class CourseService(
-    IDbContextFactory<AppDbContext> dbFactory
-) : ICourseService
+    IDbContextFactory<AppDbContext> dbFactory,
+    CurrentUserService currentUserService
+)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
+    private readonly CurrentUserService _currentUserService = currentUserService;
 
-    public async Task<CourseResponse?> GetCourseByIdAsync(Guid courseId)
+    public async Task<CourseDetailResponse?> GetCourseByIdAsync(Guid courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var course = await db.Courses.Include(c => c.Creator).FirstOrDefaultAsync(c => c.Id == courseId);
 
-        return (course == null) ? null : new CourseResponse(
+        return (course == null) ? null : new CourseDetailResponse(
             course.CreatorId,
             course.Creator.Username,
             course.Title,
