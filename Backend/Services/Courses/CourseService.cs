@@ -16,7 +16,7 @@ public class CourseService(
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
 
-    public async Task<CourseDetailResponse?> GetCourseByIdAsync(Guid courseId)
+    public async Task<CourseDetailResponse?> GetCourseByIdAsync(long courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Courses
@@ -88,7 +88,7 @@ public class CourseService(
         return true;
     }
 
-    public async Task<bool> UpdateCourseAsync(Guid courseId, CourseSetRequest dto)
+    public async Task<bool> UpdateCourseAsync(long courseId, CourseSetRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
@@ -107,7 +107,7 @@ public class CourseService(
         return true;
     }
 
-    public async Task<bool> DeleteCourseAsync(Guid courseId)
+    public async Task<bool> DeleteCourseAsync(long courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId);

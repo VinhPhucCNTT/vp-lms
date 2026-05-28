@@ -4,7 +4,7 @@ namespace Backend.Core.Entities.Resources;
 
 public class ProblemTestCase : BaseEntity, ISoftDeletable
 {
-    public Guid ProblemId { get; set; }
+    public long ProblemId { get; set; }
     public string InputData { get; set; } = default!;
     public string ExpectedOutput { get; set; } = default!;
     public bool IsSample { get; set; } = false;

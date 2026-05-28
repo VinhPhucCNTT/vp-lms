@@ -6,7 +6,7 @@ namespace Backend.Core.Entities.Resources;
 
 public class Assignment : BaseEntity, ISoftDeletable
 {
-    public Guid ResourceId { get; set; }
+    public long ResourceId { get; set; }
     public string InstructionsMarkdown { get; set; } = default!;
     public decimal? MaxScore { get; set; }
     public string? AllowedFileTypes { get; set; }

@@ -5,8 +5,8 @@ namespace Backend.Core.Entities.Courses;
 
 public class Enrollment : BaseEntity, ISoftDeletable
 {
-    public Guid CourseId { get; set; }
-    public Guid UserId { get; set; }
+    public long CourseId { get; set; }
+    public long UserId { get; set; }
     public EnrollmentRole Role { get; set; } = EnrollmentRole.Student;
 
     public bool IsDeleted { get; set; } = false;

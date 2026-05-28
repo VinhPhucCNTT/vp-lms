@@ -6,7 +6,7 @@ namespace Backend.Core.Entities.Resources;
 
 public class Problem : BaseEntity, ISoftDeletable
 {
-    public Guid ResourceId { get; set; }
+    public long ResourceId { get; set; }
     public string ProblemStatementMarkdown { get; set; } = default!;
     public string? ConstraintsMarkdown { get; set; }
     public string FunctionSignature { get; set; } = default!;

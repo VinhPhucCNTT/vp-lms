@@ -1,129 +1,89 @@
-using Backend.Core.Common;
 using Backend.Data;
 using Backend.Core.Types;
 using Microsoft.EntityFrameworkCore;
+using Backend.Services.Common;
 
 namespace Backend.Services.Courses;
 
 public class ModuleService(
-    IDbContextFactory<AppDbContext> dbFactory
+    IDbContextFactory<AppDbContext> dbFactory,
+    CurrentUserService currentUserService
 )
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
+    private readonly CurrentUserService _currentUserService = currentUserService;
 
-    public async Task<ModuleResponse?> GetModuleByIdAsync(Guid moduleId)
+    public async Task<ModuleDetailResponse?> GetModuleByIdAsync(long moduleId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var module = await db.Modules.FirstOrDefaultAsync(m => m.Id == moduleId);
-
-        return (module == null) ? null :
-            new ModuleResponse(
-                module.Title,
-                module.Description,
-                module.OrderIndex
-            );
-    }
-
-    public async Task<QueryResponse<ModuleResponse>?> QueryModulesAsync(Guid courseId, ModuleRequest query)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        if (!await db.Courses.AnyAsync(c => c.Id == courseId))
-            return null;
-        var modules = db.Modules.Where(m => m.CourseId == courseId).AsQueryable();
-
-        if (!string.IsNullOrEmpty(query.Title))
-            modules = modules.Where(m => m.Title.Equals(query.Title, StringComparison.OrdinalIgnoreCase));
-
-        if (!string.IsNullOrEmpty(query.Description))
-            modules = modules.Where(m => m.Description != null && m.Description.Equals(query.Description, StringComparison.OrdinalIgnoreCase));
-
-        var list = await modules
-            .Select(m => new ModuleResponse(
+        var currentUserId = _currentUserService.UserId;
+        return await db.Modules
+            .AsNoTracking()
+            .Where(m => m.Id == moduleId)
+            .Where(m => m.IsPublished || m.Course.CreatorId == currentUserId)
+            .Select(m => new ModuleDetailResponse(
                 m.Title,
                 m.Description,
                 m.OrderIndex))
-            .Skip((query.PageNumber - 1) * query.PageSize)
-            .Take(query.PageSize)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<ModuleResponse>> GetPublishedModulesAsync(long courseId)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.Modules
+            .AsNoTracking()
+            .Where(m => m.CourseId == courseId && m.IsPublished)
+            .Select(m => new ModuleResponse(
+                m.Title,
+                m.OrderIndex))
             .ToListAsync();
-
-        return new QueryResponse<ModuleResponse>(query.PageNumber, query.PageSize, await modules.CountAsync(), list);
     }
 
-    public async Task<MResult<CModuleSetResponse, CModuleSetError>> AddModuleAsync(Guid userId, Guid courseId, CModuleSetRequest dto)
+    public async Task<List<ModuleResponse>> GetUnpublishedModulesAsync(long courseId) 
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
+        if (!await IsUserValidAsync(db, courseId))
+            return [];
 
-        if (course == null)
-            return MResult<CModuleSetResponse, CModuleSetError>
-                .Failure(CModuleSetError.InvalidRequest);
-        if (course.CreatorId != userId)
-            return MResult<CModuleSetResponse, CModuleSetError>
-                .Failure(CModuleSetError.Unauthorized);
+        return await db.Modules
+            .AsNoTracking()
+            .Where(m => m.CourseId == courseId && !m.IsPublished)
+            .Select(m => new ModuleResponse(
+                m.Title,
+                m.OrderIndex))
+            .ToListAsync();
+    }
 
-        var module = new Module
+    public async Task<bool> AddModuleAsync(long courseId, ModuleSetRequest dto) {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        if (!await IsUserValidAsync(db, courseId))
+            return false;
+
+        var module = new Mo
         {
-            CourseId = courseId,
             Title = dto.Title,
-            Description = dto.Description,
-            OrderIndex = dto.OrderIndex,
-            IsPublished = dto.IsPublished
         };
-        db.Modules.Add(module);
-        await db.SaveChangesAsync();
-
-        return MResult<CModuleSetResponse, CModuleSetError>
-            .Success(new CModuleSetResponse(
-                module.Title,
-                module.Description,
-                module.OrderIndex,
-                module.IsPublished
-            ));
     }
 
-    public async Task<MResult<CModuleSetResponse, CModuleSetError>> UpdateModuleAsync(Guid userId, Guid courseId, Guid moduleId, CModuleSetRequest dto)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var module = await db.Modules.Include(m => m.Course).FirstOrDefaultAsync(m => m.CourseId == courseId);
+    // On failure: ignore and go next
+    public async Task<bool> PublishModulesAsync(List<long> moduleId) { }
 
-        if (module == null)
-            return MResult<CModuleSetResponse, CModuleSetError>
-                .Failure(CModuleSetError.InvalidRequest);
-        if (module.Course.CreatorId != userId)
-            return MResult<CModuleSetResponse, CModuleSetError>
-                .Failure(CModuleSetError.Unauthorized);
+    // On failure: ignore and go next
+    public async Task<bool> UnpublishModulesAsync(List<long> moduleId) { }
 
-        module.CourseId = courseId;
-        module.Title = dto.Title;
-        module.Description = dto.Description;
-        module.OrderIndex = dto.OrderIndex;
-        module.IsPublished = dto.IsPublished;
+    public async Task<bool> UpdateModuleAsync(long moduleId, ModuleSetRequest dto) { }
 
-        db.Modules.Update(module);
-        await db.SaveChangesAsync();
+    // On failure: interrupt
+    public async Task<bool> DeleteModulesAsync(List<long> moduleId) { }
 
-        return MResult<CModuleSetResponse, CModuleSetError>
-            .Success(new CModuleSetResponse(
-                module.Title,
-                module.Description,
-                module.OrderIndex,
-                module.IsPublished
-            ));
-    }
+    private async Task<bool> IsUserValidAsync(AppDbContext db, long courseId) {
+        var courseCreator = await db.Courses
+            .AsNoTracking()
+            .Where(c => c.Id == courseId)
+            .Select(c => c.CreatorId)
+            .FirstOrDefaultAsync();
 
-    public async Task<CModuleDeleteStatus> DeleteModuleAsync(Guid userId, Guid courseId, Guid moduleId)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var module = await db.Modules.Include(m => m.Course).FirstOrDefaultAsync(m => m.Id == moduleId);
-
-        if (module == null || module.CourseId != courseId)
-            return CModuleDeleteStatus.InvalidRequest;
-        if (module.Course.CreatorId != userId)
-            return CModuleDeleteStatus.Unauthorized;
-
-        db.Modules.Remove(module);
-        await db.SaveChangesAsync();
-
-        return CModuleDeleteStatus.Success;
+        return _currentUserService.UserId != courseCreator;
     }
 }

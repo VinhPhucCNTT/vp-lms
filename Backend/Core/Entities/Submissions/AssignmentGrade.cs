@@ -5,8 +5,8 @@ namespace Backend.Core.Entities.Submissions;
 
 public class AssignmentGrade : BaseEntity
 {
-    public Guid SubmissionId { get; set; }
-    public Guid GraderId { get; set; }
+    public long SubmissionId { get; set; }
+    public long GraderId { get; set; }
     public decimal? Score { get; set; }
     public string? FeedbackText { get; set; }
     public bool CanResubmit { get; set; } = false;

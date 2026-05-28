@@ -6,7 +6,7 @@ namespace Backend.Core.Entities.Resources;
 
 public class Assessment : BaseEntity, ISoftDeletable
 {
-    public Guid ResourceId { get; set; }
+    public long ResourceId { get; set; }
     public string? InstructionsMarkdown { get; set; }
     public int? TimeLimitMinutes { get; set; }
     public int MaxAttempts { get; set; } = 1;

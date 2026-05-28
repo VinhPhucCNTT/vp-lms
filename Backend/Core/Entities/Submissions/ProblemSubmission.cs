@@ -6,8 +6,8 @@ namespace Backend.Core.Entities.Submissions;
 
 public class ProblemSubmission : BaseEntity
 {
-    public Guid ProblemId { get; set; }
-    public Guid UserId { get; set; }
+    public long ProblemId { get; set; }
+    public long UserId { get; set; }
     public string SubmittedCode { get; set; } = default!;
     public string Language { get; set; } = default!;
     public SubmissionStatus Status { get; set; } = SubmissionStatus.Pending;

@@ -17,15 +17,16 @@ public record CourseDetailResponse(
     string? ThumbnailUrl,
     bool AllowAnonymousAccess,
     bool EnrollmentOpen
+    // TAPermissionResponse Permissions
 );
 
 public record CourseRequest(
-    int PageNumber,
-    int PageSize,
-    string? Title,
-    string? CreatorUserName,
-    bool? AllowAnonymousAccess,
-    bool? EnrollmentOpen
+    int PageNumber = 1,
+    int PageSize = 10,
+    string? Title = null,
+    string? CreatorUserName = null,
+    bool? AllowAnonymousAccess = null,
+    bool? EnrollmentOpen = null
 );
 
 public record CourseSetRequest(

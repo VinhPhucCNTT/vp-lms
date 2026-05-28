@@ -5,7 +5,7 @@ namespace Backend.Core.Entities.Courses;
 
 public class Course : BaseEntity, ISoftDeletable
 {
-    public Guid CreatorId { get; set; }
+    public long CreatorId { get; set; }
     public string Title { get; set; } = default!;
     public string? Description { get; set; }
     public string? ThumbnailUrl { get; set; }
@@ -18,6 +18,6 @@ public class Course : BaseEntity, ISoftDeletable
 
     // Navigation properties
     public User Creator { get; set; } = default!;
-    public ICollection<Module> Modules { get; set; } = [];
+    public ICollection<CourseModule> Modules { get; set; } = [];
     public ICollection<Enrollment> Enrollments { get; set; } = [];
 }

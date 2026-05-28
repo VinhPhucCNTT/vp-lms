@@ -5,7 +5,7 @@ namespace Backend.Core.Entities.Resources;
 
 public class Lesson : BaseEntity, ISoftDeletable
 {
-    public Guid ResourceId { get; set; }
+    public long ResourceId { get; set; }
     public string ContentMarkdown { get; set; } = default!;
 
     public bool IsDeleted { get; set; } = false;

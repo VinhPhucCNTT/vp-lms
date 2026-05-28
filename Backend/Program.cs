@@ -9,6 +9,7 @@ using Sqids;
 
 using Backend.Data;
 using Backend.Endpoints;
+using Backend.Core.Common;
 using Backend.Services.Common;
 using Backend.Services.Auth;
 
@@ -43,11 +44,11 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 
 var sqidsSettings = builder.Configuration.GetSection("Sqids").Get<SqidsSettings>();
 builder.Services.AddSingleton(provider =>
-        new SqidsEncoder<int>(new()
-        {
-            Alphabet = sqidsSettings?.Alphabet!,
-            MinLength = sqidsSettings?.MinLength ?? 0
-        })
+    new SqidsEncoder<long>(new()
+    {
+        Alphabet = sqidsSettings?.Alphabet!,
+        MinLength = sqidsSettings?.MinLength ?? 0
+    })
 );
 
 // [[ AUTHENTICATION ]]

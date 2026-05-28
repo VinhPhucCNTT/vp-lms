@@ -1,0 +1,28 @@
+namespace Backend.Core.Types;
+
+public record ModuleResponse(
+    string Title,
+    int OrderIndex
+);
+
+public record ModuleDetailResponse(
+    string Title,
+    string? Description,
+    int OrderIndex
+);
+
+// public record ModuleRequest();
+
+public record ModuleSetRequest(
+    string Title,
+    string? Description,
+    string? OrderIndex,
+    bool? IsPublished
+);
+
+public record ModuleSetResponse(
+    string Title,
+    string? Description,
+    string? OrderIndex,
+    bool? IsPublished
+);

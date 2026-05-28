@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Data.Configurations;
 
-public class ModuleConfiguration : IEntityTypeConfiguration<Module>
+public class ModuleConfiguration : IEntityTypeConfiguration<CourseModule>
 {
-    public void Configure(EntityTypeBuilder<Module> builder)
+    public void Configure(EntityTypeBuilder<CourseModule> builder)
     {
         builder.ToTable("modules");
 

@@ -17,7 +17,7 @@ public class UserService(
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     // private readonly CurrentUserService _currentUserService = currentUserService;
 
-    public async Task<UserDetailResponse?> GetUserByIdAsync(Guid userId)
+    public async Task<UserDetailResponse?> GetUserByIdAsync(long userId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Users
@@ -33,7 +33,7 @@ public class UserService(
             .FirstOrDefaultAsync();
     }
 
-    public async Task<UserStatResponse?> GetUserStatAsync(Guid userId)
+    public async Task<UserStatResponse?> GetUserStatAsync(long userId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return new UserStatResponse(
@@ -98,7 +98,7 @@ public class UserService(
         return true;
     }
 
-    public async Task<bool> UpdateUserAsync(Guid userId, UserSetRequest dto)
+    public async Task<bool> UpdateUserAsync(long userId, UserSetRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.Where(u => u.IsActive).FirstOrDefaultAsync(u => u.Id == userId);
@@ -117,7 +117,7 @@ public class UserService(
         return true;
     }
 
-    public async Task<bool> DeleteUserAsync(Guid userId)
+    public async Task<bool> DeleteUserAsync(long userId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
@@ -129,13 +129,13 @@ public class UserService(
         return true;
     }
 
-    public async Task<bool> IsUserActiveAsync(Guid userId) {
+    public async Task<bool> IsUserActiveAsync(long userId) {
         using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
         return user != null && user.IsActive;
     }
 
-    public async Task<bool> DeactivateUserAsync(Guid userId)
+    public async Task<bool> DeactivateUserAsync(long userId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.Where(u => u.IsActive).FirstOrDefaultAsync(u => u.Id == userId);
@@ -147,7 +147,7 @@ public class UserService(
         return true;
     }
 
-    public async Task<bool> ActivateUserAsync(Guid userId)
+    public async Task<bool> ActivateUserAsync(long userId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.Where(u => !u.IsActive).FirstOrDefaultAsync(u => u.Id == userId);

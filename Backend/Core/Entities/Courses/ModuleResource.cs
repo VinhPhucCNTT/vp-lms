@@ -13,7 +13,7 @@ public enum ResourceType
 
 public class ModuleResource : BaseEntity, ISoftDeletable
 {
-    public Guid ModuleId { get; set; }
+    public long ModuleId { get; set; }
     public ResourceType ResourceType { get; set; }
     public string Title { get; set; } = default!;
     public string? Description { get; set; }
@@ -27,7 +27,7 @@ public class ModuleResource : BaseEntity, ISoftDeletable
     public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
-    public Module Module { get; set; } = default!;
+    public CourseModule Module { get; set; } = default!;
     public Lesson? Lesson { get; set; }
     public Assignment? Assignment { get; set; }
     public Assessment? Assessment { get; set; }

@@ -5,7 +5,7 @@ namespace Backend.Core.Entities.Resources;
 
 public class AssessmentQuestion : BaseEntity, ISoftDeletable
 {
-    public Guid AssessmentId { get; set; }
+    public long AssessmentId { get; set; }
     public string QuestionType { get; set; } = default!;
     public string QuestionTextMarkdown { get; set; } = default!;
     public decimal Points { get; set; } = 1;

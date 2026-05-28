@@ -6,8 +6,8 @@ namespace Backend.Core.Entities.Submissions;
 
 public class AssessmentResponse : BaseEntity
 {
-    public Guid AttemptId { get; set; }
-    public Guid QuestionId { get; set; }
+    public long AttemptId { get; set; }
+    public long QuestionId { get; set; }
     public string ResponseDataJson { get; set; } = default!; // JSONB column
     public decimal? Score { get; set; }
     public bool? IsCorrect { get; set; }

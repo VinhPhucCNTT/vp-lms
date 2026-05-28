@@ -5,8 +5,8 @@ namespace Backend.Core.Entities.Courses;
 
 public class ResourceComment : BaseEntity
 {
-    public Guid ResourceId { get; set; }
-    public Guid UserId { get; set; }
+    public long ResourceId { get; set; }
+    public long UserId { get; set; }
     public Guid? ParentCommentId { get; set; }
     public string ContentMarkdown { get; set; } = default!;
     public bool IsEdited { get; set; } = false;

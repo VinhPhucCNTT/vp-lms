@@ -1,4 +1,4 @@
-namespace Backend.Data;
+namespace Backend.Core.Common;
 
 public class SqidsSettings
 {

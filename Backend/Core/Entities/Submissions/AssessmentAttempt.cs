@@ -6,8 +6,8 @@ namespace Backend.Core.Entities.Submissions;
 
 public class AssessmentAttempt : BaseEntity, ISoftDeletable
 {
-    public Guid AssessmentId { get; set; }
-    public Guid UserId { get; set; }
+    public long AssessmentId { get; set; }
+    public long UserId { get; set; }
     public DateTime StartedAt { get; set; } = DateTime.UtcNow;
     public DateTime? SubmittedAt { get; set; }
     public decimal? TotalScore { get; set; }

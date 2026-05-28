@@ -6,8 +6,8 @@ namespace Backend.Core.Entities.Submissions;
 
 public class AssignmentSubmission : BaseEntity, ISoftDeletable
 {
-    public Guid AssignmentId { get; set; }
-    public Guid UserId { get; set; }
+    public long AssignmentId { get; set; }
+    public long UserId { get; set; }
     public string? SubmissionText { get; set; }
     public string? FileUrl { get; set; }
     public string? FileName { get; set; }

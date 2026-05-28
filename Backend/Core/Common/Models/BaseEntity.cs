@@ -2,7 +2,7 @@ namespace Backend.Core.Common.Models;
 
 public abstract class BaseEntity
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public long Id { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

@@ -7,14 +7,14 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor)
 {
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
 
-    public Guid UserId
+    public long UserId
     {
         get
         {
             var userIdClaim = _httpContextAccessor.HttpContext?
                 .User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            return userIdClaim != null ? Guid.Parse(userIdClaim) : Guid.Empty;
+            return userIdClaim != null ? long.Parse(userIdClaim) : -1;
         }
     }
 

@@ -5,8 +5,8 @@ namespace Backend.Core.Entities.Submissions;
 
 public class ProblemTestResult : BaseEntity
 {
-    public Guid SubmissionId { get; set; }
-    public Guid TestCaseId { get; set; }
+    public long SubmissionId { get; set; }
+    public long TestCaseId { get; set; }
     public string Status { get; set; } = default!;
     public string? ActualOutput { get; set; }
     public string? ErrorMessage { get; set; }
