@@ -11,7 +11,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<Course> Courses => Set<Course>();
-    public DbSet<CourseModule> Modules => Set<CourseModule>();
+    public DbSet<CourseModule> CourseModules => Set<CourseModule>();
     public DbSet<ModuleResource> ModuleResources => Set<ModuleResource>();
     public DbSet<Lesson> Lessons => Set<Lesson>();
     public DbSet<Assignment> Assignments => Set<Assignment>();

@@ -16,8 +16,8 @@ public record ModuleDetailResponse(
 public record ModuleSetRequest(
     string Title,
     string? Description,
-    string? OrderIndex,
-    bool? IsPublished
+    int OrderIndex,
+    bool IsPublished
 );
 
 public record ModuleSetResponse(
