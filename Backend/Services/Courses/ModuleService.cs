@@ -44,9 +44,6 @@ public class ModuleService(
     public async Task<List<ModuleResponse>> GetUnpublishedModulesAsync(long courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        if (!await IsUserValidAsync(db, courseId))
-            return [];
-
         return await db.CourseModules
             .AsNoTracking()
             .Where(m => m.CourseId == courseId && !m.IsPublished)
@@ -59,11 +56,9 @@ public class ModuleService(
     public async Task<bool> CreateModuleAsync(long courseId, ModuleSetRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        if (!await IsUserValidAsync(db, courseId))
-            return false;
-
         var module = new CourseModule
         {
+            CourseId = courseId,
             Title = dto.Title,
             Description = dto.Description,
             OrderIndex = dto.OrderIndex,
@@ -78,7 +73,7 @@ public class ModuleService(
     public async Task<int> PublishModulesAsync(long courseId, List<long> moduleIds)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        if (moduleIds == null || moduleIds.Count == 0 || !await IsUserValidAsync(db, courseId))
+        if (moduleIds == null || moduleIds.Count == 0)
             return 0;
 
         return await db.CourseModules
@@ -90,7 +85,7 @@ public class ModuleService(
     public async Task<int> UnpublishModulesAsync(long courseId, List<long> moduleIds)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        if (moduleIds == null || moduleIds.Count == 0 || !await IsUserValidAsync(db, courseId))
+        if (moduleIds == null || moduleIds.Count == 0)
             return 0;
 
         return await db.CourseModules
@@ -103,7 +98,7 @@ public class ModuleService(
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var module = await db.CourseModules.FirstOrDefaultAsync(m => m.Id == moduleId);
-        if (module == null || !await IsUserValidAsync(db, module.CourseId))
+        if (module == null)
             return false;
 
         module.Title = dto.Title;
@@ -171,14 +166,13 @@ public class ModuleService(
         return true;
     }
 
-    private async Task<bool> IsUserValidAsync(AppDbContext db, long courseId)
+    public async Task<bool> IsUserValidAsync(long moduleId)
     {
-        var courseCreator = await db.Courses
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var currentUserId = _currentUserService.UserId;
+        return await db.CourseModules
             .AsNoTracking()
-            .Where(c => c.Id == courseId)
-            .Select(c => c.CreatorId)
-            .FirstOrDefaultAsync();
-
-        return _currentUserService.UserId != courseCreator;
+            .Where(c => c.Id == moduleId && c.Course.CreatorId == currentUserId)
+            .AnyAsync();
     }
 }

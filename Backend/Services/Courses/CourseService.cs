@@ -92,7 +92,7 @@ public class CourseService(
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
-        if (course == null || course.CreatorId != _currentUserService.UserId)
+        if (course == null)
             return false;
 
         course.Title = dto.Title;
@@ -111,12 +111,22 @@ public class CourseService(
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
-        if (course == null || course.CreatorId != _currentUserService.UserId)
+        if (course == null)
             return false;
 
         db.Courses.Remove(course);
         await db.SaveChangesAsync();
 
         return true;
+    }
+
+    public async Task<bool> IsUserValidAsync(long courseId)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var currentUserId = _currentUserService.UserId;
+        return await db.Courses
+            .AsNoTracking()
+            .Where(c => c.Id == courseId && c.CreatorId == currentUserId)
+            .AnyAsync();
     }
 }

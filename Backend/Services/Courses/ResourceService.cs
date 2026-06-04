@@ -48,9 +48,6 @@ public class ResourceService(
     public async Task<List<ResourceResponse>> GetUnpublishedResourcesAsync(long moduleId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        if (!await IsUserValidAsync(db, moduleId))
-            return [];
-
         return await db.ModuleResources
             .AsNoTracking()
             .Where(r => r.ModuleId == moduleId && !r.IsPublished)
@@ -64,11 +61,9 @@ public class ResourceService(
     public async Task<ResourceSetResponse?> CreateResourceAsync(long moduleId, ResourceCreateRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        if (!await IsUserValidAsync(db, moduleId))
-            return null;
-
         var resource = new ModuleResource
         {
+            ModuleId = moduleId,
             ResourceType = dto.Type,
             Title = dto.Title,
             Description = dto.Description,
@@ -104,7 +99,7 @@ public class ResourceService(
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var resource = await db.ModuleResources.FirstOrDefaultAsync(r => r.Id == resourceId);
-        if (resource == null || !await IsUserValidAsync(db, resource.ModuleId))
+        if (resource == null)
             return null;
 
         resource.Title = dto.Title;
@@ -132,12 +127,8 @@ public class ResourceService(
     public async Task<bool> DeleteResourceAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var resource = await db.ModuleResources.FirstOrDefaultAsync(r => r.Id == resourceId);
-        if (resource == null || !await IsUserValidAsync(db, resource.ModuleId))
-            return false;
-
-        await db.ModuleResources.Where(r => r.Id == resourceId).ExecuteDeleteAsync();
-        return true;
+        var count = await db.ModuleResources.Where(r => r.Id == resourceId).ExecuteDeleteAsync();
+        return count > 0;
     }
 
     public async Task<bool> ReorderResourceAsync(long resourceId, int orderIndex)
@@ -183,14 +174,13 @@ public class ResourceService(
         return count > 0;
     }
 
-    private async Task<bool> IsUserValidAsync(AppDbContext db, long moduleId)
+    public async Task<bool> IsUserValidAsync(long moduleId)
     {
-        var courseCreator = await db.CourseModules
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var currentUserId = _currentUserService.UserId;
+        return await db.CourseModules
             .AsNoTracking()
-            .Where(m => m.Id == moduleId)
-            .Select(m => m.Course.CreatorId)
-            .FirstOrDefaultAsync();
-
-        return _currentUserService.UserId != courseCreator;
+            .Where(c => c.Id == moduleId && c.Course.CreatorId == currentUserId)
+            .AnyAsync();
     }
 }
