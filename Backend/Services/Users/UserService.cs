@@ -2,7 +2,6 @@ using Backend.Core.Common;
 using Backend.Core.Entities.Users;
 using Backend.Core.Types;
 using Backend.Data;
-using Backend.Services.Common;
 using Microsoft.EntityFrameworkCore;
 
 using Isopoh.Cryptography.Argon2;
@@ -10,12 +9,10 @@ using Isopoh.Cryptography.Argon2;
 namespace Backend.Services.Users;
 
 public class UserService(
-    IDbContextFactory<AppDbContext> dbFactory,
-    CurrentUserService currentUserService
+    IDbContextFactory<AppDbContext> dbFactory
 )
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
-    private readonly CurrentUserService _currentUserService = currentUserService;
 
     public async Task<UserDetailResponse?> GetUserByIdAsync(long userId)
     {
