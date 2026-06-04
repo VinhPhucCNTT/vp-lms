@@ -70,28 +70,16 @@ public class ModuleService(
         return true;
     }
 
-    public async Task<int> PublishModulesAsync(long courseId, List<long> moduleIds)
+    public async Task<int> SetModulesPublishStatusAsync(long courseId, List<long> moduleIds, bool isPublished)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         if (moduleIds == null || moduleIds.Count == 0)
             return 0;
 
         return await db.CourseModules
-            .Where(m => m.CourseId == courseId && !m.IsPublished)
+            .Where(m => m.CourseId == courseId && m.IsPublished != isPublished)
             .Where(m => moduleIds.Contains(m.Id))
-            .ExecuteUpdateAsync(m => m.SetProperty(m => m.IsPublished, true));
-    }
-
-    public async Task<int> UnpublishModulesAsync(long courseId, List<long> moduleIds)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        if (moduleIds == null || moduleIds.Count == 0)
-            return 0;
-
-        return await db.CourseModules
-            .Where(m => m.CourseId == courseId && m.IsPublished)
-            .Where(m => moduleIds.Contains(m.Id))
-            .ExecuteUpdateAsync(m => m.SetProperty(m => m.IsPublished, false));
+            .ExecuteUpdateAsync(m => m.SetProperty(m => m.IsPublished, isPublished));
     }
 
     public async Task<bool> UpdateModuleAsync(long moduleId, ModuleSetRequest dto)
