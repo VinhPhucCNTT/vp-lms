@@ -3,7 +3,7 @@ using Backend.Core.Entities.Users;
 namespace Backend.Core.Types;
 
 public record UserResponse(
-    Guid UserId,
+    long UserId,
     string Username,
     string? AvatarUrl)
 {
@@ -12,7 +12,7 @@ public record UserResponse(
 }
 
 public record UserDetailResponse(
-    Guid UserId,
+    long UserId,
     string Username,
     string Email,
     string Fullname,
@@ -43,7 +43,7 @@ public record UserSetRequest(
 );
 
 public record UserSetResponse(
-    Guid UserId,
+    long UserId,
     string Username,
     string Email,
     string Fullname,
