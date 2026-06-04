@@ -110,14 +110,24 @@ public class CourseService(
     public async Task<bool> DeleteCourseAsync(long courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
-        if (course == null)
-            return false;
+        var currentUserId = _currentUserService.UserId;
+        var count = await db.Courses
+            .Where(c => c.Id == courseId && c.CreatorId == currentUserId)
+            .ExecuteDeleteAsync();
 
-        db.Courses.Remove(course);
-        await db.SaveChangesAsync();
+        return count > 0;
+    }
 
-        return true;
+    public async Task<bool> SetCoursePublishStatusAsync(long courseId, bool IsPublished)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var currentUserId = _currentUserService.UserId;
+        var count = await db.Courses
+            .Where(c => c.Id == courseId && c.CreatorId == currentUserId)
+            .Where(c => c.IsPublished == IsPublished)
+            .ExecuteUpdateAsync(c => c.SetProperty(c => c.IsPublished, IsPublished));
+
+        return count > 0;
     }
 
     public async Task<bool> IsUserValidAsync(long courseId)
