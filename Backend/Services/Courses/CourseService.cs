@@ -36,7 +36,7 @@ public class CourseService(
     public async Task<QueryResponse<CourseResponse>> QueryCoursesAsync(CourseRequest query)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var courses = db.Courses.AsNoTracking();
+        var courses = db.Courses.AsNoTracking().Where(c => c.IsPublished);
 
         if (!string.IsNullOrEmpty(query.Title))
             courses = courses.Where(c => c.Title.Contains(query.Title, StringComparison.OrdinalIgnoreCase));
