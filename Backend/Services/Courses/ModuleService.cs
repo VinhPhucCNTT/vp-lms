@@ -56,7 +56,7 @@ public class ModuleService(
             .ToListAsync();
     }
 
-    public async Task<bool> AddModuleAsync(long courseId, ModuleSetRequest dto)
+    public async Task<bool> CreateModuleAsync(long courseId, ModuleSetRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         if (!await IsUserValidAsync(db, courseId))
@@ -121,6 +121,46 @@ public class ModuleService(
         return await db.CourseModules
             .Where(m => moduleIds.Contains(m.Id))
             .ExecuteDeleteAsync();
+    }
+
+    // TODO: Reorder multiple modules at once
+    public async Task<bool> ReorderModuleAsync(long moduleId, int orderIndex)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
+
+        try
+        {
+            var target = await db.CourseModules.FirstOrDefaultAsync(m => m.Id == moduleId);
+            if (target == null) return false;
+
+            var modules = db.CourseModules
+                .Where(m => m.CourseId == target.CourseId);
+            var count = await modules.CountAsync();
+
+            if (orderIndex < 0) orderIndex = 0;
+            orderIndex = Math.Min(orderIndex, count + 1);
+
+            await modules
+                .Where(m => m.OrderIndex >= orderIndex)
+                .ExecuteUpdateAsync(m => m.SetProperty(m => m.OrderIndex, m => m.OrderIndex + 1));
+            target.OrderIndex = orderIndex;
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            return false;
+        }
+
+        return true;
+    }
+
+    public async Task GetModuleProgressAsync(long moduleId)
+    {
+        // TODO: Implement
+        throw new NotImplementedException();
     }
 
     private async Task<bool> CanDeleteModuleAsync(CourseModule module)
