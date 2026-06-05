@@ -39,6 +39,8 @@ public record CourseSetRequest(
 );
 
 public record CourseSetResponse(
+    long Id,
+    long CreatorId,
     string Title,
     string? Description,
     string? ThumbnailUrl,

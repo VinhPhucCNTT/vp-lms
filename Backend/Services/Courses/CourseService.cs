@@ -70,7 +70,7 @@ public class CourseService(
                 list);
     }
 
-    public async Task<bool> CreateCourseAsync(CourseSetRequest dto)
+    public async Task<CourseSetResponse> CreateCourseAsync(CourseSetRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var course = new Course
@@ -85,15 +85,24 @@ public class CourseService(
         };
         db.Courses.Add(course);
         await db.SaveChangesAsync();
-        return true;
+        return new CourseSetResponse(
+            course.Id,
+            course.CreatorId,
+            course.Title,
+            course.Description,
+            course.ThumbnailUrl,
+            course.IsPublished,
+            course.AllowAnonymousAccess,
+            course.EnrollmentOpen
+        );
     }
 
-    public async Task<bool> UpdateCourseAsync(long courseId, CourseSetRequest dto)
+    public async Task<CourseSetResponse?> UpdateCourseAsync(long courseId, CourseSetRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
         if (course == null)
-            return false;
+            return null;
 
         course.Title = dto.Title;
         course.Description = dto.Description;
@@ -104,7 +113,16 @@ public class CourseService(
 
         db.Courses.Update(course);
         await db.SaveChangesAsync();
-        return true;
+        return new CourseSetResponse(
+            course.Id,
+            course.CreatorId,
+            course.Title,
+            course.Description,
+            course.ThumbnailUrl,
+            course.IsPublished,
+            course.AllowAnonymousAccess,
+            course.EnrollmentOpen
+        );
     }
 
     public async Task<bool> DeleteCourseAsync(long courseId)
