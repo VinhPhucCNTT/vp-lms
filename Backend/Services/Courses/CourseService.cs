@@ -5,16 +5,19 @@ using Microsoft.EntityFrameworkCore;
 using Backend.Services.Common;
 using Backend.Core.Types;
 using Backend.Core.Entities.Courses;
+using Sqids;
 
 namespace Backend.Services.Courses;
 
 public class CourseService(
     IDbContextFactory<AppDbContext> dbFactory,
-    CurrentUserService currentUserService
+    CurrentUserService currentUserService,
+    SqidsEncoder<long> sqidsEncoder
 )
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
+    private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
 
     public async Task<CourseDetailResponse?> GetCourseByIdAsync(long courseId)
     {
@@ -23,7 +26,7 @@ public class CourseService(
             .AsNoTracking()
             .Where(c => c.Id == courseId)
             .Select(c => new CourseDetailResponse(
-                c.CreatorId,
+                _sqidsEncoder.Encode(c.CreatorId),
                 UserResponse.Set(c.Creator),
                 c.Title,
                 c.Description,
@@ -53,7 +56,7 @@ public class CourseService(
         var list = await courses
             .OrderBy(c => c.Id)
             .Select(c => new CourseResponse(
-                c.CreatorId,
+                _sqidsEncoder.Encode(c.CreatorId),
                 c.Creator.Username,
                 c.Title,
                 c.ThumbnailUrl,
@@ -70,24 +73,24 @@ public class CourseService(
                 list);
     }
 
-    public async Task<CourseSetResponse> CreateCourseAsync(CourseSetRequest dto)
+    public async Task<CourseSetResponse> CreateCourseAsync(CourseSetRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var course = new Course
         {
             CreatorId = _currentUserService.UserId,
-            Title = dto.Title,
-            Description = dto.Description,
-            ThumbnailUrl = dto.ThumbnailUrl,
-            IsPublished = dto.IsPublished,
-            AllowAnonymousAccess = dto.AllowAnonymousAccess,
-            EnrollmentOpen = dto.EnrollmentOpen
+            Title = request.Title,
+            Description = request.Description,
+            ThumbnailUrl = request.ThumbnailUrl,
+            IsPublished = request.IsPublished,
+            AllowAnonymousAccess = request.AllowAnonymousAccess,
+            EnrollmentOpen = request.EnrollmentOpen
         };
         db.Courses.Add(course);
         await db.SaveChangesAsync();
         return new CourseSetResponse(
-            course.Id,
-            course.CreatorId,
+            _sqidsEncoder.Encode(course.Id),
+            _sqidsEncoder.Encode(course.CreatorId),
             course.Title,
             course.Description,
             course.ThumbnailUrl,
@@ -97,25 +100,25 @@ public class CourseService(
         );
     }
 
-    public async Task<CourseSetResponse?> UpdateCourseAsync(long courseId, CourseSetRequest dto)
+    public async Task<CourseSetResponse?> UpdateCourseAsync(long courseId, CourseSetRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
         if (course == null)
             return null;
 
-        course.Title = dto.Title;
-        course.Description = dto.Description;
-        course.ThumbnailUrl = dto.ThumbnailUrl;
-        course.IsPublished = dto.IsPublished;
-        course.AllowAnonymousAccess = dto.AllowAnonymousAccess;
-        course.EnrollmentOpen = dto.EnrollmentOpen;
+        course.Title = request.Title;
+        course.Description = request.Description;
+        course.ThumbnailUrl = request.ThumbnailUrl;
+        course.IsPublished = request.IsPublished;
+        course.AllowAnonymousAccess = request.AllowAnonymousAccess;
+        course.EnrollmentOpen = request.EnrollmentOpen;
 
         db.Courses.Update(course);
         await db.SaveChangesAsync();
         return new CourseSetResponse(
-            course.Id,
-            course.CreatorId,
+            _sqidsEncoder.Encode(course.Id),
+            _sqidsEncoder.Encode(course.CreatorId),
             course.Title,
             course.Description,
             course.ThumbnailUrl,

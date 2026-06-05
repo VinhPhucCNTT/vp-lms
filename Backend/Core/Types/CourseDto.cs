@@ -1,7 +1,7 @@
 namespace Backend.Core.Types;
 
 public record CourseResponse(
-    long CreatorId,
+    string CreatorSqid,
     string CreatorUserName,
     string Title,
     string? ThumbnailUrl,
@@ -10,7 +10,7 @@ public record CourseResponse(
 );
 
 public record CourseDetailResponse(
-    long CreatorId,
+    string CreatorSqid,
     UserResponse Creator,
     string Title,
     string? Description,
@@ -39,8 +39,8 @@ public record CourseSetRequest(
 );
 
 public record CourseSetResponse(
-    long Id,
-    long CreatorId,
+    string CourseSqid,
+    string CreatorSqid,
     string Title,
     string? Description,
     string? ThumbnailUrl,
