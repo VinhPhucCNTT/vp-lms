@@ -73,6 +73,56 @@ public class CourseService(
                 list);
     }
 
+    // Get all unpublished course belonging to the current user
+    // TODO: May have to reconsider this once course versioning is fully fleshed out
+    public async Task<List<CourseResponse>> GetUnpublishedCoursesAsync()
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var currentUserId = _currentUserService.UserId;
+        return await db.Courses
+            .AsNoTracking()
+            .Where(c => c.CreatorId == currentUserId && !c.IsPublished)
+            .Select(c => new CourseResponse(
+                _sqidsEncoder.Encode(c.CreatorId),
+                c.Creator.Username,
+                c.Title,
+                c.ThumbnailUrl,
+                c.AllowAnonymousAccess,
+                c.EnrollmentOpen))
+            .ToListAsync();
+    }
+
+    public async Task<List<CourseResponse>> GetPublishedCoursesAsync()
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.Courses
+            .AsNoTracking()
+            .Select(c => new CourseResponse(
+                _sqidsEncoder.Encode(c.CreatorId),
+                c.Creator.Username,
+                c.Title,
+                c.ThumbnailUrl,
+                c.AllowAnonymousAccess,
+                c.EnrollmentOpen))
+            .ToListAsync();
+    }
+
+    public async Task<List<CourseResponse>> GetUserCoursesAsync(long userId)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.Courses
+            .AsNoTracking()
+            .Where(c => c.CreatorId == userId)
+            .Select(c => new CourseResponse(
+                _sqidsEncoder.Encode(c.CreatorId),
+                c.Creator.Username,
+                c.Title,
+                c.ThumbnailUrl,
+                c.AllowAnonymousAccess,
+                c.EnrollmentOpen))
+            .ToListAsync();
+    }
+
     public async Task<CourseSetResponse> CreateCourseAsync(CourseSetRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
@@ -151,7 +201,7 @@ public class CourseService(
         return count > 0;
     }
 
-    public async Task<bool> IsUserValidAsync(long courseId)
+    public async Task<bool> CheckOwnerAsync(long courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;

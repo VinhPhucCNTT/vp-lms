@@ -12,15 +12,21 @@ public static class CourseEndpoints
 {
     public static void AddCourseEndpoints(this IEndpointRouteBuilder route)
     {
-        var course = route.MapGroup("/api/course");
+        var course = route.MapGroup("/api/course").WithTags("Courses");
 
         course.MapGet("{courseSqid}", HandleGetById);
+        course.MapGet("user/{userSqid}", HandleGetUserCourses);
+        course.MapGet("", HandleGetPublished);
+        course.MapGet("unpublished", HandleGetUnpublished).RequireAuthorization();
         course.MapGet("query", HandleQuery);
+        course.MapGet("{courseSqid}/check", HandleCheckOwner).RequireAuthorization();
+
         course.MapPut("", HandleCreate).RequireAuthorization();
         course.MapPost("{courseSqid}", HandleUpdate).RequireAuthorization();
         course.MapDelete("{courseSqid}", HandleDelete).RequireAuthorization();
-        course.MapPost("{courseSqid}/set", HandleSetPublish).RequireAuthorization();
-        course.MapGet("{courseSqid}/check", HandleCheckValid).RequireAuthorization();
+
+        course.MapPost("{courseSqid}/publish", HandlePublish).RequireAuthorization();
+        course.MapPost("{courseSqid}/unpublish", HandleUnpublish).RequireAuthorization();
     }
 
     private static async
@@ -38,11 +44,39 @@ public static class CourseEndpoints
     }
 
     private static async
+        Task<Ok<List<CourseResponse>>>
+        HandleGetUserCourses(
+            [FromRoute] string userSqid,
+            SqidsEncoder<long> sqidsEncoder,
+            CourseService courseService)
+    {
+        var userId = sqidsEncoder.Decode(userSqid).Single();
+        return TypedResults.Ok(
+            await courseService.GetUserCoursesAsync(userId));
+    }
+
+    private static async
+        Task<Ok<List<CourseResponse>>>
+        HandleGetPublished(CourseService courseService)
+    {
+        return TypedResults.Ok(
+            await courseService.GetPublishedCoursesAsync());
+    }
+
+    private static async
+        Task<Ok<List<CourseResponse>>>
+        HandleGetUnpublished(CourseService courseService)
+    {
+        return TypedResults.Ok(
+            await courseService.GetUnpublishedCoursesAsync());
+    }
+
+    private static async
         Task<Ok<QueryResponse<CourseResponse>>>
         HandleQuery([AsParameters] CourseRequest query, CourseService courseService)
     {
-        var result = await courseService.QueryCoursesAsync(query);
-        return TypedResults.Ok(result);
+        return TypedResults.Ok(
+            await courseService.QueryCoursesAsync(query));
     }
 
     private static async
@@ -62,7 +96,7 @@ public static class CourseEndpoints
             CourseService courseService)
     {
         var courseId = sqidsEncoder.Decode(courseSqid).Single();
-        if (!await courseService.IsUserValidAsync(courseId))
+        if (!await courseService.CheckOwnerAsync(courseId))
             return TypedResults.Unauthorized();
 
         var result = await courseService.UpdateCourseAsync(courseId, request);
@@ -79,7 +113,7 @@ public static class CourseEndpoints
             CourseService courseService)
     {
         var courseId = sqidsEncoder.Decode(courseSqid).Single();
-        if (!await courseService.IsUserValidAsync(courseId))
+        if (!await courseService.CheckOwnerAsync(courseId))
             return TypedResults.Unauthorized();
 
         var result = await courseService.DeleteCourseAsync(courseId);
@@ -90,17 +124,33 @@ public static class CourseEndpoints
 
     private static async
         Task<Results<Ok, NotFound, UnauthorizedHttpResult>>
-        HandleSetPublish(
+        HandlePublish(
             [FromRoute] string courseSqid,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            [FromQuery] bool isPublished = true)
+            CourseService courseService)
     {
         var courseId = sqidsEncoder.Decode(courseSqid).Single();
-        if (!await courseService.IsUserValidAsync(courseId))
+        if (!await courseService.CheckOwnerAsync(courseId))
             return TypedResults.Unauthorized();
 
-        var result = await courseService.SetCoursePublishStatusAsync(courseId, isPublished);
+        var result = await courseService.SetCoursePublishStatusAsync(courseId, true);
+        return result
+            ? TypedResults.Ok()
+            : TypedResults.NotFound();
+    }
+
+    private static async
+        Task<Results<Ok, NotFound, UnauthorizedHttpResult>>
+        HandleUnpublish(
+            [FromRoute] string courseSqid,
+            SqidsEncoder<long> sqidsEncoder,
+            CourseService courseService)
+    {
+        var courseId = sqidsEncoder.Decode(courseSqid).Single();
+        if (!await courseService.CheckOwnerAsync(courseId))
+            return TypedResults.Unauthorized();
+
+        var result = await courseService.SetCoursePublishStatusAsync(courseId, false);
         return result
             ? TypedResults.Ok()
             : TypedResults.NotFound();
@@ -108,13 +158,13 @@ public static class CourseEndpoints
 
     private static async
         Task<Ok<bool>>
-        HandleCheckValid(
+        HandleCheckOwner(
             [FromRoute] string courseSqid,
             SqidsEncoder<long> sqidsEncoder,
             CourseService courseService)
     {
         var courseId = sqidsEncoder.Decode(courseSqid).Single();
         return TypedResults.Ok(
-            await courseService.IsUserValidAsync(courseId));
+            await courseService.CheckOwnerAsync(courseId));
     }
 }
