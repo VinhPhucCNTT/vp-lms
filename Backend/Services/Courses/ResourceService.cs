@@ -48,9 +48,10 @@ public class ResourceService(
     public async Task<List<ResourceResponse>> GetUnpublishedResourcesAsync(long moduleId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
+        var currentUserId = _currentUserService.UserId;
         return await db.ModuleResources
             .AsNoTracking()
-            .Where(r => r.ModuleId == moduleId && !r.IsPublished)
+            .Where(r => r.ModuleId == moduleId && !r.IsPublished && r.Module.Course.CreatorId == currentUserId)
             .Select(r => new ResourceResponse(
                 r.ResourceType,
                 r.Title,
@@ -164,17 +165,26 @@ public class ResourceService(
         return true;
     }
 
-    public async Task<bool> SetPublishStatusAsync(long resourceId, bool isPublished)
+    public async Task<bool> SetResourcePublishStatusAsync(long moduleId, long resourceId, bool isPublished)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var count = await db.ModuleResources
-            .Where(r => r.Id == resourceId)
+            .Where(r => r.ModuleId == moduleId && r.Id == resourceId)
             .ExecuteUpdateAsync(r => r.SetProperty(r => r.IsPublished, isPublished));
 
         return count > 0;
     }
 
-    public async Task<bool> IsUserValidAsync(long moduleId)
+    public async Task<int> SetResourcesPublishStatusAsync(long moduleId, List<long> resourceIds, bool isPublished)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var currentUserId = _currentUserService.UserId;
+        return await db.ModuleResources
+            .Where(r => r.ModuleId == moduleId && resourceIds.Contains(r.Id) && r.Module.Course.CreatorId == currentUserId)
+            .ExecuteUpdateAsync(r => r.SetProperty(r => r.IsPublished, isPublished));
+    }
+
+    public async Task<bool> CheckOwnerAsync(long moduleId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;

@@ -46,9 +46,10 @@ public class ModuleService(
     public async Task<List<ModuleResponse>> GetUnpublishedModulesAsync(long courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
+        var currentUserId = _currentUserService.UserId;
         return await db.CourseModules
             .AsNoTracking()
-            .Where(m => m.CourseId == courseId && !m.IsPublished)
+            .Where(m => m.CourseId == courseId && !m.IsPublished && m.Course.CreatorId == currentUserId)
             .Select(m => new ModuleResponse(
                 m.Title,
                 m.OrderIndex))
