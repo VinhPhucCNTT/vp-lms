@@ -21,8 +21,9 @@ public record ModuleSetRequest(
 );
 
 public record ModuleSetResponse(
+    string ModuleSqid,
     string Title,
     string? Description,
-    string? OrderIndex,
+    int OrderIndex,
     bool? IsPublished
 );

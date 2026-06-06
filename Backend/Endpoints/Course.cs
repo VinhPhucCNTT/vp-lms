@@ -80,6 +80,18 @@ public static class CourseEndpoints
     }
 
     private static async
+        Task<Ok<bool>>
+        HandleCheckOwner(
+            [FromRoute] string courseSqid,
+            SqidsEncoder<long> sqidsEncoder,
+            CourseService courseService)
+    {
+        var courseId = sqidsEncoder.Decode(courseSqid).Single();
+        return TypedResults.Ok(
+            await courseService.CheckOwnerAsync(courseId));
+    }
+
+    private static async
         Task<Ok<CourseSetResponse>>
         HandleCreate([FromBody] CourseSetRequest request, CourseService courseService)
     {
@@ -116,8 +128,7 @@ public static class CourseEndpoints
         if (!await courseService.CheckOwnerAsync(courseId))
             return TypedResults.Unauthorized();
 
-        var result = await courseService.DeleteCourseAsync(courseId);
-        return result
+        return await courseService.DeleteCourseAsync(courseId)
             ? TypedResults.Ok()
             : TypedResults.NotFound();
     }
@@ -154,17 +165,5 @@ public static class CourseEndpoints
         return result
             ? TypedResults.Ok()
             : TypedResults.NotFound();
-    }
-
-    private static async
-        Task<Ok<bool>>
-        HandleCheckOwner(
-            [FromRoute] string courseSqid,
-            SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService)
-    {
-        var courseId = sqidsEncoder.Decode(courseSqid).Single();
-        return TypedResults.Ok(
-            await courseService.CheckOwnerAsync(courseId));
     }
 }

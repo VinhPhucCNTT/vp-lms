@@ -12,8 +12,7 @@ namespace Backend.Services.Courses;
 public class CourseService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
-    SqidsEncoder<long> sqidsEncoder
-)
+    SqidsEncoder<long> sqidsEncoder)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;

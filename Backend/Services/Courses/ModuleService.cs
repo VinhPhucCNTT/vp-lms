@@ -3,16 +3,18 @@ using Backend.Core.Types;
 using Microsoft.EntityFrameworkCore;
 using Backend.Services.Common;
 using Backend.Core.Entities.Courses;
+using Sqids;
 
 namespace Backend.Services.Courses;
 
 public class ModuleService(
     IDbContextFactory<AppDbContext> dbFactory,
-    CurrentUserService currentUserService
-)
+    CurrentUserService currentUserService,
+    SqidsEncoder<long> sqidsEncoder)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
+    private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
 
     public async Task<ModuleDetailResponse?> GetModuleByIdAsync(long moduleId)
     {
@@ -53,7 +55,7 @@ public class ModuleService(
             .ToListAsync();
     }
 
-    public async Task<bool> CreateModuleAsync(long courseId, ModuleSetRequest dto)
+    public async Task<ModuleSetResponse> CreateModuleAsync(long courseId, ModuleSetRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var module = new CourseModule
@@ -67,27 +69,20 @@ public class ModuleService(
         db.CourseModules.Add(module);
         await db.SaveChangesAsync();
 
-        return true;
+        return new ModuleSetResponse(
+            _sqidsEncoder.Encode(module.Id),
+            module.Title,
+            module.Description,
+            module.OrderIndex,
+            module.IsPublished);
     }
 
-    public async Task<int> SetModulesPublishStatusAsync(long courseId, List<long> moduleIds, bool isPublished)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        if (moduleIds == null || moduleIds.Count == 0)
-            return 0;
-
-        return await db.CourseModules
-            .Where(m => m.CourseId == courseId && m.IsPublished != isPublished)
-            .Where(m => moduleIds.Contains(m.Id))
-            .ExecuteUpdateAsync(m => m.SetProperty(m => m.IsPublished, isPublished));
-    }
-
-    public async Task<bool> UpdateModuleAsync(long moduleId, ModuleSetRequest dto)
+    public async Task<ModuleSetResponse?> UpdateModuleAsync(long moduleId, ModuleSetRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var module = await db.CourseModules.FirstOrDefaultAsync(m => m.Id == moduleId);
         if (module == null)
-            return false;
+            return null;
 
         module.Title = dto.Title;
         module.Description = dto.Description;
@@ -95,14 +90,49 @@ public class ModuleService(
         module.IsPublished = dto.IsPublished;
         await db.SaveChangesAsync();
 
-        return true;
+        return new ModuleSetResponse(
+            _sqidsEncoder.Encode(module.Id),
+            module.Title,
+            module.Description,
+            module.OrderIndex,
+            module.IsPublished);
+    }
+
+    public async Task<bool> SetModulePublishStatusAsync(long courseId, long moduleId, bool isPublished)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var count = await db.CourseModules
+            .Where(m => m.CourseId == courseId && m.IsPublished != isPublished)
+            .Where(m => m.Id == moduleId)
+            .ExecuteUpdateAsync(m => m.SetProperty(m => m.IsPublished, isPublished));
+        return count > 0;
+    }
+
+    public async Task<int> SetModulesPublishStatusAsync(long courseId, List<long> moduleIds, bool isPublished)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var currentUserId = _currentUserService.UserId;
+        return await db.CourseModules
+            .Where(m => m.CourseId == courseId && m.IsPublished != isPublished && m.Course.CreatorId == currentUserId)
+            .Where(m => moduleIds.Contains(m.Id))
+            .ExecuteUpdateAsync(m => m.SetProperty(m => m.IsPublished, isPublished));
+    }
+
+    public async Task<bool> DeleteModuleAsync(long moduleId)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var count = await db.CourseModules
+            .Where(m => m.Id == moduleId)
+            .ExecuteDeleteAsync();
+        return count > 0;
     }
 
     public async Task<int> DeleteModulesAsync(List<long> moduleIds)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
+        var currentUserId = _currentUserService.UserId;
         return await db.CourseModules
-            .Where(m => moduleIds.Contains(m.Id))
+            .Where(m => moduleIds.Contains(m.Id) && m.Course.CreatorId == currentUserId)
             .ExecuteDeleteAsync();
     }
 
@@ -150,11 +180,10 @@ public class ModuleService(
     {
         // TODO: Internally track if courses (and consequently it's dependents) can be deleted, otherwise archirve it, keeping all records instead.
         // => Implement CourseService.CanBeDeletedAsync()
-        // => New Course entity flag: CanBeDeleted
         return true;
     }
 
-    public async Task<bool> IsUserValidAsync(long moduleId)
+    public async Task<bool> CheckOwnerAsync(long moduleId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
