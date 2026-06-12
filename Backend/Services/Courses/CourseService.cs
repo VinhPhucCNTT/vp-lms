@@ -153,7 +153,7 @@ public class CourseService(
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
-        if (course == null)
+        if (course is null)
             return null;
 
         course.Title = request.Title;
