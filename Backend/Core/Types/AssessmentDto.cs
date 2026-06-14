@@ -20,7 +20,7 @@ public record AssessmentResponse(
 );
 
 public record QuestionRequest(
-    string? NewQuestionSqid,
+    string? QuestionSqid,
     string QuestionType,
     string QuestionTextMarkdown,
     decimal Points,
