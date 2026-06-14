@@ -12,7 +12,7 @@ public class Assessment : BaseEntity, ISoftDeletable
     public int MaxAttempts { get; set; } = 1;
     public bool ShuffleQuestions { get; set; } = false;
     public bool ShowResults { get; set; } = true;
-    public decimal? PassingScore { get; set; }
+    public string? GradingSchemaJson { get; set; }
 
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
