@@ -8,9 +8,8 @@ public class Assignment : BaseEntity, ISoftDeletable
 {
     public long ResourceId { get; set; }
     public string InstructionsMarkdown { get; set; } = default!;
-    public decimal? MaxScore { get; set; }
     public string? AllowedFileTypes { get; set; }
-    public int MaxFileSizeMb { get; set; } = 10;
+    public int MaxFileSizeKb { get; set; } = 10;
     public SubmissionType SubmissionType { get; set; } = SubmissionType.Both;
     public string? GradingSchemaJson { get; set; } // JSONB in PostgreSQL
 
