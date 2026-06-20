@@ -8,6 +8,7 @@ public class AssessmentQuestion : BaseEntity, ISoftDeletable
     public long AssessmentId { get; set; }
     public string QuestionType { get; set; } = default!;
     public string QuestionTextMarkdown { get; set; } = default!;
+    // TODO: Implement more advanced scoring (percentage based, etc?)
     public decimal Points { get; set; } = 1;
     public int OrderIndex { get; set; }
     public string QuestionDataJson { get; set; } = default!; // JSONB column

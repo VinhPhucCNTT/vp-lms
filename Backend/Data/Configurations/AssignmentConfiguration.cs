@@ -16,8 +16,8 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
             .IsRequired()
             .HasColumnType("text");
 
-        builder.Property(x => x.MaxScore)
-            .HasColumnType("decimal(5,2)");
+        // builder.Property(x => x.MaxScore)
+        //     .HasColumnType("decimal(5,2)");
 
         builder.Property(x => x.AllowedFileTypes)
             .HasMaxLength(255);

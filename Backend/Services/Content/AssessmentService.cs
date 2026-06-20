@@ -1,5 +1,4 @@
 using Backend.Data;
-using Backend.Core.Common;
 using Microsoft.EntityFrameworkCore;
 using Backend.Services.Common;
 using Backend.Core.Types;
@@ -19,13 +18,13 @@ public class AssessmentService(
     private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
 
-    public async Task<AssessmentResponse?> GetAssessmentByIdAsync(long resourceId)
+    public async Task<AssessmentResponseDto?> GetAssessmentByIdAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Assessments
             .AsNoTracking()
             .Where(a => a.ResourceId == resourceId)
-            .Select(a => new AssessmentResponse(
+            .Select(a => new AssessmentResponseDto(
                 _sqidsEncoder.Encode(a.Id),
                 a.InstructionsMarkdown,
                 a.TimeLimitMinutes,
@@ -36,7 +35,7 @@ public class AssessmentService(
             )).FirstOrDefaultAsync();
     }
 
-    public async Task<AssessmentResponse> CreateAssessmentAsync(ModuleResource resource, AssessmentRequest request)
+    public async Task<AssessmentResponseDto> CreateAssessmentAsync(ModuleResource resource, AssessmentRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var assessment = new Assessment
@@ -51,7 +50,7 @@ public class AssessmentService(
         };
         db.Assessments.Add(assessment);
         await db.SaveChangesAsync();
-        return new AssessmentResponse(
+        return new AssessmentResponseDto(
             _sqidsEncoder.Encode(assessment.Id),
             assessment.InstructionsMarkdown,
             assessment.TimeLimitMinutes,
@@ -62,7 +61,7 @@ public class AssessmentService(
         );
     }
 
-    public async Task<AssessmentResponse?> UpdateAssessmentAsync(long assessmentId, AssessmentRequest request)
+    public async Task<AssessmentResponseDto?> UpdateAssessmentAsync(long assessmentId, AssessmentRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var assessment = await db.Assessments.FirstOrDefaultAsync(a => a.Id == assessmentId);
@@ -78,7 +77,7 @@ public class AssessmentService(
 
         db.Assessments.Update(assessment);
         await db.SaveChangesAsync();
-        return new AssessmentResponse(
+        return new AssessmentResponseDto(
             _sqidsEncoder.Encode(assessment.Id),
             assessment.InstructionsMarkdown,
             assessment.TimeLimitMinutes,

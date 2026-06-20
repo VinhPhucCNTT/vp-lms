@@ -8,9 +8,7 @@ using Isopoh.Cryptography.Argon2;
 
 namespace Backend.Services.Users;
 
-public class UserService(
-    IDbContextFactory<AppDbContext> dbFactory
-)
+public class UserService(IDbContextFactory<AppDbContext> dbFactory)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
 
@@ -20,13 +18,7 @@ public class UserService(
         return await db.Users
             .AsNoTracking()
             .Where(u => u.Id == userId && u.IsActive)
-            .Select(u => new UserDetailResponse(
-                u.Id,
-                u.Username,
-                u.Email,
-                u.Fullname,
-                u.AvatarUrl,
-                u.CreatedAt))
+            .Select(u => new UserDetailResponse.Set(u, _sqidsEncoder.Encode(u.Id)))
             .FirstOrDefaultAsync();
     }
 

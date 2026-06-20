@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Data.Configurations;
 
-public class ProblemConfiguration : IEntityTypeConfiguration<Problem>
+public class ProblemConfiguration : IEntityTypeConfiguration<CodingProblem>
 {
-    public void Configure(EntityTypeBuilder<Problem> builder)
+    public void Configure(EntityTypeBuilder<CodingProblem> builder)
     {
         builder.ToTable("problems");
 

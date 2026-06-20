@@ -17,7 +17,7 @@ public class ProblemSubmission : BaseEntity
     public int? TotalTestCases { get; set; }
 
     // Navigation properties
-    public Problem Problem { get; set; } = default!;
+    public CodingProblem Problem { get; set; } = default!;
     public User User { get; set; } = default!;
     public ICollection<ProblemTestResult> TestResults { get; set; } = [];
 }

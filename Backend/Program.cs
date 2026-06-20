@@ -12,6 +12,8 @@ using Backend.Endpoints;
 using Backend.Core.Common;
 using Backend.Services.Common;
 using Backend.Services.Auth;
+using Backend.Services.Courses;
+using Backend.Services.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,9 +87,15 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddHttpContextAccessor();
+
 // Inject services
 builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<AuthService>();
+
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<CourseService>();
+builder.Services.AddScoped<ResourceService>();
 
 var app = builder.Build();
 

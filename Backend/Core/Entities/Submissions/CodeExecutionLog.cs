@@ -18,5 +18,5 @@ public class CodeExecutionLog : BaseEntity
 
     // Navigation properties
     public User User { get; set; } = default!;
-    public Problem? Problem { get; set; }
+    public CodingProblem? Problem { get; set; }
 }

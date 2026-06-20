@@ -30,7 +30,6 @@ public class CourseService(
                 c.Title,
                 c.Description,
                 c.ThumbnailUrl,
-                c.AllowAnonymousAccess,
                 c.EnrollmentOpen))
             .FirstOrDefaultAsync();
     }
@@ -46,9 +45,6 @@ public class CourseService(
         if (!string.IsNullOrEmpty(query.CreatorUserName))
             courses = courses.Where(c => c.Creator.Username.Contains(query.CreatorUserName, StringComparison.OrdinalIgnoreCase));
 
-        if (query.AllowAnonymousAccess != null)
-            courses = courses.Where(c => c.AllowAnonymousAccess == query.AllowAnonymousAccess);
-
         if (query.EnrollmentOpen != null)
             courses = courses.Where(c => c.EnrollmentOpen == query.EnrollmentOpen);
 
@@ -59,7 +55,6 @@ public class CourseService(
                 c.Creator.Username,
                 c.Title,
                 c.ThumbnailUrl,
-                c.AllowAnonymousAccess,
                 c.EnrollmentOpen))
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
@@ -86,7 +81,6 @@ public class CourseService(
                 c.Creator.Username,
                 c.Title,
                 c.ThumbnailUrl,
-                c.AllowAnonymousAccess,
                 c.EnrollmentOpen))
             .ToListAsync();
     }
@@ -101,7 +95,6 @@ public class CourseService(
                 c.Creator.Username,
                 c.Title,
                 c.ThumbnailUrl,
-                c.AllowAnonymousAccess,
                 c.EnrollmentOpen))
             .ToListAsync();
     }
@@ -117,7 +110,6 @@ public class CourseService(
                 c.Creator.Username,
                 c.Title,
                 c.ThumbnailUrl,
-                c.AllowAnonymousAccess,
                 c.EnrollmentOpen))
             .ToListAsync();
     }
@@ -132,7 +124,6 @@ public class CourseService(
             Description = request.Description,
             ThumbnailUrl = request.ThumbnailUrl,
             IsPublished = request.IsPublished,
-            AllowAnonymousAccess = request.AllowAnonymousAccess,
             EnrollmentOpen = request.EnrollmentOpen
         };
         db.Courses.Add(course);
@@ -144,7 +135,6 @@ public class CourseService(
             course.Description,
             course.ThumbnailUrl,
             course.IsPublished,
-            course.AllowAnonymousAccess,
             course.EnrollmentOpen
         );
     }
@@ -160,7 +150,6 @@ public class CourseService(
         course.Description = request.Description;
         course.ThumbnailUrl = request.ThumbnailUrl;
         course.IsPublished = request.IsPublished;
-        course.AllowAnonymousAccess = request.AllowAnonymousAccess;
         course.EnrollmentOpen = request.EnrollmentOpen;
 
         db.Courses.Update(course);
@@ -172,7 +161,6 @@ public class CourseService(
             course.Description,
             course.ThumbnailUrl,
             course.IsPublished,
-            course.AllowAnonymousAccess,
             course.EnrollmentOpen
         );
     }

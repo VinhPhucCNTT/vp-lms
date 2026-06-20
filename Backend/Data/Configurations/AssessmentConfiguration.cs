@@ -15,8 +15,8 @@ public class AssessmentConfiguration : IEntityTypeConfiguration<Assessment>
         builder.Property(x => x.InstructionsMarkdown)
             .HasColumnType("text");
 
-        builder.Property(x => x.PassingScore)
-            .HasColumnType("decimal(5,2)");
+        // builder.Property(x => x.PassingScore)
+        //     .HasColumnType("decimal(5,2)");
 
         builder.HasOne(x => x.Resource)
             .WithOne(r => r.Assessment)

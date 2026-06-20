@@ -11,6 +11,7 @@ public class User : BaseEntity
     public string Fullname { get; set; } = default!;
     public string? AvatarUrl { get; set; }
     public bool IsActive { get; set; } = true;
+    public UserRoles Role { get; set; }
 
     // Soft delete using anonymized name
     public bool IsDeleted { get; set; } = false;
@@ -20,4 +21,10 @@ public class User : BaseEntity
     public ICollection<Course> Courses { get; set; } = [];
     public ICollection<Enrollment> Enrollments { get; set; } = [];
     public ICollection<ResourceComment> Comments { get; set; } = [];
+}
+
+public enum UserRoles {
+    Student,
+    Instructor,
+    Admin
 }

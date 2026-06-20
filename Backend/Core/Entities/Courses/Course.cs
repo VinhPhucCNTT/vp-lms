@@ -10,7 +10,6 @@ public class Course : BaseEntity, ISoftDeletable
     public string? Description { get; set; }
     public string? ThumbnailUrl { get; set; }
     public bool IsPublished { get; set; } = false;
-    public bool AllowAnonymousAccess { get; set; } = false;
     public bool EnrollmentOpen { get; set; } = true;
 
     public bool IsDeleted { get; set; } = false;

@@ -7,9 +7,10 @@ public class TAPermissions : BaseEntity
 {
     public long EnrollmentId { get; set; }
     public bool CanGrade { get; set; } = true;
-    public bool CanModerateDiscussions { get; set; } = true;
-    public bool CanEditContent { get; set; } = false;
-    public bool CanManageEnrollments { get; set; } = false;
+    // // TODO: Decide whether to keep this
+    // public bool CanModerateDiscussions { get; set; } = true;
+    // public bool CanEditContent { get; set; } = false;
+    // public bool CanManageEnrollments { get; set; } = false;
     public long GrantedByUserId { get; set; }
     public DateTime GrantedAt { get; set; } = DateTime.UtcNow;
 

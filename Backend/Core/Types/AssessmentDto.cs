@@ -9,7 +9,7 @@ public record AssessmentRequest(
     string? GradingSchemaJson
 );
 
-public record AssessmentResponse(
+public record AssessmentResponseDto(
     string AssessmentSqid,
     string? InstructionsMarkdown,
     int? TimeLimitMinutes,

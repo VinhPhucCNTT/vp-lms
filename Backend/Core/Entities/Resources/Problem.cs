@@ -4,7 +4,7 @@ using Backend.Core.Entities.Submissions;
 
 namespace Backend.Core.Entities.Resources;
 
-public class Problem : BaseEntity, ISoftDeletable
+public class CodingProblem : BaseEntity, ISoftDeletable
 {
     public long ResourceId { get; set; }
     public string ProblemStatementMarkdown { get; set; } = default!;

@@ -15,7 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ModuleResource> ModuleResources => Set<ModuleResource>();
     public DbSet<Lesson> Lessons => Set<Lesson>();
     public DbSet<Assignment> Assignments => Set<Assignment>();
-    public DbSet<Problem> Problems => Set<Problem>();
+    public DbSet<CodingProblem> CodingProblems => Set<CodingProblem>();
     public DbSet<ProblemTestCase> TestCases => Set<ProblemTestCase>();
     public DbSet<Assessment> Assessments => Set<Assessment>();
     public DbSet<AssessmentQuestion> AssessmentQuestions => Set<AssessmentQuestion>();
@@ -62,7 +62,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasQueryFilter(a => !a.IsDeleted && !a.Resource.IsDeleted);
         builder.Entity<Assessment>()
             .HasQueryFilter(a => !a.IsDeleted && !a.Resource.IsDeleted);
-        builder.Entity<Problem>()
+        builder.Entity<CodingProblem>()
             .HasQueryFilter(j => !j.IsDeleted && !j.Resource.IsDeleted);
 
         builder.Entity<AssignmentSubmission>()

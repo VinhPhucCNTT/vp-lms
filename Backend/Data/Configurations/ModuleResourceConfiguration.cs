@@ -51,7 +51,7 @@ public class ModuleResourceConfiguration : IEntityTypeConfiguration<ModuleResour
 
         builder.HasOne(x => x.Problem)
             .WithOne(c => c.Resource)
-            .HasForeignKey<Problem>(c => c.ResourceId)
+            .HasForeignKey<CodingProblem>(c => c.ResourceId)
             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
     }

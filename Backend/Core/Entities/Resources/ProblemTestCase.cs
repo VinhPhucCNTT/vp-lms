@@ -15,5 +15,5 @@ public class ProblemTestCase : BaseEntity, ISoftDeletable
     public DateTime? DeletedAt { get; set; }
 
     // Navigation property
-    public Problem Problem { get; set; } = default!;
+    public CodingProblem Problem { get; set; } = default!;
 }
