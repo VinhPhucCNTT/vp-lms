@@ -3,19 +3,23 @@ using Backend.Core.Entities.Courses;
 namespace Backend.Core.Types;
 
 public record ResourceResponse(
+    string Id,
     ResourceType Type,
     string Title,
     int OrderIndex
-);
+) : IEntityResponse;
 
 public record ResourceDetailResponse(
+    string Id,
     ResourceType Type,
     string Title,
     string? Description,
     int OrderIndex,
     DateTime? AvailableFrom,
-    DateTime? AvailableUntil
-);
+    DateTime? AvailableUntil,
+    DateTime CreatedAt,
+    DateTime UpdatedAt
+) : IEntityResponse;
 
 // public record ResourceRequest();
 
@@ -41,7 +45,7 @@ public record ResourceUpdateRequest(
 );
 
 public record ResourceSetResponse(
-    long Id,
+    string Id,
     ResourceType Type,
     string Title,
     string? Description,
@@ -50,4 +54,4 @@ public record ResourceSetResponse(
     DateTime? AvailableUntil,
     bool IsPublished,
     string? AccessPassword
-);
+) : IEntityResponse;

@@ -1,3 +1,4 @@
+using AutoMapper;
 using Backend.Core.Entities.Courses;
 using Backend.Core.Types;
 using Backend.Data;
@@ -8,11 +9,13 @@ namespace Backend.Services.Courses;
 
 public class ResourceService(
     IDbContextFactory<AppDbContext> dbFactory,
-    CurrentUserService currentUserService
+    CurrentUserService currentUserService,
+    IMapper mapper
 )
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
+    private readonly IMapper _mapper = mapper;
 
     public async Task<ResourceDetailResponse?> GetResourceByIdAsync(long resourceId)
     {
@@ -22,13 +25,7 @@ public class ResourceService(
             .AsNoTracking()
             .Where(r => r.Id == resourceId)
             .Where(r => r.IsPublished || r.Module.Course.CreatorId == currentUserId)
-            .Select(r => new ResourceDetailResponse(
-                r.ResourceType,
-                r.Title,
-                r.Description,
-                r.OrderIndex,
-                r.AvailableFrom,
-                r.AvailableUntil))
+            .Select(r => _mapper.Map<ResourceDetailResponse>(r))
             .FirstOrDefaultAsync();
     }
 
@@ -38,10 +35,7 @@ public class ResourceService(
         return await db.ModuleResources
             .AsNoTracking()
             .Where(r => r.ModuleId == moduleId && r.IsPublished)
-            .Select(r => new ResourceResponse(
-                r.ResourceType,
-                r.Title,
-                r.OrderIndex))
+            .Select(r => _mapper.Map<ResourceResponse>(r))
             .ToListAsync();
     }
 
@@ -52,10 +46,7 @@ public class ResourceService(
         return await db.ModuleResources
             .AsNoTracking()
             .Where(r => r.ModuleId == moduleId && !r.IsPublished && r.Module.Course.CreatorId == currentUserId)
-            .Select(r => new ResourceResponse(
-                r.ResourceType,
-                r.Title,
-                r.OrderIndex))
+            .Select(r => _mapper.Map<ResourceResponse>(r))
             .ToListAsync();
     }
 
@@ -83,17 +74,7 @@ public class ResourceService(
         db.ModuleResources.Add(resource);
         await db.SaveChangesAsync();
 
-        return new ResourceSetResponse(
-            resource.Id,
-            resource.ResourceType,
-            resource.Title,
-            resource.Description,
-            resource.OrderIndex,
-            resource.AvailableFrom,
-            resource.AvailableUntil,
-            resource.IsPublished,
-            resource.AccessPassword
-        );
+        return _mapper.Map<ResourceSetResponse>(resource);
     }
 
     public async Task<ResourceSetResponse?> UpdateResourceAsync(long resourceId, ResourceUpdateRequest dto)
@@ -112,17 +93,7 @@ public class ResourceService(
         resource.AccessPassword = dto.AccessPassword;
         await db.SaveChangesAsync();
 
-        return new ResourceSetResponse(
-            resource.Id,
-            resource.ResourceType,
-            resource.Title,
-            resource.Description,
-            resource.OrderIndex,
-            resource.AvailableFrom,
-            resource.AvailableUntil,
-            resource.IsPublished,
-            resource.AccessPassword
-        );
+        return _mapper.Map<ResourceSetResponse>(resource);
     }
 
     public async Task<bool> DeleteResourceAsync(long resourceId)

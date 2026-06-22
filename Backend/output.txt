@@ -1,0 +1,321 @@
+erDiagram
+    User ||--o{ Course : "creates"
+    User ||--o{ Enrollment : "enrolls"
+    Course ||--o{ Enrollment : "contains"
+    Enrollment ||--o| TAPermissions : "has"
+    User ||--o{ TAPermissions : "grants"
+    Course ||--o{ CourseModule : "has"
+    CourseModule ||--o{ ModuleResource : "contains"
+    ModuleResource ||--o| Lesson : "acts-as"
+    ModuleResource ||--o| Assignment : "acts-as"
+    ModuleResource ||--o| Assessment : "acts-as"
+    ModuleResource ||--o| Problem : "acts-as"
+    ModuleResource ||--o{ ResourceComment : "has"
+    User ||--o{ ResourceComment : "writes"
+    ResourceComment |o--o{ ResourceComment : "replies-to"
+    ModuleResource ||--o{ ResourceProgress : "tracked-by"
+    User ||--o{ ResourceProgress : "progress"
+    Assessment ||--o{ AssessmentQuestion : "contains"
+    Assessment ||--o{ AssessmentAttempt : "attempts"
+    User ||--o{ AssessmentAttempt : "makes"
+    AssessmentAttempt ||--o{ AssessmentResponse : "contains"
+    AssessmentQuestion ||--o{ AssessmentResponse : "answers"
+    User |o--o{ AssessmentResponse : "grades"
+    Assignment ||--o{ AssignmentSubmission : "has"
+    User ||--o{ AssignmentSubmission : "submits"
+    AssignmentSubmission ||--o| AssignmentGrade : "graded-with"
+    User ||--o{ AssignmentGrade : "grades"
+    Problem ||--o{ ProblemTestCase : "tested-by"
+    Problem ||--o{ ProblemSubmission : "has"
+    User ||--o{ ProblemSubmission : "submits"
+    ProblemSubmission ||--o{ ProblemTestResult : "executes"
+    ProblemTestCase ||--o{ ProblemTestResult : "verifies"
+    User ||--o{ CodeExecutionLog : "logs"
+    Problem |o--o{ CodeExecutionLog : "profiles"
+
+    Course {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long CreatorId FK
+        string Title
+        string Description
+        string ThumbnailUrl
+        boolean IsPublished
+        boolean AllowAnonymousAccess
+        boolean EnrollmentOpen
+        boolean IsDeleted
+        datetime DeletedAt
+    }
+
+    Enrollment {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long CourseId FK
+        long UserId FK
+        EnrollmentRole Role
+        boolean IsDeleted
+        datetime DeletedAt
+    }
+
+    CourseModule {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long CourseId FK
+        string Title
+        string Description
+        int OrderIndex
+        boolean IsPublished
+        boolean IsDeleted
+        datetime DeletedAt
+    }
+
+    ModuleResource {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long ModuleId FK
+        ResourceType ResourceType
+        string Title
+        string Description
+        int OrderIndex
+        boolean IsPublished
+        datetime AvailableFrom
+        datetime AvailableUntil
+        string AccessPassword
+        boolean IsDeleted
+        datetime DeletedAt
+    }
+
+    ResourceComment {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long ResourceId FK
+        long UserId FK
+        guid ParentCommentId FK
+        string ContentMarkdown
+        boolean IsEdited
+        boolean IsDeleted
+        datetime DeletedAt
+    }
+
+    ResourceProgress {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long UserId FK
+        long ResourceId FK
+        boolean IsCompleted
+        datetime CompletedAt
+        datetime LastAccessedAt
+    }
+
+    TAPermissions {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long EnrollmentId FK
+        boolean CanGrade
+        boolean CanModerateDiscussions
+        boolean CanEditContent
+        boolean CanManageEnrollments
+        long GrantedByUserId FK
+        datetime GrantedAt
+    }
+
+    Assessment {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long ResourceId FK
+        string InstructionsMarkdown
+        int TimeLimitMinutes
+        int MaxAttempts
+        boolean ShuffleQuestions
+        boolean ShowResults
+        string GradingSchemaJson
+        boolean IsDeleted
+        datetime DeletedAt
+    }
+
+    AssessmentQuestion {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long AssessmentId FK
+        string QuestionType
+        string QuestionTextMarkdown
+        decimal Points
+        int OrderIndex
+        string QuestionDataJson
+        boolean IsDeleted
+        datetime DeletedAt
+    }
+
+    Assignment {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long ResourceId FK
+        string InstructionsMarkdown
+        string AllowedFileTypes
+        int MaxFileSizeKb
+        SubmissionType SubmissionType
+        string GradingSchemaJson
+        boolean IsDeleted
+        datetime DeletedAt
+    }
+
+    Lesson {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long ResourceId FK
+        string ContentMarkdown
+        boolean IsDeleted
+        datetime DeletedAt
+    }
+
+    Problem {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long ResourceId FK
+        string ProblemStatementMarkdown
+        string ConstraintsMarkdown
+        string FunctionSignature
+        string Language
+        int TimeLimitMs
+        int MemoryLimitMb
+        boolean IsPractice
+        boolean IsDeleted
+        datetime DeletedAt
+    }
+
+    ProblemTestCase {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long ProblemId FK
+        string InputData
+        string ExpectedOutput
+        boolean IsSample
+        int OrderIndex
+        string Explanation
+        boolean IsDeleted
+        datetime DeletedAt
+    }
+
+    AssessmentAttempt {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long AssessmentId FK
+        long UserId FK
+        datetime StartedAt
+        datetime SubmittedAt
+        decimal TotalScore
+        boolean IsPassed
+        int AttemptNumber
+        boolean IsDeleted
+        datetime DeletedAt
+    }
+
+    AssessmentResponse {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long AttemptId FK
+        long QuestionId FK
+        string ResponseDataJson
+        decimal Score
+        boolean IsCorrect
+        guid GradedByUserId FK
+        datetime GradedAt
+        string FeedbackText
+    }
+
+    AssignmentGrade {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long SubmissionId FK
+        long GraderId FK
+        decimal Score
+        string FeedbackText
+        boolean CanResubmit
+    }
+
+    AssignmentSubmission {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long AssignmentId FK
+        long UserId FK
+        string SubmissionText
+        string FileUrl
+        string FileName
+        datetime SubmittedOn
+        boolean IsDeleted
+        datetime DeletedAt
+    }
+
+    CodeExecutionLog {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long UserId FK
+        guid ProblemId FK
+        string Language
+        string CodeSnippet
+        int ExecutionTimeMs
+        int MemoryUsedKb
+        string Status
+        string ErrorMessage
+        datetime ExecutedAt
+    }
+
+    ProblemSubmission {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long ProblemId FK
+        long UserId FK
+        string SubmittedCode
+        string Language
+        SubmissionStatus Status
+        int ExecutionTimeMs
+        int MemoryUsedKb
+        int PassedTestCases
+        int TotalTestCases
+    }
+
+    ProblemTestResult {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        long SubmissionId FK
+        long TestCaseId FK
+        string Status
+        string ActualOutput
+        string ErrorMessage
+        int ExecutionTimeMs
+        int MemoryUsedKb
+    }
+
+    User {
+        long Id PK
+        datetime CreatedAt
+        datetime UpdatedAt
+        string Username
+        string Email
+        string PasswordHash
+        string Fullname
+        string AvatarUrl
+        boolean IsActive
+        boolean IsDeleted
+        datetime DeletedAt
+    }

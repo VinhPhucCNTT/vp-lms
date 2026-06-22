@@ -4,17 +4,20 @@ using Microsoft.EntityFrameworkCore;
 using Backend.Services.Common;
 using Backend.Core.Entities.Courses;
 using Sqids;
+using AutoMapper;
 
 namespace Backend.Services.Courses;
 
 public class ModuleService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
+    IMapper mapper,
     SqidsEncoder<long> sqidsEncoder)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
+    private readonly IMapper _mapper = mapper;
 
     public async Task<ModuleDetailResponse?> GetModuleByIdAsync(long moduleId)
     {
@@ -24,10 +27,7 @@ public class ModuleService(
             .AsNoTracking()
             .Where(m => m.Id == moduleId)
             .Where(m => m.IsPublished || m.Course.CreatorId == currentUserId)
-            .Select(m => new ModuleDetailResponse(
-                m.Title,
-                m.Description,
-                m.OrderIndex))
+            .Select(m => _mapper.Map<ModuleDetailResponse>(m))
             .FirstOrDefaultAsync();
     }
 
@@ -37,9 +37,7 @@ public class ModuleService(
         return await db.CourseModules
             .AsNoTracking()
             .Where(m => m.CourseId == courseId && m.IsPublished)
-            .Select(m => new ModuleResponse(
-                m.Title,
-                m.OrderIndex))
+            .Select(m => _mapper.Map<ModuleResponse>())
             .ToListAsync();
     }
 
@@ -50,9 +48,7 @@ public class ModuleService(
         return await db.CourseModules
             .AsNoTracking()
             .Where(m => m.CourseId == courseId && !m.IsPublished && m.Course.CreatorId == currentUserId)
-            .Select(m => new ModuleResponse(
-                m.Title,
-                m.OrderIndex))
+            .Select(m => _mapper.Map<ModuleResponse>(m))
             .ToListAsync();
     }
 
@@ -70,12 +66,7 @@ public class ModuleService(
         db.CourseModules.Add(module);
         await db.SaveChangesAsync();
 
-        return new ModuleSetResponse(
-            _sqidsEncoder.Encode(module.Id),
-            module.Title,
-            module.Description,
-            module.OrderIndex,
-            module.IsPublished);
+        return _mapper.Map<ModuleSetResponse>(module);
     }
 
     public async Task<ModuleSetResponse?> UpdateModuleAsync(long moduleId, ModuleSetRequest dto)
@@ -91,12 +82,7 @@ public class ModuleService(
         module.IsPublished = dto.IsPublished;
         await db.SaveChangesAsync();
 
-        return new ModuleSetResponse(
-            _sqidsEncoder.Encode(module.Id),
-            module.Title,
-            module.Description,
-            module.OrderIndex,
-            module.IsPublished);
+        return _mapper.Map<ModuleSetResponse>(module);
     }
 
     public async Task<bool> SetModulePublishStatusAsync(long courseId, long moduleId, bool isPublished)
