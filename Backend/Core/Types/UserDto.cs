@@ -3,22 +3,18 @@ using Backend.Core.Entities.Users;
 namespace Backend.Core.Types;
 
 public record UserResponse(
-    long UserId,
+    string Id,
     string Username,
-    string? AvatarUrl)
-{
-    public static UserResponse Set(User u)
-        => new(u.Id, u.Username, u.AvatarUrl);
-}
+    string? AvatarUrl) : IEntityResponse;
 
 public record UserDetailResponse(
-    long UserId,
+    string Id,
     string Username,
     string Email,
     string Fullname,
     string? AvatarUrl,
     DateTime CreatedAt
-);
+) : IEntityResponse;
 
 public record UserRequest(
     int PageNumber,
@@ -43,9 +39,9 @@ public record UserSetRequest(
 );
 
 public record UserSetResponse(
-    long UserId,
+    string Id,
     string Username,
     string Email,
     string Fullname,
     string? AvatarUrl
-);
+) : IEntityResponse;

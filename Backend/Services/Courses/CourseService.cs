@@ -6,17 +6,21 @@ using Backend.Services.Common;
 using Backend.Core.Types;
 using Backend.Core.Entities.Courses;
 using Sqids;
+using AutoMapper;
 
 namespace Backend.Services.Courses;
 
 public class CourseService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
+    IMapper mapper,
     SqidsEncoder<long> sqidsEncoder)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
+    private readonly IMapper _mapper = mapper;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
+
 
     public async Task<CourseDetailResponse?> GetCourseByIdAsync(long courseId)
     {
@@ -26,7 +30,7 @@ public class CourseService(
             .Where(c => c.Id == courseId)
             .Select(c => new CourseDetailResponse(
                 _sqidsEncoder.Encode(c.CreatorId),
-                UserResponse.Set(c.Creator),
+                _mapper.Map<UserResponse>(c.Creator),
                 c.Title,
                 c.Description,
                 c.ThumbnailUrl,
@@ -50,12 +54,7 @@ public class CourseService(
 
         var list = await courses
             .OrderBy(c => c.Id)
-            .Select(c => new CourseResponse(
-                _sqidsEncoder.Encode(c.CreatorId),
-                c.Creator.Username,
-                c.Title,
-                c.ThumbnailUrl,
-                c.EnrollmentOpen))
+            .Select(c => _mapper.Map<CourseResponse>(c))
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
             .ToListAsync();
@@ -76,12 +75,7 @@ public class CourseService(
         return await db.Courses
             .AsNoTracking()
             .Where(c => c.CreatorId == currentUserId && !c.IsPublished)
-            .Select(c => new CourseResponse(
-                _sqidsEncoder.Encode(c.CreatorId),
-                c.Creator.Username,
-                c.Title,
-                c.ThumbnailUrl,
-                c.EnrollmentOpen))
+            .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync();
     }
 
@@ -90,12 +84,7 @@ public class CourseService(
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Courses
             .AsNoTracking()
-            .Select(c => new CourseResponse(
-                _sqidsEncoder.Encode(c.CreatorId),
-                c.Creator.Username,
-                c.Title,
-                c.ThumbnailUrl,
-                c.EnrollmentOpen))
+            .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync();
     }
 
@@ -105,12 +94,7 @@ public class CourseService(
         return await db.Courses
             .AsNoTracking()
             .Where(c => c.CreatorId == userId)
-            .Select(c => new CourseResponse(
-                _sqidsEncoder.Encode(c.CreatorId),
-                c.Creator.Username,
-                c.Title,
-                c.ThumbnailUrl,
-                c.EnrollmentOpen))
+            .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync();
     }
 
@@ -128,15 +112,7 @@ public class CourseService(
         };
         db.Courses.Add(course);
         await db.SaveChangesAsync();
-        return new CourseSetResponse(
-            _sqidsEncoder.Encode(course.Id),
-            _sqidsEncoder.Encode(course.CreatorId),
-            course.Title,
-            course.Description,
-            course.ThumbnailUrl,
-            course.IsPublished,
-            course.EnrollmentOpen
-        );
+        return _mapper.Map<CourseSetResponse>(course);
     }
 
     public async Task<CourseSetResponse?> UpdateCourseAsync(long courseId, CourseSetRequest request)
@@ -154,15 +130,7 @@ public class CourseService(
 
         db.Courses.Update(course);
         await db.SaveChangesAsync();
-        return new CourseSetResponse(
-            _sqidsEncoder.Encode(course.Id),
-            _sqidsEncoder.Encode(course.CreatorId),
-            course.Title,
-            course.Description,
-            course.ThumbnailUrl,
-            course.IsPublished,
-            course.EnrollmentOpen
-        );
+        return _mapper.Map<CourseSetResponse>(course);
     }
 
     public async Task<bool> DeleteCourseAsync(long courseId)

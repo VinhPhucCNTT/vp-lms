@@ -5,12 +5,17 @@ using Backend.Data;
 using Microsoft.EntityFrameworkCore;
 
 using Isopoh.Cryptography.Argon2;
+using AutoMapper;
 
 namespace Backend.Services.Users;
 
-public class UserService(IDbContextFactory<AppDbContext> dbFactory)
+public class UserService(
+    IDbContextFactory<AppDbContext> dbFactory,
+    IMapper mapper
+    )
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
+    private readonly IMapper _mapper = mapper;
 
     public async Task<UserDetailResponse?> GetUserByIdAsync(long userId)
     {
@@ -18,7 +23,7 @@ public class UserService(IDbContextFactory<AppDbContext> dbFactory)
         return await db.Users
             .AsNoTracking()
             .Where(u => u.Id == userId && u.IsActive)
-            .Select(u => new UserDetailResponse.Set(u, _sqidsEncoder.Encode(u.Id)))
+            .Select(u => _mapper.Map<UserDetailResponse>(u))
             .FirstOrDefaultAsync();
     }
 
@@ -54,10 +59,7 @@ public class UserService(IDbContextFactory<AppDbContext> dbFactory)
 
         var list = await users
             .OrderBy(u => u.Id)
-            .Select(u => new UserResponse(
-                u.Id,
-                u.Username,
-                u.AvatarUrl))
+            .Select(u => _mapper.Map<UserResponse>(u))
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
             .ToListAsync();
@@ -69,7 +71,7 @@ public class UserService(IDbContextFactory<AppDbContext> dbFactory)
             list);
     }
 
-    public async Task<bool> AddUserAsync(UserSetRequest dto)
+    public async Task<UserSetResponse> AddUserAsync(UserSetRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var hashedPassword = Argon2.Hash(dto.Password);
@@ -84,14 +86,14 @@ public class UserService(IDbContextFactory<AppDbContext> dbFactory)
         };
         db.Users.Add(user);
         await db.SaveChangesAsync();
-        return true;
+        return _mapper.Map<UserSetResponse>(user);
     }
 
-    public async Task<bool> UpdateUserAsync(long userId, UserSetRequest dto)
+    public async Task<UserSetResponse?> UpdateUserAsync(long userId, UserSetRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.Where(u => u.IsActive).FirstOrDefaultAsync(u => u.Id == userId);
-        if (user == null) return false;
+        if (user == null) return null;
 
         var hashedPassword = Argon2.Hash(dto.Password);
         user.Username = dto.Username;
@@ -103,7 +105,7 @@ public class UserService(IDbContextFactory<AppDbContext> dbFactory)
 
         db.Users.Update(user);
         await db.SaveChangesAsync();
-        return true;
+        return _mapper.Map<UserSetResponse>(user);
     }
 
     public async Task<bool> DeleteUserAsync(long userId)

@@ -1,15 +1,16 @@
 namespace Backend.Core.Types;
 
 public record CourseResponse(
-    string CreatorSqid,
+    string Id,
+    string CreatorId,
     string CreatorUserName,
     string Title,
     string? ThumbnailUrl,
     bool EnrollmentOpen
-);
+) : IEntityResponse;
 
 public record CourseDetailResponse(
-    string CreatorSqid,
+    string CreatorId,
     UserResponse Creator,
     string Title,
     string? Description,
@@ -35,11 +36,11 @@ public record CourseSetRequest(
 );
 
 public record CourseSetResponse(
-    string CourseSqid,
-    string CreatorSqid,
+    string Id,
+    string CreatorId,
     string Title,
     string? Description,
     string? ThumbnailUrl,
     bool IsPublished,
     bool EnrollmentOpen
-);
+) : IEntityResponse;

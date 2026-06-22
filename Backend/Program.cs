@@ -14,6 +14,7 @@ using Backend.Services.Common;
 using Backend.Services.Auth;
 using Backend.Services.Courses;
 using Backend.Services.Users;
+using Backend.Core.Automapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -88,6 +89,10 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddHttpContextAccessor();
+
+// Automapper
+builder.Services.AddTransient<SqidConverter>();
+builder.Services.AddAutoMapper(cfg => { }, typeof(CourseProfile));
 
 // Inject services
 builder.Services.AddScoped<CurrentUserService>();
