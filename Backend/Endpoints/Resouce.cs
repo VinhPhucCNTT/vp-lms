@@ -62,6 +62,7 @@ public static class ResourceEndpoints
             SqidsEncoder<long> sqidsEncoder,
             ResourceService resourceService)
     {
+
         var moduleId = sqidsEncoder.Decode(moduleSqid).Single();
         return TypedResults.Ok(
             await resourceService.GetUnpublishedResourcesAsync(moduleId));

@@ -104,7 +104,10 @@ builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<AuthService>();
 
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<EnrollmentService>();
+
 builder.Services.AddScoped<CourseService>();
+builder.Services.AddScoped<ModuleService>();
 builder.Services.AddScoped<ResourceService>();
 
 var app = builder.Build();
@@ -125,6 +128,7 @@ app.UseAuthorization();
 // Add endpoints
 app.AddAuthEndpoints();
 app.AddCourseEndpoints();
+app.AddEnrollmentEndpoints();
 app.AddModuleEndpoints();
 app.AddResourceEndpoints();
 app.AddUserEndpoints();
