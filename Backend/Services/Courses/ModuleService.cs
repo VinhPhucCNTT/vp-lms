@@ -37,7 +37,7 @@ public class ModuleService(
         return await db.CourseModules
             .AsNoTracking()
             .Where(m => m.CourseId == courseId && m.IsPublished)
-            .Select(m => _mapper.Map<ModuleResponse>())
+            .Select(m => _mapper.Map<ModuleResponse>(m))
             .ToListAsync();
     }
 

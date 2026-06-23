@@ -92,7 +92,12 @@ builder.Services.AddHttpContextAccessor();
 
 // Automapper
 builder.Services.AddTransient<SqidConverter>();
-builder.Services.AddAutoMapper(cfg => { }, typeof(CourseProfile));
+builder.Services.AddAutoMapper(cfg => { },
+        typeof(CourseProfile),
+        typeof(EnrollmentProfile),
+        typeof(ModuleProfile),
+        typeof(ResourceProfile),
+        typeof(UserProfile));
 
 // Inject services
 builder.Services.AddScoped<CurrentUserService>();
@@ -119,5 +124,9 @@ app.UseAuthorization();
 
 // Add endpoints
 app.AddAuthEndpoints();
+app.AddCourseEndpoints();
+app.AddModuleEndpoints();
+app.AddResourceEndpoints();
+app.AddUserEndpoints();
 
 app.Run();

@@ -71,7 +71,7 @@ public class UserService(
             list);
     }
 
-    public async Task<UserSetResponse> AddUserAsync(UserSetRequest dto)
+    public async Task<UserSetResponse> CreateUserAsync(UserSetRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var hashedPassword = Argon2.Hash(dto.Password);
