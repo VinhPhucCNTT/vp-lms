@@ -11,7 +11,7 @@ public class AttemptAnswer : BaseEntity
     public string ResponseDataJson { get; set; } = default!; // JSONB column
     public decimal? Score { get; set; }
     public bool? IsCorrect { get; set; }
-    public Guid? GradedByUserId { get; set; }
+    public long? GradedByUserId { get; set; }
     public DateTime? GradedAt { get; set; }
     public string? FeedbackText { get; set; }
 

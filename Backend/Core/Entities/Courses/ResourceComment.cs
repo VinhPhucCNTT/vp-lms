@@ -7,7 +7,7 @@ public class ResourceComment : BaseEntity
 {
     public long ResourceId { get; set; }
     public long UserId { get; set; }
-    public Guid? ParentCommentId { get; set; }
+    public long? ParentCommentId { get; set; }
     public string ContentMarkdown { get; set; } = default!;
     public bool IsEdited { get; set; } = false;
 

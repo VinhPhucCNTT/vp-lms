@@ -7,7 +7,7 @@ namespace Backend.Core.Entities.Submissions;
 public class CodeExecutionLog : BaseEntity
 {
     public long UserId { get; set; }
-    public Guid? ProblemId { get; set; }
+    public long? ProblemId { get; set; }
     public string Language { get; set; } = default!;
     public string? CodeSnippet { get; set; }
     public int? ExecutionTimeMs { get; set; }
