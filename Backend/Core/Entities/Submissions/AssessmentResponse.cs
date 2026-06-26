@@ -4,7 +4,7 @@ using Backend.Core.Entities.Users;
 
 namespace Backend.Core.Entities.Submissions;
 
-public class AssessmentResponse : BaseEntity
+public class AttemptAnswer : BaseEntity
 {
     public long AttemptId { get; set; }
     public long QuestionId { get; set; }

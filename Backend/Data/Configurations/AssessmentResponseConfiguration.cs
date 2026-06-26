@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Data.Configurations;
 
-public class AssessmentResponseConfiguration : IEntityTypeConfiguration<AssessmentResponse>
+public class AttemptAnswerConfiguration : IEntityTypeConfiguration<AttemptAnswer>
 {
-    public void Configure(EntityTypeBuilder<AssessmentResponse> builder)
+    public void Configure(EntityTypeBuilder<AttemptAnswer> builder)
     {
         builder.ToTable("assessment_responses");
 

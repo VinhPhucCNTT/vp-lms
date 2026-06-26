@@ -18,5 +18,5 @@ public class AssessmentQuestion : BaseEntity, ISoftDeletable
     
     // Navigation properties
     public Assessment Assessment { get; set; } = default!;
-    public ICollection<AssessmentResponse> Responses { get; set; } = [];
+    public ICollection<AttemptAnswer> Answers { get; set; } = [];
 }

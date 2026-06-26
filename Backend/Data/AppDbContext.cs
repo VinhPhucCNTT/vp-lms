@@ -10,26 +10,33 @@ namespace Backend.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
+
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<CourseModule> CourseModules => Set<CourseModule>();
+
     public DbSet<ModuleResource> ModuleResources => Set<ModuleResource>();
-    public DbSet<Lesson> Lessons => Set<Lesson>();
-    public DbSet<Assignment> Assignments => Set<Assignment>();
-    public DbSet<CodingProblem> CodingProblems => Set<CodingProblem>();
-    public DbSet<ProblemTestCase> TestCases => Set<ProblemTestCase>();
-    public DbSet<Assessment> Assessments => Set<Assessment>();
-    public DbSet<AssessmentQuestion> AssessmentQuestions => Set<AssessmentQuestion>();
-    public DbSet<Enrollment> Enrollments => Set<Enrollment>();
-    public DbSet<TAPermissions> TAPermissions => Set<TAPermissions>();
-    public DbSet<AssignmentSubmission> AssignmentSubmissions => Set<AssignmentSubmission>();
-    public DbSet<AssignmentGrade> AssignmentGrades => Set<AssignmentGrade>();
-    public DbSet<ProblemSubmission> ProblemSubmissions => Set<ProblemSubmission>();
-    public DbSet<ProblemTestResult> ProblemTestResults => Set<ProblemTestResult>();
-    public DbSet<AssessmentAttempt> AssessmentAttempts => Set<AssessmentAttempt>();
-    public DbSet<AssessmentResponse> AssessmentResponses => Set<AssessmentResponse>();
     public DbSet<ResourceComment> ResourceComments => Set<ResourceComment>();
     public DbSet<ResourceProgress> ResourceProgress => Set<ResourceProgress>();
+
+    public DbSet<Lesson> Lessons => Set<Lesson>();
+
+    public DbSet<Assignment> Assignments => Set<Assignment>();
+    public DbSet<AssignmentSubmission> AssignmentSubmissions => Set<AssignmentSubmission>();
+    public DbSet<AssignmentGrade> AssignmentGrades => Set<AssignmentGrade>();
+
+    public DbSet<CodingProblem> CodingProblems => Set<CodingProblem>();
+    public DbSet<ProblemTestCase> ProblemTestCases => Set<ProblemTestCase>();
+    public DbSet<ProblemSubmission> ProblemSubmissions => Set<ProblemSubmission>();
+    public DbSet<ProblemTestResult> ProblemTestResults => Set<ProblemTestResult>();
     public DbSet<CodeExecutionLog> CodeExecutionLogs => Set<CodeExecutionLog>();
+
+    public DbSet<Assessment> Assessments => Set<Assessment>();
+    public DbSet<AssessmentQuestion> AssessmentQuestions => Set<AssessmentQuestion>();
+    public DbSet<AssessmentAttempt> AssessmentAttempts => Set<AssessmentAttempt>();
+    public DbSet<AttemptAnswer> AttemptAnswers => Set<AttemptAnswer>();
+
+    public DbSet<Enrollment> Enrollments => Set<Enrollment>();
+    public DbSet<TAPermissions> TAPermissions => Set<TAPermissions>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -70,7 +77,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         builder.Entity<AssessmentQuestion>()
             .HasQueryFilter(q => !q.IsDeleted && !q.Assessment.IsDeleted);
-        builder.Entity<AssessmentResponse>()
+        builder.Entity<AttemptAnswer>()
             .HasQueryFilter(r => !r.Question.IsDeleted);
 
         // Use anonymous name instead

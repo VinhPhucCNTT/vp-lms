@@ -33,7 +33,7 @@ public class AssessmentAttemptConfiguration : IEntityTypeConfiguration<Assessmen
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
 
-        builder.HasMany(x => x.Responses)
+        builder.HasMany(x => x.Answers)
             .WithOne(r => r.Attempt)
             .HasForeignKey(r => r.AttemptId)
             .OnDelete(DeleteBehavior.Cascade)

@@ -20,5 +20,5 @@ public class AssessmentAttempt : BaseEntity, ISoftDeletable
     // Navigation properties
     public Assessment Assessment { get; set; } = default!;
     public User User { get; set; } = default!;
-    public ICollection<AssessmentResponse> Responses { get; set; } = [];
+    public ICollection<AttemptAnswer> Answers { get; set; } = [];
 }
