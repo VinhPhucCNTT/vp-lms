@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -15,13 +16,15 @@ namespace backend.Migrations
                 name: "users",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     username = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     email = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     password_hash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     fullname = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     avatar_url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false),
+                    role = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false),
                     deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -36,13 +39,13 @@ namespace backend.Migrations
                 name: "courses",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    creator_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    creator_id = table.Column<long>(type: "bigint", nullable: false),
                     title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
                     thumbnail_url = table.Column<string>(type: "text", nullable: true),
                     is_published = table.Column<bool>(type: "boolean", nullable: false),
-                    allow_anonymous_access = table.Column<bool>(type: "boolean", nullable: false),
                     enrollment_open = table.Column<bool>(type: "boolean", nullable: false),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false),
                     deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -64,9 +67,10 @@ namespace backend.Migrations
                 name: "enrollments",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    course_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    course_id = table.Column<long>(type: "bigint", nullable: false),
+                    user_id = table.Column<long>(type: "bigint", nullable: false),
                     role = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false),
                     deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -94,8 +98,9 @@ namespace backend.Migrations
                 name: "modules",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    course_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    course_id = table.Column<long>(type: "bigint", nullable: false),
                     title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
                     order_index = table.Column<int>(type: "integer", nullable: false),
@@ -120,13 +125,11 @@ namespace backend.Migrations
                 name: "ta_permissions",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    enrollment_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    enrollment_id = table.Column<long>(type: "bigint", nullable: false),
                     can_grade = table.Column<bool>(type: "boolean", nullable: false),
-                    can_moderate_discussions = table.Column<bool>(type: "boolean", nullable: false),
-                    can_edit_content = table.Column<bool>(type: "boolean", nullable: false),
-                    can_manage_enrollments = table.Column<bool>(type: "boolean", nullable: false),
-                    granted_by_user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    granted_by_user_id = table.Column<long>(type: "bigint", nullable: false),
                     granted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
@@ -152,8 +155,9 @@ namespace backend.Migrations
                 name: "module_resources",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    module_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    module_id = table.Column<long>(type: "bigint", nullable: false),
                     resource_type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
@@ -161,7 +165,7 @@ namespace backend.Migrations
                     is_published = table.Column<bool>(type: "boolean", nullable: false),
                     available_from = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     available_until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    access_password_hash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    access_password = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false),
                     deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -171,7 +175,7 @@ namespace backend.Migrations
                 {
                     table.PrimaryKey("pk_module_resources", x => x.id);
                     table.ForeignKey(
-                        name: "fk_module_resources_modules_module_id",
+                        name: "fk_module_resources_course_modules_module_id",
                         column: x => x.module_id,
                         principalTable: "modules",
                         principalColumn: "id",
@@ -182,14 +186,15 @@ namespace backend.Migrations
                 name: "assessments",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    resource_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    resource_id = table.Column<long>(type: "bigint", nullable: false),
                     instructions_markdown = table.Column<string>(type: "text", nullable: true),
                     time_limit_minutes = table.Column<int>(type: "integer", nullable: true),
                     max_attempts = table.Column<int>(type: "integer", nullable: false),
                     shuffle_questions = table.Column<bool>(type: "boolean", nullable: false),
                     show_results = table.Column<bool>(type: "boolean", nullable: false),
-                    passing_score = table.Column<decimal>(type: "numeric(5,2)", nullable: true),
+                    grading_schema_json = table.Column<string>(type: "text", nullable: true),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false),
                     deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -210,12 +215,12 @@ namespace backend.Migrations
                 name: "assignments",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    resource_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    resource_id = table.Column<long>(type: "bigint", nullable: false),
                     instructions_markdown = table.Column<string>(type: "text", nullable: false),
-                    max_score = table.Column<decimal>(type: "numeric(5,2)", nullable: true),
                     allowed_file_types = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
-                    max_file_size_mb = table.Column<int>(type: "integer", nullable: false),
+                    max_file_size_kb = table.Column<int>(type: "integer", nullable: false),
                     submission_type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     grading_schema = table.Column<string>(type: "jsonb", nullable: true),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -238,8 +243,9 @@ namespace backend.Migrations
                 name: "lessons",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    resource_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    resource_id = table.Column<long>(type: "bigint", nullable: false),
                     content_markdown = table.Column<string>(type: "text", nullable: false),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false),
                     deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -261,8 +267,9 @@ namespace backend.Migrations
                 name: "problems",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    resource_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    resource_id = table.Column<long>(type: "bigint", nullable: false),
                     problem_statement_markdown = table.Column<string>(type: "text", nullable: false),
                     constraints_markdown = table.Column<string>(type: "text", nullable: true),
                     function_signature = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
@@ -290,10 +297,11 @@ namespace backend.Migrations
                 name: "resource_comments",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    resource_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    parent_comment_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    resource_id = table.Column<long>(type: "bigint", nullable: false),
+                    user_id = table.Column<long>(type: "bigint", nullable: false),
+                    parent_comment_id = table.Column<long>(type: "bigint", nullable: true),
                     content_markdown = table.Column<string>(type: "text", nullable: false),
                     is_edited = table.Column<bool>(type: "boolean", nullable: false),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -328,9 +336,10 @@ namespace backend.Migrations
                 name: "resource_progress",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    resource_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    user_id = table.Column<long>(type: "bigint", nullable: false),
+                    resource_id = table.Column<long>(type: "bigint", nullable: false),
                     is_completed = table.Column<bool>(type: "boolean", nullable: false),
                     completed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     last_accessed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -358,9 +367,10 @@ namespace backend.Migrations
                 name: "assessment_attempts",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    assessment_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    assessment_id = table.Column<long>(type: "bigint", nullable: false),
+                    user_id = table.Column<long>(type: "bigint", nullable: false),
                     started_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     submitted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     total_score = table.Column<decimal>(type: "numeric(5,2)", nullable: true),
@@ -392,8 +402,9 @@ namespace backend.Migrations
                 name: "assessment_questions",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    assessment_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    assessment_id = table.Column<long>(type: "bigint", nullable: false),
                     question_type = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     question_text_markdown = table.Column<string>(type: "text", nullable: false),
                     points = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
@@ -419,9 +430,10 @@ namespace backend.Migrations
                 name: "assignment_submissions",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    assignment_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    assignment_id = table.Column<long>(type: "bigint", nullable: false),
+                    user_id = table.Column<long>(type: "bigint", nullable: false),
                     submission_text = table.Column<string>(type: "text", nullable: true),
                     file_url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     file_name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
@@ -452,9 +464,10 @@ namespace backend.Migrations
                 name: "code_execution_logs",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    problem_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    user_id = table.Column<long>(type: "bigint", nullable: false),
+                    problem_id = table.Column<long>(type: "bigint", nullable: true),
                     language = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     code_snippet = table.Column<string>(type: "text", nullable: true),
                     execution_time_ms = table.Column<int>(type: "integer", nullable: true),
@@ -469,7 +482,7 @@ namespace backend.Migrations
                 {
                     table.PrimaryKey("pk_code_execution_logs", x => x.id);
                     table.ForeignKey(
-                        name: "fk_code_execution_logs_problems_problem_id",
+                        name: "fk_code_execution_logs_coding_problems_problem_id",
                         column: x => x.problem_id,
                         principalTable: "problems",
                         principalColumn: "id",
@@ -486,9 +499,10 @@ namespace backend.Migrations
                 name: "problem_submissions",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    problem_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    problem_id = table.Column<long>(type: "bigint", nullable: false),
+                    user_id = table.Column<long>(type: "bigint", nullable: false),
                     submitted_code = table.Column<string>(type: "text", nullable: false),
                     language = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
@@ -503,7 +517,7 @@ namespace backend.Migrations
                 {
                     table.PrimaryKey("pk_problem_submissions", x => x.id);
                     table.ForeignKey(
-                        name: "fk_problem_submissions_problems_problem_id",
+                        name: "fk_problem_submissions_coding_problems_problem_id",
                         column: x => x.problem_id,
                         principalTable: "problems",
                         principalColumn: "id",
@@ -520,8 +534,9 @@ namespace backend.Migrations
                 name: "problem_test_cases",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    problem_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    problem_id = table.Column<long>(type: "bigint", nullable: false),
                     input_data = table.Column<string>(type: "text", nullable: false),
                     expected_output = table.Column<string>(type: "text", nullable: false),
                     is_sample = table.Column<bool>(type: "boolean", nullable: false),
@@ -536,7 +551,7 @@ namespace backend.Migrations
                 {
                     table.PrimaryKey("pk_problem_test_cases", x => x.id);
                     table.ForeignKey(
-                        name: "fk_problem_test_cases_problems_problem_id",
+                        name: "fk_problem_test_cases_coding_problems_problem_id",
                         column: x => x.problem_id,
                         principalTable: "problems",
                         principalColumn: "id",
@@ -547,13 +562,14 @@ namespace backend.Migrations
                 name: "assessment_responses",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    attempt_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    question_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    attempt_id = table.Column<long>(type: "bigint", nullable: false),
+                    question_id = table.Column<long>(type: "bigint", nullable: false),
                     response_data = table.Column<string>(type: "jsonb", nullable: false),
                     score = table.Column<decimal>(type: "numeric(5,2)", nullable: true),
                     is_correct = table.Column<bool>(type: "boolean", nullable: true),
-                    graded_by_user_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    graded_by_user_id = table.Column<long>(type: "bigint", nullable: true),
                     graded_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     feedback_text = table.Column<string>(type: "text", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -585,10 +601,11 @@ namespace backend.Migrations
                 name: "assignment_grades",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    submission_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    grader_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    score = table.Column<decimal>(type: "numeric(5,2)", nullable: true),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    submission_id = table.Column<long>(type: "bigint", nullable: false),
+                    grader_id = table.Column<long>(type: "bigint", nullable: false),
+                    score = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
                     feedback_text = table.Column<string>(type: "text", nullable: true),
                     can_resubmit = table.Column<bool>(type: "boolean", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -615,9 +632,10 @@ namespace backend.Migrations
                 name: "problem_test_results",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    submission_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    test_case_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    submission_id = table.Column<long>(type: "bigint", nullable: false),
+                    test_case_id = table.Column<long>(type: "bigint", nullable: false),
                     status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     actual_output = table.Column<string>(type: "text", nullable: true),
                     error_message = table.Column<string>(type: "text", nullable: true),
@@ -636,7 +654,7 @@ namespace backend.Migrations
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "fk_problem_test_results_test_cases_test_case_id",
+                        name: "fk_problem_test_results_problem_test_cases_test_case_id",
                         column: x => x.test_case_id,
                         principalTable: "problem_test_cases",
                         principalColumn: "id",
@@ -832,6 +850,11 @@ namespace backend.Migrations
                 name: "ix_ta_permissions_granted_by_user_id",
                 table: "ta_permissions",
                 column: "granted_by_user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_users_is_active",
+                table: "users",
+                column: "is_active");
 
             migrationBuilder.CreateIndex(
                 name: "ix_users_username_email",

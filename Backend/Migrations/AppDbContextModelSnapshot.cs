@@ -22,23 +22,21 @@ namespace backend.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Backend.Models.Courses.Course", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.Course", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    b.Property<bool>("AllowAnonymousAccess")
-                        .HasColumnType("boolean")
-                        .HasColumnName("allow_anonymous_access");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<Guid>("CreatorId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("CreatorId")
+                        .HasColumnType("bigint")
                         .HasColumnName("creator_id");
 
                     b.Property<DateTime?>("DeletedAt")
@@ -84,65 +82,17 @@ namespace backend.Migrations
                     b.ToTable("courses", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.Enrollment", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.CourseModule", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("CourseId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("course_id");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_deleted");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("role");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_enrollments");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_enrollments_user_id");
-
-                    b.HasIndex("CourseId", "UserId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_enrollments_course_id_user_id");
-
-                    b.ToTable("enrollments", (string)null);
-                });
-
-            modelBuilder.Entity("Backend.Models.Courses.Module", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("CourseId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("CourseId")
+                        .HasColumnType("bigint")
                         .HasColumnName("course_id");
 
                     b.Property<DateTime>("CreatedAt")
@@ -189,17 +139,71 @@ namespace backend.Migrations
                     b.ToTable("modules", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.ModuleResource", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.Enrollment", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    b.Property<string>("AccessPasswordHash")
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("CourseId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("role");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_enrollments");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_enrollments_user_id");
+
+                    b.HasIndex("CourseId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_enrollments_course_id_user_id");
+
+                    b.ToTable("enrollments", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Core.Entities.Courses.ModuleResource", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("AccessPassword")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
-                        .HasColumnName("access_password_hash");
+                        .HasColumnName("access_password");
 
                     b.Property<DateTime?>("AvailableFrom")
                         .HasColumnType("timestamp with time zone")
@@ -229,8 +233,8 @@ namespace backend.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_published");
 
-                    b.Property<Guid>("ModuleId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("ModuleId")
+                        .HasColumnType("bigint")
                         .HasColumnName("module_id");
 
                     b.Property<int>("OrderIndex")
@@ -263,12 +267,14 @@ namespace backend.Migrations
                     b.ToTable("module_resources", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.ResourceComment", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.ResourceComment", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("ContentMarkdown")
                         .IsRequired()
@@ -291,20 +297,20 @@ namespace backend.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_edited");
 
-                    b.Property<Guid?>("ParentCommentId")
-                        .HasColumnType("uuid")
+                    b.Property<long?>("ParentCommentId")
+                        .HasColumnType("bigint")
                         .HasColumnName("parent_comment_id");
 
-                    b.Property<Guid>("ResourceId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("ResourceId")
+                        .HasColumnType("bigint")
                         .HasColumnName("resource_id");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
@@ -322,12 +328,14 @@ namespace backend.Migrations
                     b.ToTable("resource_comments", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.ResourceProgress", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.ResourceProgress", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("timestamp with time zone")
@@ -345,16 +353,16 @@ namespace backend.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_accessed_at");
 
-                    b.Property<Guid>("ResourceId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("ResourceId")
+                        .HasColumnType("bigint")
                         .HasColumnName("resource_id");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
@@ -369,35 +377,25 @@ namespace backend.Migrations
                     b.ToTable("resource_progress", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.TAPermissions", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.TAPermissions", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    b.Property<bool>("CanEditContent")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_edit_content");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<bool>("CanGrade")
                         .HasColumnType("boolean")
                         .HasColumnName("can_grade");
 
-                    b.Property<bool>("CanManageEnrollments")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_manage_enrollments");
-
-                    b.Property<bool>("CanModerateDiscussions")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_moderate_discussions");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<Guid>("EnrollmentId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("EnrollmentId")
+                        .HasColumnType("bigint")
                         .HasColumnName("enrollment_id");
 
                     b.Property<DateTime>("GrantedAt")
@@ -406,8 +404,8 @@ namespace backend.Migrations
                         .HasColumnName("granted_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<Guid>("GrantedByUserId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("GrantedByUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("granted_by_user_id");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -427,12 +425,14 @@ namespace backend.Migrations
                     b.ToTable("ta_permissions", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.Assessment", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.Assessment", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -441,6 +441,10 @@ namespace backend.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
+
+                    b.Property<string>("GradingSchemaJson")
+                        .HasColumnType("text")
+                        .HasColumnName("grading_schema_json");
 
                     b.Property<string>("InstructionsMarkdown")
                         .HasColumnType("text")
@@ -454,12 +458,8 @@ namespace backend.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("max_attempts");
 
-                    b.Property<decimal?>("PassingScore")
-                        .HasColumnType("decimal(5,2)")
-                        .HasColumnName("passing_score");
-
-                    b.Property<Guid>("ResourceId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("ResourceId")
+                        .HasColumnType("bigint")
                         .HasColumnName("resource_id");
 
                     b.Property<bool>("ShowResults")
@@ -488,15 +488,17 @@ namespace backend.Migrations
                     b.ToTable("assessments", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.AssessmentQuestion", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.AssessmentQuestion", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("AssessmentId")
-                        .HasColumnType("uuid")
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("AssessmentId")
+                        .HasColumnType("bigint")
                         .HasColumnName("assessment_id");
 
                     b.Property<DateTime>("CreatedAt")
@@ -554,12 +556,14 @@ namespace backend.Migrations
                     b.ToTable("assessment_questions", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.Assignment", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.Assignment", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("AllowedFileTypes")
                         .HasMaxLength(255)
@@ -587,16 +591,12 @@ namespace backend.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_deleted");
 
-                    b.Property<int>("MaxFileSizeMb")
+                    b.Property<int>("MaxFileSizeKb")
                         .HasColumnType("integer")
-                        .HasColumnName("max_file_size_mb");
+                        .HasColumnName("max_file_size_kb");
 
-                    b.Property<decimal?>("MaxScore")
-                        .HasColumnType("decimal(5,2)")
-                        .HasColumnName("max_score");
-
-                    b.Property<Guid>("ResourceId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("ResourceId")
+                        .HasColumnType("bigint")
                         .HasColumnName("resource_id");
 
                     b.Property<string>("SubmissionType")
@@ -619,54 +619,14 @@ namespace backend.Migrations
                     b.ToTable("assignments", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.Lesson", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.CodingProblem", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    b.Property<string>("ContentMarkdown")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("content_markdown");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_deleted");
-
-                    b.Property<Guid>("ResourceId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("resource_id");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id")
-                        .HasName("pk_lessons");
-
-                    b.HasIndex("ResourceId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_lessons_resource_id");
-
-                    b.ToTable("lessons", (string)null);
-                });
-
-            modelBuilder.Entity("Backend.Models.Resources.Problem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("ConstraintsMarkdown")
                         .HasColumnType("text")
@@ -709,8 +669,8 @@ namespace backend.Migrations
                         .HasColumnType("text")
                         .HasColumnName("problem_statement_markdown");
 
-                    b.Property<Guid>("ResourceId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("ResourceId")
+                        .HasColumnType("bigint")
                         .HasColumnName("resource_id");
 
                     b.Property<int>("TimeLimitMs")
@@ -731,12 +691,58 @@ namespace backend.Migrations
                     b.ToTable("problems", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.ProblemTestCase", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.Lesson", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ContentMarkdown")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content_markdown");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<long>("ResourceId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("resource_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_lessons");
+
+                    b.HasIndex("ResourceId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_lessons_resource_id");
+
+                    b.ToTable("lessons", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Core.Entities.Resources.ProblemTestCase", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -772,8 +778,8 @@ namespace backend.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("order_index");
 
-                    b.Property<Guid>("ProblemId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("ProblemId")
+                        .HasColumnType("bigint")
                         .HasColumnName("problem_id");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -790,15 +796,17 @@ namespace backend.Migrations
                     b.ToTable("problem_test_cases", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.AssessmentAttempt", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.AssessmentAttempt", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("AssessmentId")
-                        .HasColumnType("uuid")
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("AssessmentId")
+                        .HasColumnType("bigint")
                         .HasColumnName("assessment_id");
 
                     b.Property<int>("AttemptNumber")
@@ -839,8 +847,8 @@ namespace backend.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
@@ -855,81 +863,14 @@ namespace backend.Migrations
                     b.ToTable("assessment_attempts", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.AssessmentResponse", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.AssignmentGrade", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("AttemptId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("attempt_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("FeedbackText")
-                        .HasColumnType("text")
-                        .HasColumnName("feedback_text");
-
-                    b.Property<DateTime?>("GradedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("graded_at");
-
-                    b.Property<Guid?>("GradedByUserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("graded_by_user_id");
-
-                    b.Property<bool?>("IsCorrect")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_correct");
-
-                    b.Property<Guid>("QuestionId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("question_id");
-
-                    b.Property<string>("ResponseDataJson")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("response_data");
-
-                    b.Property<decimal?>("Score")
-                        .HasColumnType("decimal(5,2)")
-                        .HasColumnName("score");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id")
-                        .HasName("pk_assessment_responses");
-
-                    b.HasIndex("GradedByUserId")
-                        .HasDatabaseName("ix_assessment_responses_graded_by_user_id");
-
-                    b.HasIndex("QuestionId")
-                        .HasDatabaseName("ix_assessment_responses_question_id");
-
-                    b.HasIndex("ResponseDataJson")
-                        .HasDatabaseName("ix_assessment_responses_response_data");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("ResponseDataJson"), "GIN");
-
-                    b.HasIndex("AttemptId", "QuestionId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_assessment_responses_attempt_id_question_id");
-
-                    b.ToTable("assessment_responses", (string)null);
-                });
-
-            modelBuilder.Entity("Backend.Models.Submissions.AssignmentGrade", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<bool>("CanResubmit")
                         .HasColumnType("boolean")
@@ -943,16 +884,16 @@ namespace backend.Migrations
                         .HasColumnType("text")
                         .HasColumnName("feedback_text");
 
-                    b.Property<Guid>("GraderId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("GraderId")
+                        .HasColumnType("bigint")
                         .HasColumnName("grader_id");
 
-                    b.Property<decimal?>("Score")
+                    b.Property<decimal>("Score")
                         .HasColumnType("decimal(5,2)")
                         .HasColumnName("score");
 
-                    b.Property<Guid>("SubmissionId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("SubmissionId")
+                        .HasColumnType("bigint")
                         .HasColumnName("submission_id");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -972,15 +913,17 @@ namespace backend.Migrations
                     b.ToTable("assignment_grades", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.AssignmentSubmission", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.AssignmentSubmission", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("AssignmentId")
-                        .HasColumnType("uuid")
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("AssignmentId")
+                        .HasColumnType("bigint")
                         .HasColumnName("assignment_id");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1017,8 +960,8 @@ namespace backend.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
@@ -1034,12 +977,85 @@ namespace backend.Migrations
                     b.ToTable("assignment_submissions", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.CodeExecutionLog", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.AttemptAnswer", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("AttemptId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("attempt_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("FeedbackText")
+                        .HasColumnType("text")
+                        .HasColumnName("feedback_text");
+
+                    b.Property<DateTime?>("GradedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("graded_at");
+
+                    b.Property<long?>("GradedByUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("graded_by_user_id");
+
+                    b.Property<bool?>("IsCorrect")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_correct");
+
+                    b.Property<long>("QuestionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("question_id");
+
+                    b.Property<string>("ResponseDataJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("response_data");
+
+                    b.Property<decimal?>("Score")
+                        .HasColumnType("decimal(5,2)")
+                        .HasColumnName("score");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_assessment_responses");
+
+                    b.HasIndex("GradedByUserId")
+                        .HasDatabaseName("ix_assessment_responses_graded_by_user_id");
+
+                    b.HasIndex("QuestionId")
+                        .HasDatabaseName("ix_assessment_responses_question_id");
+
+                    b.HasIndex("ResponseDataJson")
+                        .HasDatabaseName("ix_assessment_responses_response_data");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("ResponseDataJson"), "GIN");
+
+                    b.HasIndex("AttemptId", "QuestionId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_assessment_responses_attempt_id_question_id");
+
+                    b.ToTable("assessment_responses", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.CodeExecutionLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("CodeSnippet")
                         .HasColumnType("text")
@@ -1073,8 +1089,8 @@ namespace backend.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("memory_used_kb");
 
-                    b.Property<Guid?>("ProblemId")
-                        .HasColumnType("uuid")
+                    b.Property<long?>("ProblemId")
+                        .HasColumnType("bigint")
                         .HasColumnName("problem_id");
 
                     b.Property<string>("Status")
@@ -1085,8 +1101,8 @@ namespace backend.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
@@ -1101,12 +1117,14 @@ namespace backend.Migrations
                     b.ToTable("code_execution_logs", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.ProblemSubmission", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.ProblemSubmission", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1130,8 +1148,8 @@ namespace backend.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("passed_test_cases");
 
-                    b.Property<Guid>("ProblemId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("ProblemId")
+                        .HasColumnType("bigint")
                         .HasColumnName("problem_id");
 
                     b.Property<string>("Status")
@@ -1153,8 +1171,8 @@ namespace backend.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
@@ -1169,12 +1187,14 @@ namespace backend.Migrations
                     b.ToTable("problem_submissions", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.ProblemTestResult", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.ProblemTestResult", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("ActualOutput")
                         .HasColumnType("text")
@@ -1202,12 +1222,12 @@ namespace backend.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("status");
 
-                    b.Property<Guid>("SubmissionId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("SubmissionId")
+                        .HasColumnType("bigint")
                         .HasColumnName("submission_id");
 
-                    b.Property<Guid>("TestCaseId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("TestCaseId")
+                        .HasColumnType("bigint")
                         .HasColumnName("test_case_id");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -1226,12 +1246,14 @@ namespace backend.Migrations
                     b.ToTable("problem_test_results", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Users.User", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Users.User", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("AvatarUrl")
                         .HasMaxLength(500)
@@ -1272,6 +1294,12 @@ namespace backend.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("password_hash");
 
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("role");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -1285,6 +1313,9 @@ namespace backend.Migrations
                     b.HasKey("Id")
                         .HasName("pk_users");
 
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_users_is_active");
+
                     b.HasIndex("Username", "Email")
                         .IsUnique()
                         .HasDatabaseName("ix_users_username_email");
@@ -1292,9 +1323,9 @@ namespace backend.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.Course", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.Course", b =>
                 {
-                    b.HasOne("Backend.Models.Users.User", "Creator")
+                    b.HasOne("Backend.Core.Entities.Users.User", "Creator")
                         .WithMany("Courses")
                         .HasForeignKey("CreatorId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1304,16 +1335,27 @@ namespace backend.Migrations
                     b.Navigation("Creator");
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.Enrollment", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.CourseModule", b =>
                 {
-                    b.HasOne("Backend.Models.Courses.Course", "Course")
+                    b.HasOne("Backend.Core.Entities.Courses.Course", "Course")
+                        .WithMany("Modules")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_modules_courses_course_id");
+
+                    b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("Backend.Core.Entities.Courses.Enrollment", b =>
+                {
+                    b.HasOne("Backend.Core.Entities.Courses.Course", "Course")
                         .WithMany("Enrollments")
                         .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_enrollments_courses_course_id");
 
-                    b.HasOne("Backend.Models.Users.User", "User")
+                    b.HasOne("Backend.Core.Entities.Users.User", "User")
                         .WithMany("Enrollments")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1325,43 +1367,32 @@ namespace backend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.Module", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.ModuleResource", b =>
                 {
-                    b.HasOne("Backend.Models.Courses.Course", "Course")
-                        .WithMany("Modules")
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_modules_courses_course_id");
-
-                    b.Navigation("Course");
-                });
-
-            modelBuilder.Entity("Backend.Models.Courses.ModuleResource", b =>
-                {
-                    b.HasOne("Backend.Models.Courses.Module", "Module")
+                    b.HasOne("Backend.Core.Entities.Courses.CourseModule", "Module")
                         .WithMany("Resources")
                         .HasForeignKey("ModuleId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_module_resources_modules_module_id");
+                        .HasConstraintName("fk_module_resources_course_modules_module_id");
 
                     b.Navigation("Module");
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.ResourceComment", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.ResourceComment", b =>
                 {
-                    b.HasOne("Backend.Models.Courses.ResourceComment", "ParentComment")
+                    b.HasOne("Backend.Core.Entities.Courses.ResourceComment", "ParentComment")
                         .WithMany("Replies")
                         .HasForeignKey("ParentCommentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_resource_comments_resource_comments_parent_comment_id");
 
-                    b.HasOne("Backend.Models.Courses.ModuleResource", "Resource")
+                    b.HasOne("Backend.Core.Entities.Courses.ModuleResource", "Resource")
                         .WithMany("Comments")
                         .HasForeignKey("ResourceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_resource_comments_module_resources_resource_id");
 
-                    b.HasOne("Backend.Models.Users.User", "User")
+                    b.HasOne("Backend.Core.Entities.Users.User", "User")
                         .WithMany("Comments")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1375,15 +1406,15 @@ namespace backend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.ResourceProgress", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.ResourceProgress", b =>
                 {
-                    b.HasOne("Backend.Models.Courses.ModuleResource", "Resource")
+                    b.HasOne("Backend.Core.Entities.Courses.ModuleResource", "Resource")
                         .WithMany("Progress")
                         .HasForeignKey("ResourceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_resource_progress_module_resources_resource_id");
 
-                    b.HasOne("Backend.Models.Users.User", "User")
+                    b.HasOne("Backend.Core.Entities.Users.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1395,15 +1426,15 @@ namespace backend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.TAPermissions", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.TAPermissions", b =>
                 {
-                    b.HasOne("Backend.Models.Courses.Enrollment", "Enrollment")
+                    b.HasOne("Backend.Core.Entities.Courses.Enrollment", "Enrollment")
                         .WithOne("TAPermissions")
-                        .HasForeignKey("Backend.Models.Courses.TAPermissions", "EnrollmentId")
+                        .HasForeignKey("Backend.Core.Entities.Courses.TAPermissions", "EnrollmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_ta_permissions_enrollments_enrollment_id");
 
-                    b.HasOne("Backend.Models.Users.User", "GrantedByUser")
+                    b.HasOne("Backend.Core.Entities.Users.User", "GrantedByUser")
                         .WithMany()
                         .HasForeignKey("GrantedByUserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1414,20 +1445,20 @@ namespace backend.Migrations
                     b.Navigation("GrantedByUser");
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.Assessment", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.Assessment", b =>
                 {
-                    b.HasOne("Backend.Models.Courses.ModuleResource", "Resource")
+                    b.HasOne("Backend.Core.Entities.Courses.ModuleResource", "Resource")
                         .WithOne("Assessment")
-                        .HasForeignKey("Backend.Models.Resources.Assessment", "ResourceId")
+                        .HasForeignKey("Backend.Core.Entities.Resources.Assessment", "ResourceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_assessments_module_resources_resource_id");
 
                     b.Navigation("Resource");
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.AssessmentQuestion", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.AssessmentQuestion", b =>
                 {
-                    b.HasOne("Backend.Models.Resources.Assessment", "Assessment")
+                    b.HasOne("Backend.Core.Entities.Resources.Assessment", "Assessment")
                         .WithMany("Questions")
                         .HasForeignKey("AssessmentId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1437,59 +1468,59 @@ namespace backend.Migrations
                     b.Navigation("Assessment");
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.Assignment", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.Assignment", b =>
                 {
-                    b.HasOne("Backend.Models.Courses.ModuleResource", "Resource")
+                    b.HasOne("Backend.Core.Entities.Courses.ModuleResource", "Resource")
                         .WithOne("Assignment")
-                        .HasForeignKey("Backend.Models.Resources.Assignment", "ResourceId")
+                        .HasForeignKey("Backend.Core.Entities.Resources.Assignment", "ResourceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_assignments_module_resources_resource_id");
 
                     b.Navigation("Resource");
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.Lesson", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.CodingProblem", b =>
                 {
-                    b.HasOne("Backend.Models.Courses.ModuleResource", "Resource")
-                        .WithOne("Lesson")
-                        .HasForeignKey("Backend.Models.Resources.Lesson", "ResourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_lessons_module_resources_resource_id");
-
-                    b.Navigation("Resource");
-                });
-
-            modelBuilder.Entity("Backend.Models.Resources.Problem", b =>
-                {
-                    b.HasOne("Backend.Models.Courses.ModuleResource", "Resource")
+                    b.HasOne("Backend.Core.Entities.Courses.ModuleResource", "Resource")
                         .WithOne("Problem")
-                        .HasForeignKey("Backend.Models.Resources.Problem", "ResourceId")
+                        .HasForeignKey("Backend.Core.Entities.Resources.CodingProblem", "ResourceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_problems_module_resources_resource_id");
 
                     b.Navigation("Resource");
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.ProblemTestCase", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.Lesson", b =>
                 {
-                    b.HasOne("Backend.Models.Resources.Problem", "Problem")
+                    b.HasOne("Backend.Core.Entities.Courses.ModuleResource", "Resource")
+                        .WithOne("Lesson")
+                        .HasForeignKey("Backend.Core.Entities.Resources.Lesson", "ResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_lessons_module_resources_resource_id");
+
+                    b.Navigation("Resource");
+                });
+
+            modelBuilder.Entity("Backend.Core.Entities.Resources.ProblemTestCase", b =>
+                {
+                    b.HasOne("Backend.Core.Entities.Resources.CodingProblem", "Problem")
                         .WithMany("TestCases")
                         .HasForeignKey("ProblemId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_problem_test_cases_problems_problem_id");
+                        .HasConstraintName("fk_problem_test_cases_coding_problems_problem_id");
 
                     b.Navigation("Problem");
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.AssessmentAttempt", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.AssessmentAttempt", b =>
                 {
-                    b.HasOne("Backend.Models.Resources.Assessment", "Assessment")
+                    b.HasOne("Backend.Core.Entities.Resources.Assessment", "Assessment")
                         .WithMany("Attempts")
                         .HasForeignKey("AssessmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_assessment_attempts_assessments_assessment_id");
 
-                    b.HasOne("Backend.Models.Users.User", "User")
+                    b.HasOne("Backend.Core.Entities.Users.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1500,21 +1531,62 @@ namespace backend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.AssessmentResponse", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.AssignmentGrade", b =>
                 {
-                    b.HasOne("Backend.Models.Submissions.AssessmentAttempt", "Attempt")
-                        .WithMany("Responses")
+                    b.HasOne("Backend.Core.Entities.Users.User", "Grader")
+                        .WithMany()
+                        .HasForeignKey("GraderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignment_grades_users_grader_id");
+
+                    b.HasOne("Backend.Core.Entities.Submissions.AssignmentSubmission", "Submission")
+                        .WithOne("Grade")
+                        .HasForeignKey("Backend.Core.Entities.Submissions.AssignmentGrade", "SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_assignment_grades_assignment_submissions_submission_id");
+
+                    b.Navigation("Grader");
+
+                    b.Navigation("Submission");
+                });
+
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.AssignmentSubmission", b =>
+                {
+                    b.HasOne("Backend.Core.Entities.Resources.Assignment", "Assignment")
+                        .WithMany("Submissions")
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignment_submissions_assignments_assignment_id");
+
+                    b.HasOne("Backend.Core.Entities.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignment_submissions_users_user_id");
+
+                    b.Navigation("Assignment");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.AttemptAnswer", b =>
+                {
+                    b.HasOne("Backend.Core.Entities.Submissions.AssessmentAttempt", "Attempt")
+                        .WithMany("Answers")
                         .HasForeignKey("AttemptId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_assessment_responses_assessment_attempts_attempt_id");
 
-                    b.HasOne("Backend.Models.Users.User", "GradedByUser")
+                    b.HasOne("Backend.Core.Entities.Users.User", "GradedByUser")
                         .WithMany()
                         .HasForeignKey("GradedByUserId")
                         .HasConstraintName("fk_assessment_responses_users_graded_by_user_id");
 
-                    b.HasOne("Backend.Models.Resources.AssessmentQuestion", "Question")
-                        .WithMany("Responses")
+                    b.HasOne("Backend.Core.Entities.Resources.AssessmentQuestion", "Question")
+                        .WithMany("Answers")
                         .HasForeignKey("QuestionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -1527,56 +1599,15 @@ namespace backend.Migrations
                     b.Navigation("Question");
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.AssignmentGrade", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.CodeExecutionLog", b =>
                 {
-                    b.HasOne("Backend.Models.Users.User", "Grader")
-                        .WithMany()
-                        .HasForeignKey("GraderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_assignment_grades_users_grader_id");
-
-                    b.HasOne("Backend.Models.Submissions.AssignmentSubmission", "Submission")
-                        .WithOne("Grade")
-                        .HasForeignKey("Backend.Models.Submissions.AssignmentGrade", "SubmissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_assignment_grades_assignment_submissions_submission_id");
-
-                    b.Navigation("Grader");
-
-                    b.Navigation("Submission");
-                });
-
-            modelBuilder.Entity("Backend.Models.Submissions.AssignmentSubmission", b =>
-                {
-                    b.HasOne("Backend.Models.Resources.Assignment", "Assignment")
-                        .WithMany("Submissions")
-                        .HasForeignKey("AssignmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_assignment_submissions_assignments_assignment_id");
-
-                    b.HasOne("Backend.Models.Users.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_assignment_submissions_users_user_id");
-
-                    b.Navigation("Assignment");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Backend.Models.Submissions.CodeExecutionLog", b =>
-                {
-                    b.HasOne("Backend.Models.Resources.Problem", "Problem")
+                    b.HasOne("Backend.Core.Entities.Resources.CodingProblem", "Problem")
                         .WithMany()
                         .HasForeignKey("ProblemId")
                         .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_code_execution_logs_problems_problem_id");
+                        .HasConstraintName("fk_code_execution_logs_coding_problems_problem_id");
 
-                    b.HasOne("Backend.Models.Users.User", "User")
+                    b.HasOne("Backend.Core.Entities.Users.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1588,15 +1619,15 @@ namespace backend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.ProblemSubmission", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.ProblemSubmission", b =>
                 {
-                    b.HasOne("Backend.Models.Resources.Problem", "Problem")
+                    b.HasOne("Backend.Core.Entities.Resources.CodingProblem", "Problem")
                         .WithMany("Submissions")
                         .HasForeignKey("ProblemId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_problem_submissions_problems_problem_id");
+                        .HasConstraintName("fk_problem_submissions_coding_problems_problem_id");
 
-                    b.HasOne("Backend.Models.Users.User", "User")
+                    b.HasOne("Backend.Core.Entities.Users.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1608,45 +1639,45 @@ namespace backend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.ProblemTestResult", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.ProblemTestResult", b =>
                 {
-                    b.HasOne("Backend.Models.Submissions.ProblemSubmission", "Submission")
+                    b.HasOne("Backend.Core.Entities.Submissions.ProblemSubmission", "Submission")
                         .WithMany("TestResults")
                         .HasForeignKey("SubmissionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_problem_test_results_problem_submissions_submission_id");
 
-                    b.HasOne("Backend.Models.Resources.ProblemTestCase", "TestCase")
+                    b.HasOne("Backend.Core.Entities.Resources.ProblemTestCase", "TestCase")
                         .WithMany()
                         .HasForeignKey("TestCaseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_problem_test_results_test_cases_test_case_id");
+                        .HasConstraintName("fk_problem_test_results_problem_test_cases_test_case_id");
 
                     b.Navigation("Submission");
 
                     b.Navigation("TestCase");
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.Course", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.Course", b =>
                 {
                     b.Navigation("Enrollments");
 
                     b.Navigation("Modules");
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.Enrollment", b =>
-                {
-                    b.Navigation("TAPermissions");
-                });
-
-            modelBuilder.Entity("Backend.Models.Courses.Module", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.CourseModule", b =>
                 {
                     b.Navigation("Resources");
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.ModuleResource", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.Enrollment", b =>
+                {
+                    b.Navigation("TAPermissions");
+                });
+
+            modelBuilder.Entity("Backend.Core.Entities.Courses.ModuleResource", b =>
                 {
                     b.Navigation("Assessment");
 
@@ -1661,51 +1692,51 @@ namespace backend.Migrations
                     b.Navigation("Progress");
                 });
 
-            modelBuilder.Entity("Backend.Models.Courses.ResourceComment", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Courses.ResourceComment", b =>
                 {
                     b.Navigation("Replies");
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.Assessment", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.Assessment", b =>
                 {
                     b.Navigation("Attempts");
 
                     b.Navigation("Questions");
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.AssessmentQuestion", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.AssessmentQuestion", b =>
                 {
-                    b.Navigation("Responses");
+                    b.Navigation("Answers");
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.Assignment", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.Assignment", b =>
                 {
                     b.Navigation("Submissions");
                 });
 
-            modelBuilder.Entity("Backend.Models.Resources.Problem", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Resources.CodingProblem", b =>
                 {
                     b.Navigation("Submissions");
 
                     b.Navigation("TestCases");
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.AssessmentAttempt", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.AssessmentAttempt", b =>
                 {
-                    b.Navigation("Responses");
+                    b.Navigation("Answers");
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.AssignmentSubmission", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.AssignmentSubmission", b =>
                 {
                     b.Navigation("Grade");
                 });
 
-            modelBuilder.Entity("Backend.Models.Submissions.ProblemSubmission", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Submissions.ProblemSubmission", b =>
                 {
                     b.Navigation("TestResults");
                 });
 
-            modelBuilder.Entity("Backend.Models.Users.User", b =>
+            modelBuilder.Entity("Backend.Core.Entities.Users.User", b =>
                 {
                     b.Navigation("Comments");
 
