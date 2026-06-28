@@ -14,20 +14,20 @@ public static class ModuleEndpoints
         var module = route.MapGroup("/api/module").WithTags("Modules");
 
         module.MapGet("{moduleSqid}", HandleGetById);
-        module.MapGet("published/{courseSqid}", HandleGetPublished);
-        module.MapGet("unpublished/{courseSqid}", HandleGetUnpublished);
-        module.MapGet("{moduleSqid}/check", HandleCheckOwner);
+        module.MapGet("published/{courseSqid}", HandleGetPublished).RequireAuthorization();
+        module.MapGet("unpublished/{courseSqid}", HandleGetUnpublished).RequireAuthorization();
+        module.MapGet("{moduleSqid}/check", HandleCheckOwner).RequireAuthorization();
 
-        module.MapPut("{courseSqid}", HandleCreate);
-        module.MapPost("{moduleSqid}", HandleUpdate);
-        module.MapDelete("{moduleSqid}", HandleDelete);
-        module.MapPost("bulk-delete", HandleBulkDelete);
+        module.MapPut("{courseSqid}", HandleCreate).RequireAuthorization();
+        module.MapPost("{moduleSqid}", HandleUpdate).RequireAuthorization();
+        module.MapDelete("{moduleSqid}", HandleDelete).RequireAuthorization();
+        module.MapPost("bulk-delete", HandleBulkDelete).RequireAuthorization();
 
-        module.MapPost("{courseSqid}/publish/{moduleSqid}", HandlePublish);
-        module.MapPost("{courseSqid}/unpublish/{moduleSqid}", HandleUnpublish);
-        module.MapPost("{courseSqid}/bulk-publish", HandleBulkPublish);
-        module.MapPost("{courseSqid}/bulk-unpublish", HandleBulkUnpublish);
-        module.MapPost("{moduleSqid}/reorder", HandleReorder);
+        module.MapPost("{courseSqid}/publish/{moduleSqid}", HandlePublish).RequireAuthorization();
+        module.MapPost("{courseSqid}/unpublish/{moduleSqid}", HandleUnpublish).RequireAuthorization();
+        module.MapPost("{courseSqid}/bulk-publish", HandleBulkPublish).RequireAuthorization();
+        module.MapPost("{courseSqid}/bulk-unpublish", HandleBulkUnpublish).RequireAuthorization();
+        module.MapPost("{moduleSqid}/reorder", HandleReorder).RequireAuthorization();
     }
 
     private static async

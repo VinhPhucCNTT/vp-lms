@@ -14,19 +14,19 @@ public static class ResourceEndpoints
         var resource = route.MapGroup("/api/resource").WithTags("Resources");
 
         resource.MapGet("{resourceSqid}", HandleGetById);
-        resource.MapGet("{moduleSqid}/published", HandleGetPublished);
-        resource.MapGet("{moduleSqid}/unpublished", HandleGetUnpublished);
-        resource.MapGet("{resourceSqid}/check", HandleCheckOwner);
+        resource.MapGet("{moduleSqid}/published", HandleGetPublished).RequireAuthorization();
+        resource.MapGet("{moduleSqid}/unpublished", HandleGetUnpublished).RequireAuthorization();
+        resource.MapGet("{resourceSqid}/check", HandleCheckOwner).RequireAuthorization();
 
-        resource.MapPut("{moduleSqid}", HandleCreate);
-        resource.MapPost("{resourceSqid}", HandleUpdate);
-        resource.MapDelete("{resourceSqid}", HandleDelete);
+        resource.MapPut("{moduleSqid}", HandleCreate).RequireAuthorization();
+        resource.MapPost("{resourceSqid}", HandleUpdate).RequireAuthorization();
+        resource.MapDelete("{resourceSqid}", HandleDelete).RequireAuthorization();
 
-        resource.MapPost("{moduleSqid}/publish/{resourceSqid}", HandlePublish);
-        resource.MapPost("{moduleSqid}/unpublish/{resourceSqid}", HandleUnpublish);
-        resource.MapPost("{moduleSqid}/bulk-publish", HandleBulkPublish);
-        resource.MapPost("{moduleSqid}/bulk-unpublish", HandleBulkUnpublish);
-        resource.MapPost("{resourceSqid}/reorder", HandleReorder);
+        resource.MapPost("{moduleSqid}/publish/{resourceSqid}", HandlePublish).RequireAuthorization();
+        resource.MapPost("{moduleSqid}/unpublish/{resourceSqid}", HandleUnpublish).RequireAuthorization();
+        resource.MapPost("{moduleSqid}/bulk-publish", HandleBulkPublish).RequireAuthorization();
+        resource.MapPost("{moduleSqid}/bulk-unpublish", HandleBulkUnpublish).RequireAuthorization();
+        resource.MapPost("{resourceSqid}/reorder", HandleReorder).RequireAuthorization();
     }
 
     private static async

@@ -15,8 +15,8 @@ public static class CourseEndpoints
         var course = route.MapGroup("/api/course").WithTags("Courses");
 
         course.MapGet("{courseSqid}", HandleGetById);
-        course.MapGet("user/{userSqid}", HandleGetUserCourses);
-        course.MapGet("", HandleGetPublished);
+        course.MapGet("user/{userSqid}", HandleGetUserCourses).RequireAuthorization();
+        course.MapGet("", HandleGetPublished).RequireAuthorization();
         course.MapGet("unpublished", HandleGetUnpublished).RequireAuthorization();
         course.MapGet("query", HandleQuery);
         course.MapGet("{courseSqid}/check", HandleCheckOwner).RequireAuthorization();
