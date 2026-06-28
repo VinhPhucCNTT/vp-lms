@@ -15,8 +15,11 @@ using Backend.Services.Auth;
 using Backend.Services.Courses;
 using Backend.Services.Users;
 using Backend.Core.Automapper;
+using Backend.Core.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // Automatically register validators
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
@@ -111,6 +114,8 @@ builder.Services.AddScoped<ModuleService>();
 builder.Services.AddScoped<ResourceService>();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 app.UseCors("allowFrontend");
 

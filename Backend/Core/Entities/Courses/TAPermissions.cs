@@ -7,7 +7,7 @@ public class TAPermissions : BaseEntity
 {
     public long EnrollmentId { get; set; }
     public bool CanGrade { get; set; } = true;
-    // // TODO: Decide whether to keep this
+    // NOTE: Unnecessary for now
     // public bool CanModerateDiscussions { get; set; } = true;
     // public bool CanEditContent { get; set; } = false;
     // public bool CanManageEnrollments { get; set; } = false;

@@ -28,9 +28,6 @@ public class ModuleResourceConfiguration : IEntityTypeConfiguration<ModuleResour
         builder.Property(x => x.AccessPassword)
             .HasMaxLength(255);
 
-        builder.HasIndex(x => x.ModuleId)
-            .IsUnique();
-
         builder.HasOne(x => x.Lesson)
             .WithOne(l => l.Resource)
             .HasForeignKey<Lesson>(l => l.ResourceId)

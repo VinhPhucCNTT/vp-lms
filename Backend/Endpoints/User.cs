@@ -159,7 +159,7 @@ public static class UserEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var result = await userService.ActivateUserAsync(decoded[0]);
+        var result = await userService.DeactivateUserAsync(decoded[0]);
         return result
             ? TypedResults.Ok()
             : TypedResults.NotFound();

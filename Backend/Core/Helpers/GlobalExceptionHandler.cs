@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Backend.Helpers;
+namespace Backend.Core.Helpers;
 
 internal sealed class GlobalExceptionHandler(
         IProblemDetailsService problemDetailsService,

@@ -37,7 +37,7 @@ public class AuthService(
     {
         using var dbContext = await _contextFactory.CreateDbContextAsync();
 
-        if (!await dbContext.Users.AnyAsync(u => u.Email == dto.Email))
+        if (await dbContext.Users.AnyAsync(u => u.Email == dto.Email))
             return null;
 
         var hashedPassword = Argon2.Hash(dto.Password);
