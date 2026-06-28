@@ -74,6 +74,7 @@ public class CourseService(
         var currentUserId = _currentUserService.UserId;
         return await db.Courses
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Where(c => c.CreatorId == currentUserId && !c.IsPublished)
             .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync();
@@ -150,6 +151,7 @@ public class CourseService(
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
         var count = await db.Courses
+            .IgnoreQueryFilters()
             .Where(c => c.Id == courseId && c.CreatorId == currentUserId)
             .Where(c => c.IsPublished == IsPublished)
             .ExecuteUpdateAsync(c => c.SetProperty(c => c.IsPublished, IsPublished));
