@@ -108,19 +108,24 @@ public class ModuleService(
     public async Task<bool> DeleteModuleAsync(long moduleId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var count = await db.CourseModules
-            .Where(m => m.Id == moduleId)
-            .ExecuteDeleteAsync();
-        return count > 0;
+        var module = await db.CourseModules.FirstOrDefaultAsync(m => m.Id == moduleId);
+        if (module is null)
+            return false;
+        db.CourseModules.Remove(module);
+        await db.SaveChangesAsync();
+        return true;
     }
 
     public async Task<int> DeleteModulesAsync(List<long> moduleIds)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
-        return await db.CourseModules
-            .Where(m => moduleIds.Contains(m.Id) && m.Course.CreatorId == currentUserId)
-            .ExecuteDeleteAsync();
+        var modules = db.CourseModules
+            .Where(m => moduleIds.Contains(m.Id) && m.Course.CreatorId == currentUserId);
+        var count = await modules.CountAsync();
+        db.CourseModules.RemoveRange(modules);
+        await db.SaveChangesAsync();
+        return count;
     }
 
     // TODO: Reorder multiple modules at once

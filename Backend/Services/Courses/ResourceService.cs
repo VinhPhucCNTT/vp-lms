@@ -99,8 +99,12 @@ public class ResourceService(
     public async Task<bool> DeleteResourceAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var count = await db.ModuleResources.Where(r => r.Id == resourceId).ExecuteDeleteAsync();
-        return count > 0;
+        var resource = await db.ModuleResources.FirstOrDefaultAsync(r => r.Id == resourceId);
+        if (resource is null)
+            return false;
+        db.ModuleResources.Remove(resource);
+        await db.SaveChangesAsync();
+        return true;
     }
 
     public async Task<bool> ReorderResourceAsync(long resourceId, int orderIndex)

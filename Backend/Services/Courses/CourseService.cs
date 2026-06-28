@@ -137,11 +137,12 @@ public class CourseService(
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
-        var count = await db.Courses
-            .Where(c => c.Id == courseId && c.CreatorId == currentUserId)
-            .ExecuteDeleteAsync();
-
-        return count > 0;
+        var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId && c.CreatorId == currentUserId);
+        if (course is null)
+            return false;
+        db.Courses.Remove(course);
+        await db.SaveChangesAsync();
+        return true;
     }
 
     public async Task<bool> SetCoursePublishStatusAsync(long courseId, bool IsPublished)

@@ -78,11 +78,13 @@ public class EnrollmentService(
         if (course is null || course.CreatorId == currentUserId)
             return false;
 
-        var count = await db.Enrollments
-            .Where(e => e.CourseId == courseId && e.UserId == currentUserId)
-            .ExecuteDeleteAsync();
+        var enrollment = await db.Enrollments.FirstOrDefaultAsync(e => e.CourseId == courseId && e.UserId == currentUserId);
+        if (enrollment is null)
+            return false;
+        db.Enrollments.Remove(enrollment);
+        await db.SaveChangesAsync();
 
-        return count > 0;
+        return true;
     }
 
     public async Task<EnrollmentResponse?> SetTAAsync(long enrollmentId, bool enable)
@@ -106,11 +108,13 @@ public class EnrollmentService(
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
 
-        var count = await db.Enrollments
-            .Where(e => e.Id == enrollmentId && e.Course.CreatorId == currentUserId)
-            .ExecuteDeleteAsync();
+        var enrollment = await db.Enrollments.FirstOrDefaultAsync(e => e.Id == enrollmentId && e.UserId == currentUserId);
+        if (enrollment is null)
+            return false;
+        db.Enrollments.Remove(enrollment);
+        await db.SaveChangesAsync();
 
-        return count > 0;
+        return true;
     }
 
     private async Task<List<EnrollmentResponse>> GetEnrollmentsAsync(
