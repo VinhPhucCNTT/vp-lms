@@ -159,13 +159,13 @@ public class ResourceService(
             .ExecuteUpdateAsync(r => r.SetProperty(r => r.IsPublished, isPublished));
     }
 
-    public async Task<bool> CheckOwnerAsync(long moduleId)
+    public async Task<bool> CheckOwnerAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
-        return await db.CourseModules
+        return await db.ModuleResources
             .AsNoTracking()
-            .Where(c => c.Id == moduleId && c.Course.CreatorId == currentUserId)
+            .Where(c => c.Id == resourceId && c.Module.Course.CreatorId == currentUserId)
             .AnyAsync();
     }
 }
