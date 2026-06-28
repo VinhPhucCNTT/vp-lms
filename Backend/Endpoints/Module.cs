@@ -14,8 +14,8 @@ public static class ModuleEndpoints
         var module = route.MapGroup("/api/module").WithTags("Modules");
 
         module.MapGet("{moduleSqid}", HandleGetById);
-        module.MapGet("publshed/{courseSqid}", HandleGetPublished);
-        module.MapGet("unpublshed/{courseSqid}", HandleGetUnpublished);
+        module.MapGet("published/{courseSqid}", HandleGetPublished);
+        module.MapGet("unpublished/{courseSqid}", HandleGetUnpublished);
         module.MapGet("{moduleSqid}/check", HandleCheckOwner);
 
         module.MapPut("{courseSqid}", HandleCreate);
