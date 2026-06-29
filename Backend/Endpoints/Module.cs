@@ -13,232 +13,286 @@ public static class ModuleEndpoints
     {
         var module = route.MapGroup("/api/module").WithTags("Modules");
 
-        module.MapGet("{moduleSqid}", HandleGetById);
-        module.MapGet("published/{courseSqid}", HandleGetPublished).RequireAuthorization();
-        module.MapGet("unpublished/{courseSqid}", HandleGetUnpublished).RequireAuthorization();
-        module.MapGet("{moduleSqid}/check", HandleCheckOwner).RequireAuthorization();
+        module.MapGet("{moduleId}", HandleGetById);
+        module.MapGet("published/{courseId}", HandleGetPublished).RequireAuthorization();
+        module.MapGet("unpublished/{courseId}", HandleGetUnpublished).RequireAuthorization();
+        module.MapGet("{moduleId}/check", HandleCheckOwner).RequireAuthorization();
 
-        module.MapPut("{courseSqid}", HandleCreate).RequireAuthorization();
-        module.MapPost("{moduleSqid}", HandleUpdate).RequireAuthorization();
-        module.MapDelete("{moduleSqid}", HandleDelete).RequireAuthorization();
+        module.MapPut("{courseId}", HandleCreate).RequireAuthorization();
+        module.MapPost("{moduleId}", HandleUpdate).RequireAuthorization();
+        module.MapDelete("{moduleId}", HandleDelete).RequireAuthorization();
         module.MapPost("bulk-delete", HandleBulkDelete).RequireAuthorization();
 
-        module.MapPost("{courseSqid}/publish/{moduleSqid}", HandlePublish).RequireAuthorization();
-        module.MapPost("{courseSqid}/unpublish/{moduleSqid}", HandleUnpublish).RequireAuthorization();
-        module.MapPost("{courseSqid}/bulk-publish", HandleBulkPublish).RequireAuthorization();
-        module.MapPost("{courseSqid}/bulk-unpublish", HandleBulkUnpublish).RequireAuthorization();
-        module.MapPost("{moduleSqid}/reorder", HandleReorder).RequireAuthorization();
+        module.MapPost("{courseId}/publish/{moduleId}", HandlePublish).RequireAuthorization();
+        module.MapPost("{courseId}/unpublish/{moduleId}", HandleUnpublish).RequireAuthorization();
+        module.MapPost("{courseId}/bulk-publish", HandleBulkPublish).RequireAuthorization();
+        module.MapPost("{courseId}/bulk-unpublish", HandleBulkUnpublish).RequireAuthorization();
+        module.MapPost("{moduleId}/reorder", HandleReorder).RequireAuthorization();
     }
 
     private static async
-        Task<Results<Ok<ModuleDetailResponse>, NotFound>>
+        Task<Results<Ok<ModuleDetailResponse>, BadRequest, NotFound>>
         HandleGetById(
-            [FromRoute] string moduleSqid,
+            string moduleId,
             SqidsEncoder<long> sqidsEncoder,
             ModuleService moduleService)
     {
-        var moduleId = sqidsEncoder.Decode(moduleSqid).Single();
-        var result = await moduleService.GetModuleByIdAsync(moduleId);
+        var decoded = sqidsEncoder.Decode(moduleId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        var result = await moduleService.GetModuleByIdAsync(decoded[0]);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();
     }
 
     private static async
-        Task<Ok<List<ModuleResponse>>>
+        Task<Results<Ok<List<ModuleResponse>>, BadRequest>>
         HandleGetPublished(
-            [FromRoute] string courseSqid,
+            string courseId,
             SqidsEncoder<long> sqidsEncoder,
             ModuleService moduleService)
     {
-        var courseId = sqidsEncoder.Decode(courseSqid).Single();
+        var decoded = sqidsEncoder.Decode(courseId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
         return TypedResults.Ok(
-            await moduleService.GetPublishedModulesAsync(courseId));
+            await moduleService.GetPublishedModulesAsync(decoded[0]));
     }
 
     private static async
-        Task<Ok<List<ModuleResponse>>>
+        Task<Results<Ok<List<ModuleResponse>>, BadRequest>>
         HandleGetUnpublished(
-            [FromRoute] string courseSqid,
+            string courseId,
             SqidsEncoder<long> sqidsEncoder,
             ModuleService moduleService)
     {
-        var courseId = sqidsEncoder.Decode(courseSqid).Single();
+        var decoded = sqidsEncoder.Decode(courseId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
         return TypedResults.Ok(
-            await moduleService.GetUnpublishedModulesAsync(courseId));
+            await moduleService.GetUnpublishedModulesAsync(decoded[0]));
     }
 
     private static async
-        Task<Ok<bool>>
+        Task<Results<Ok<bool>, BadRequest>>
         HandleCheckOwner(
-            [FromRoute] string moduleSqid,
+            string moduleId,
             SqidsEncoder<long> sqidsEncoder,
             ModuleService moduleService)
     {
-        var moduleId = sqidsEncoder.Decode(moduleSqid).Single();
+        var decoded = sqidsEncoder.Decode(moduleId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
         return TypedResults.Ok(
-            await moduleService.CheckOwnerAsync(moduleId));
+            await moduleService.CheckOwnerAsync(decoded[0]));
     }
 
     private static async
-        Task<Ok<ModuleSetResponse>>
+        Task<Results<Ok<ModuleSetResponse>, BadRequest>>
         HandleCreate(
-            [FromRoute] string courseSqid,
+            string courseId,
             [FromBody] ModuleSetRequest request,
             SqidsEncoder<long> sqidsEncoder,
             ModuleService moduleService)
     {
-        var courseId = sqidsEncoder.Decode(courseSqid).Single();
+        var decoded = sqidsEncoder.Decode(courseId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
         return TypedResults.Ok(
-            await moduleService.CreateModuleAsync(courseId, request));
+            await moduleService.CreateModuleAsync(decoded[0], request));
     }
 
     private static async
-        Task<Results<Ok<ModuleSetResponse>, NotFound, UnauthorizedHttpResult>>
+        Task<Results<Ok<ModuleSetResponse>, NotFound, BadRequest, UnauthorizedHttpResult>>
         HandleUpdate(
-            [FromRoute] string moduleSqid,
+            string moduleId,
             [FromBody] ModuleSetRequest request,
             SqidsEncoder<long> sqidsEncoder,
             ModuleService moduleService)
     {
-        var moduleId = sqidsEncoder.Decode(moduleSqid).Single();
-        if (!await moduleService.CheckOwnerAsync(moduleId))
+        var decoded = sqidsEncoder.Decode(moduleId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        if (!await moduleService.CheckOwnerAsync(decoded[0]))
             return TypedResults.Unauthorized();
 
-        var result = await moduleService.UpdateModuleAsync(moduleId, request);
+        var result = await moduleService.UpdateModuleAsync(decoded[0], request);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();
     }
 
     private static async
-        Task<Results<Ok, NotFound, UnauthorizedHttpResult>>
+        Task<Results<Ok, NotFound, BadRequest, UnauthorizedHttpResult>>
         HandleDelete(
-            [FromRoute] string moduleSqid,
+            string moduleId,
             SqidsEncoder<long> sqidsEncoder,
             ModuleService moduleService)
     {
-        var moduleId = sqidsEncoder.Decode(moduleSqid).Single();
-        if (!await moduleService.CheckOwnerAsync(moduleId))
+        var decoded = sqidsEncoder.Decode(moduleId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        if (!await moduleService.CheckOwnerAsync(decoded[0]))
             return TypedResults.Unauthorized();
 
-        return await moduleService.DeleteModuleAsync(moduleId)
+        return await moduleService.DeleteModuleAsync(decoded[0])
             ? TypedResults.Ok()
             : TypedResults.NotFound();
     }
 
     private static async
-        Task<Results<Ok<int>, NotFound>>
+        Task<Results<Ok<int>, BadRequest, NotFound>>
         HandleBulkDelete(
-            [FromBody] List<string> moduleSqids,
+            [FromBody] List<string> moduleIds,
             SqidsEncoder<long> sqidsEncoder,
             ModuleService moduleService)
     {
-        if (moduleSqids is null || moduleSqids.Count == 0)
+        if (moduleIds is null || moduleIds.Count == 0)
             return TypedResults.Ok(0);
-        var moduleIds = moduleSqids
-            .Select(sqid => sqidsEncoder.Decode(sqid).SingleOrDefault())
-            .ToList();
 
-        var count = await moduleService.DeleteModulesAsync(moduleIds);
+        List<long> decodedIds = [];
+        foreach (var id in moduleIds)
+        {
+            var decoded = sqidsEncoder.Decode(id);
+            if (decoded.Count != 1)
+                return TypedResults.BadRequest();
+            decodedIds.Add(decoded[0]);
+        }
+
+        var count = await moduleService.DeleteModulesAsync(decodedIds);
         return count > 0
             ? TypedResults.Ok(count)
             : TypedResults.NotFound();
     }
 
     private static async
-        Task<Results<Ok, NotFound, UnauthorizedHttpResult>>
+        Task<Results<Ok, NotFound, BadRequest, UnauthorizedHttpResult>>
         HandlePublish(
-            [FromRoute] string courseSqid,
-            [FromRoute] string moduleSqid,
+            string courseId,
+            string moduleId,
             SqidsEncoder<long> sqidsEncoder,
             ModuleService moduleService)
     {
-        var moduleId = sqidsEncoder.Decode(moduleSqid).Single();
-        var courseId = sqidsEncoder.Decode(courseSqid).Single();
-        if (!await moduleService.CheckOwnerAsync(moduleId))
+        var dModuleId = sqidsEncoder.Decode(moduleId);
+        var dCourseId = sqidsEncoder.Decode(courseId);
+        if (dModuleId.Count != 1 || dCourseId.Count != 1)
+            return TypedResults.BadRequest();
+
+        if (!await moduleService.CheckOwnerAsync(dModuleId[0]))
             return TypedResults.Unauthorized();
 
-        var result = await moduleService.SetModulePublishStatusAsync(courseId, moduleId, true);
+        var result = await moduleService.SetModulePublishStatusAsync(dCourseId[0], dModuleId[0], true);
         return result
             ? TypedResults.Ok()
             : TypedResults.NotFound();
     }
 
     private static async
-        Task<Results<Ok, NotFound, UnauthorizedHttpResult>>
+        Task<Results<Ok, NotFound, BadRequest, UnauthorizedHttpResult>>
         HandleUnpublish(
-            [FromRoute] string courseSqid,
-            [FromRoute] string moduleSqid,
+            string courseId,
+            string moduleId,
             SqidsEncoder<long> sqidsEncoder,
             ModuleService moduleService)
     {
-        var moduleId = sqidsEncoder.Decode(moduleSqid).Single();
-        var courseId = sqidsEncoder.Decode(courseSqid).Single();
-        if (!await moduleService.CheckOwnerAsync(moduleId))
+        var dModuleId = sqidsEncoder.Decode(moduleId);
+        var dCourseId = sqidsEncoder.Decode(courseId);
+        if (dModuleId.Count != 1 || dCourseId.Count != 1)
+            return TypedResults.BadRequest();
+
+        if (!await moduleService.CheckOwnerAsync(dModuleId[0]))
             return TypedResults.Unauthorized();
 
-        var result = await moduleService.SetModulePublishStatusAsync(courseId, moduleId, false);
+        var result = await moduleService.SetModulePublishStatusAsync(dCourseId[0], dModuleId[0], false);
         return result
             ? TypedResults.Ok()
             : TypedResults.NotFound();
     }
 
     private static async
-        Task<Results<Ok<int>, NotFound, UnauthorizedHttpResult>>
+        Task<Results<Ok<int>, NotFound, BadRequest, UnauthorizedHttpResult>>
         HandleBulkPublish(
-            [FromRoute] string courseSqid,
-            [FromBody] List<string> moduleSqids,
+            string courseId,
+            [FromBody] List<string> moduleIds,
             SqidsEncoder<long> sqidsEncoder,
             ModuleService moduleService)
     {
-        if (moduleSqids is null || moduleSqids.Count == 0)
+        if (moduleIds is null || moduleIds.Count == 0)
             return TypedResults.Ok(0);
-        var moduleIds = moduleSqids
-            .Select(sqid => sqidsEncoder.Decode(sqid).SingleOrDefault())
-            .ToList();
-        var courseId = sqidsEncoder.Decode(courseSqid).Single();
 
-        var count = await moduleService.SetModulesPublishStatusAsync(courseId, moduleIds, true);
+        var dCourseId = sqidsEncoder.Decode(courseId);
+        if (dCourseId.Count != 1)
+            return TypedResults.BadRequest();
+
+        List<long> dModuleIds = [];
+        foreach (var id in moduleIds)
+        {
+            var decoded = sqidsEncoder.Decode(id);
+            if (decoded.Count != 1)
+                return TypedResults.BadRequest();
+            dModuleIds.Add(decoded[0]);
+        }
+
+        var count = await moduleService.SetModulesPublishStatusAsync(dCourseId[0], dModuleIds, true);
         return count > 0
             ? TypedResults.Ok(count)
             : TypedResults.NotFound();
     }
 
     private static async
-        Task<Results<Ok<int>, NotFound, UnauthorizedHttpResult>>
+        Task<Results<Ok<int>, NotFound, BadRequest, UnauthorizedHttpResult>>
         HandleBulkUnpublish(
-            [FromRoute] string courseSqid,
-            [FromBody] List<string> moduleSqids,
+            string courseId,
+            [FromBody] List<string> moduleIds,
             SqidsEncoder<long> sqidsEncoder,
             ModuleService moduleService)
     {
-        if (moduleSqids is null || moduleSqids.Count == 0)
+        if (moduleIds is null || moduleIds.Count == 0)
             return TypedResults.Ok(0);
-        var moduleIds = moduleSqids
-            .Select(sqid => sqidsEncoder.Decode(sqid).SingleOrDefault())
-            .ToList();
-        var courseId = sqidsEncoder.Decode(courseSqid).Single();
 
-        var count = await moduleService.SetModulesPublishStatusAsync(courseId, moduleIds, false);
+        var dCourseId = sqidsEncoder.Decode(courseId);
+        if (dCourseId.Count != 1)
+            return TypedResults.BadRequest();
+
+        List<long> dModuleIds = [];
+        foreach (var id in moduleIds)
+        {
+            var decoded = sqidsEncoder.Decode(id);
+            if (decoded.Count != 1)
+                return TypedResults.BadRequest();
+            dModuleIds.Add(decoded[0]);
+        }
+
+        var count = await moduleService.SetModulesPublishStatusAsync(dCourseId[0], dModuleIds, false);
         return count > 0
             ? TypedResults.Ok(count)
             : TypedResults.NotFound();
     }
 
     private static async
-        Task<Results<Ok, NotFound, UnauthorizedHttpResult>>
+        Task<Results<Ok, NotFound, BadRequest, UnauthorizedHttpResult>>
         HandleReorder(
-            [FromRoute] string moduleSqid,
+            string moduleId,
             [FromQuery] int orderIndex,
             SqidsEncoder<long> sqidsEncoder,
             ModuleService moduleService)
     {
-        var moduleId = sqidsEncoder.Decode(moduleSqid).Single();
-        if (!await moduleService.CheckOwnerAsync(moduleId))
+        var decoded = sqidsEncoder.Decode(moduleId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        if (!await moduleService.CheckOwnerAsync(decoded[0]))
             return TypedResults.Unauthorized();
 
-        return await moduleService.ReorderModuleAsync(moduleId, orderIndex)
+        return await moduleService.ReorderModuleAsync(decoded[0], orderIndex)
             ? TypedResults.Ok()
             : TypedResults.NotFound();
     }
