@@ -54,9 +54,10 @@ public class CourseService(
 
         var list = await courses
             .OrderBy(c => c.Id)
-            .Select(c => _mapper.Map<CourseResponse>(c))
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
+            .Include(c => c.Creator)
+            .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync();
 
         return new QueryResponse<CourseResponse>(
@@ -76,6 +77,7 @@ public class CourseService(
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Where(c => c.CreatorId == currentUserId && !c.IsPublished)
+            .Include(c => c.Creator)
             .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync();
     }
@@ -85,6 +87,7 @@ public class CourseService(
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Courses
             .AsNoTracking()
+            .Include(c => c.Creator)
             .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync();
     }
@@ -95,6 +98,7 @@ public class CourseService(
         return await db.Courses
             .AsNoTracking()
             .Where(c => c.CreatorId == userId)
+            .Include(c => c.Creator)
             .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync();
     }

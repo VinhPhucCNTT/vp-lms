@@ -12,16 +12,16 @@ public class CourseProfile : Profile
             .MapSqidId()
             .ForMember(
                 d => d.CreatorId,
-                o => o.ConvertUsing<SqidConverter, long>(x => x.Creator.Id))
+                o => o.ConvertUsing<SqidConverter, long>(x => x.CreatorId))
             .ForMember(
                 d => d.CreatorUserName,
-                o => o.MapFrom(x => x.Creator.Username));
+                o => o.MapFrom(x => x.Creator != null ? x.Creator.Username : ""));
 
         CreateMap<Course, CourseSetResponse>()
             .MapSqidId()
             .ForMember(
                 d => d.CreatorId,
-                o => o.ConvertUsing<SqidConverter, long>(x => x.Creator.Id));
+                o => o.ConvertUsing<SqidConverter, long>(x => x.CreatorId));
 
     }
 }
