@@ -75,7 +75,6 @@ public class CourseService(
         var currentUserId = _currentUserService.UserId;
         return await db.Courses
             .AsNoTracking()
-            .IgnoreQueryFilters()
             .Where(c => c.CreatorId == currentUserId && !c.IsPublished)
             .Include(c => c.Creator)
             .Select(c => _mapper.Map<CourseResponse>(c))
@@ -87,6 +86,7 @@ public class CourseService(
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Courses
             .AsNoTracking()
+            .Where(c => c.IsPublished)
             .Include(c => c.Creator)
             .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync();
@@ -150,15 +150,14 @@ public class CourseService(
         return true;
     }
 
-    public async Task<bool> SetCoursePublishStatusAsync(long courseId, bool IsPublished)
+    public async Task<bool> SetCoursePublishStatusAsync(long courseId, bool value)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
         var count = await db.Courses
-            .IgnoreQueryFilters()
             .Where(c => c.Id == courseId && c.CreatorId == currentUserId)
-            .Where(c => c.IsPublished == IsPublished)
-            .ExecuteUpdateAsync(c => c.SetProperty(c => c.IsPublished, IsPublished));
+            .Where(c => c.IsPublished == value)
+            .ExecuteUpdateAsync(c => c.SetProperty(c => c.IsPublished, value));
 
         return count > 0;
     }
