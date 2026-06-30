@@ -9,7 +9,13 @@ public class ModuleResourceConfiguration : IEntityTypeConfiguration<ModuleResour
 {
     public void Configure(EntityTypeBuilder<ModuleResource> builder)
     {
-        builder.ToTable("module_resources");
+        builder.ToTable(
+            "module_resources",
+            t => t.HasCheckConstraint(
+                "CK_ModuleResources_Polymorphic_ExactlyOne",
+                "(\"LessonId\" IS NOT NULL)::int + (\"AssignmentId\" IS NOT NULL)::int + (\"AssessmentId\" IS NOT NULL)::int + (\"ProblemId\" IS NOT NULL)::int = 1"
+            )
+        );
 
         builder.HasKey(x => x.Id);
 
