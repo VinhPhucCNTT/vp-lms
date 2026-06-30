@@ -9,7 +9,6 @@ public class ResourceCommentConfiguration : IEntityTypeConfiguration<ResourceCom
     public void Configure(EntityTypeBuilder<ResourceComment> builder)
     {
         builder.ToTable("resource_comments");
-        builder.HasQueryFilter(x => !x.IsDeleted);
 
         builder.HasKey(x => x.Id);
 

@@ -10,6 +10,7 @@ public class Assignment : BaseEntity, ISoftDeletable
     public string InstructionsMarkdown { get; set; } = default!;
     public string? AllowedFileTypes { get; set; }
     public int MaxFileSizeKb { get; set; } = 10;
+    public int? MaxAttempt { get; set; }
     public SubmissionType SubmissionType { get; set; } = SubmissionType.Both;
     public string? GradingSchemaJson { get; set; } // JSONB in PostgreSQL
 

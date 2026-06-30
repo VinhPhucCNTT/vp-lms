@@ -20,6 +20,7 @@ public class ModuleConfiguration : IEntityTypeConfiguration<CourseModule>
             .HasColumnType("text");
 
         builder.HasIndex(x => new { x.CourseId, x.OrderIndex })
+            .HasFilter("IsDeleted = false")
             .IsUnique();
 
         builder.HasMany(x => x.Resources)

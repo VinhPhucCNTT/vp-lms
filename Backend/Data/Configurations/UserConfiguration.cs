@@ -38,7 +38,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasConversion<string>();
 
         builder.HasIndex(x => x.IsActive);
-        builder.HasIndex(x => new { x.Username, x.Email })
+        builder.HasIndex(x => x.Username)
+            .IsUnique();
+        builder.HasIndex(x => x.Email)
             .IsUnique();
     }
 }

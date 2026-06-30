@@ -18,6 +18,7 @@ public class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollment>
             .HasConversion<string>();
 
         builder.HasIndex(x => new { x.CourseId, x.UserId })
+            .HasFilter("IsDeleted = false")
             .IsUnique();
 
         builder.HasOne(x => x.TAPermissions)

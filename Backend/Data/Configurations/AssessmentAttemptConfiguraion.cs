@@ -19,7 +19,7 @@ public class AssessmentAttemptConfiguration : IEntityTypeConfiguration<Assessmen
         builder.Property(x => x.TotalScore)
             .HasColumnType("decimal(5,2)");
 
-        builder.HasIndex(x => new { x.AssessmentId, x.UserId });
+        builder.HasIndex(x => new { x.AssessmentId, x.UserId, x.AttemptNumber });
 
         builder.HasOne(x => x.Assessment)
             .WithMany(a => a.Attempts)
