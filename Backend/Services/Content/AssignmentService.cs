@@ -1,23 +1,22 @@
 using Backend.Data;
-using Backend.Core.Common;
 using Microsoft.EntityFrameworkCore;
 using Backend.Services.Common;
 using Backend.Core.Types;
 using Backend.Core.Entities.Courses;
-using Sqids;
 using Backend.Core.Entities.Resources;
 using Backend.Core.Entities.Submissions;
+using AutoMapper;
 
 namespace Backend.Services.Content;
 
 public class AssignmentService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
-    SqidsEncoder<long> sqidsEncoder)
+    IMapper mapper)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
-    private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
+    private readonly IMapper _mapper = mapper;
 
     public async Task<AssignmentResponse?> GetAssignmentByIdAsync(long resourceId)
     {
@@ -25,17 +24,11 @@ public class AssignmentService(
         return await db.Assignments
             .AsNoTracking()
             .Where(a => a.ResourceId == resourceId)
-            .Select(a => new AssignmentResponse(
-                _sqidsEncoder.Encode(a.Id),
-                a.InstructionsMarkdown,
-                a.AllowedFileTypes,
-                a.MaxFileSizeKb,
-                a.SubmissionType,
-                a.GradingSchemaJson
-            )).FirstOrDefaultAsync();
+            .Select(a => _mapper.Map<AssignmentResponse>(a))
+            .FirstOrDefaultAsync();
     }
 
-    public async Task<AssignmentResponse> CreateAssignmentAsync(ModuleResource resource, AssignmentRequest request)
+    public async Task<AssignmentResponse?> CreateAssignmentAsync(ModuleResource resource, AssignmentRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var assignment = new Assignment
@@ -44,19 +37,13 @@ public class AssignmentService(
             InstructionsMarkdown = request.InstructionsMarkdown,
             AllowedFileTypes = request.AllowedFileTypes,
             MaxFileSizeKb = request.MaxFileSizeKb,
+            MaxAttempt = request.MaxAttempt,
             SubmissionType = request.SubmissionType,
             GradingSchemaJson = request.GradingSchemaJson
         };
         db.Assignments.Add(assignment);
         await db.SaveChangesAsync();
-        return new AssignmentResponse(
-            _sqidsEncoder.Encode(assignment.Id),
-            assignment.InstructionsMarkdown,
-            assignment.AllowedFileTypes,
-            assignment.MaxFileSizeKb,
-            assignment.SubmissionType,
-            assignment.GradingSchemaJson
-        );
+        return _mapper.Map<AssignmentResponse>(assignment);
     }
 
     // public async Task<bool> ValidateGradingSchemaAsync(string? GradingSchemaJson) { }
@@ -75,19 +62,13 @@ public class AssignmentService(
         assignment.InstructionsMarkdown = request.InstructionsMarkdown;
         assignment.AllowedFileTypes = request.AllowedFileTypes;
         assignment.MaxFileSizeKb = request.MaxFileSizeKb;
+        assignment.MaxAttempt = request.MaxAttempt;
         assignment.SubmissionType = request.SubmissionType;
         assignment.GradingSchemaJson = request.GradingSchemaJson;
 
         db.Assignments.Update(assignment);
         await db.SaveChangesAsync();
-        return new AssignmentResponse(
-            _sqidsEncoder.Encode(assignment.Id),
-            assignment.InstructionsMarkdown,
-            assignment.AllowedFileTypes,
-            assignment.MaxFileSizeKb,
-            assignment.SubmissionType,
-            assignment.GradingSchemaJson
-        );
+        return _mapper.Map<AssignmentResponse>(assignment);
     }
 
     public async Task<List<SubmissionResponse>?> GetSubmissionsAsync(long assignmentId)
@@ -96,13 +77,8 @@ public class AssignmentService(
         return await db.AssignmentSubmissions
             .AsNoTracking()
             .Where(s => s.AssignmentId == assignmentId)
-            .Select(s => new SubmissionResponse(
-                _sqidsEncoder.Encode(s.AssignmentId),
-                _sqidsEncoder.Encode(s.UserId),
-                s.SubmissionText,
-                s.FileUrl,
-                s.FileName
-            )).ToListAsync();
+            .Select(s => _mapper.Map<SubmissionResponse>(s))
+            .ToListAsync();
     }
 
     public async Task<AssignmentGradeResponse?> GetGradeBySubmissionAsync(long submissionId)
@@ -111,12 +87,8 @@ public class AssignmentService(
         return await db.AssignmentGrades
             .AsNoTracking()
             .Where(g => g.SubmissionId == submissionId)
-            .Select(g => new AssignmentGradeResponse(
-                _sqidsEncoder.Encode(g.SubmissionId),
-                _sqidsEncoder.Encode(g.GraderId),
-                g.Score,
-                g.FeedbackText
-            )).FirstOrDefaultAsync();
+            .Select(g => _mapper.Map<AssignmentGradeResponse>(g))
+            .FirstOrDefaultAsync();
     }
 
     public async Task<List<AssignmentGradeResponse>?> GetGradesByAssignmentAsync(long assignmentId)
@@ -151,13 +123,8 @@ public class AssignmentService(
         return await db.AssignmentSubmissions
             .AsNoTracking()
             .Where(s => s.AssignmentId == assignmentId && s.Grade == null)
-            .Select(s => new SubmissionResponse(
-                _sqidsEncoder.Encode(s.AssignmentId),
-                _sqidsEncoder.Encode(s.UserId),
-                s.SubmissionText,
-                s.FileUrl,
-                s.FileName
-            )).ToListAsync();
+            .Select(s => _mapper.Map<SubmissionResponse>(s))
+            .ToListAsync();
     }
 
     public async Task<List<SubmissionResponse>?> GetStudentSubmissionsAsync(long assignmentId, long studentUserId)
@@ -166,13 +133,8 @@ public class AssignmentService(
         return await db.AssignmentSubmissions
             .AsNoTracking()
             .Where(s => s.AssignmentId == assignmentId && s.UserId == studentUserId)
-            .Select(s => new SubmissionResponse(
-                _sqidsEncoder.Encode(s.AssignmentId),
-                _sqidsEncoder.Encode(s.UserId),
-                s.SubmissionText,
-                s.FileUrl,
-                s.FileName
-            )).ToListAsync();
+            .Select(s => _mapper.Map<SubmissionResponse>(s))
+            .ToListAsync();
     }
 
     // TODO: Implement
@@ -197,13 +159,7 @@ public class AssignmentService(
 
         db.AssignmentSubmissions.Add(submission);
         await db.SaveChangesAsync();
-        return new SubmissionResponse(
-            _sqidsEncoder.Encode(submission.AssignmentId),
-            _sqidsEncoder.Encode(currentUserId),
-            submission.SubmissionText,
-            submission.FileUrl,
-            submission.FileName
-        );
+        return _mapper.Map<SubmissionResponse>(submission);
     }
 
     public async Task<AssignmentGradeResponse?> GradeSubmissionAsync(long submissionId, AssignmentGradeRequest request)
@@ -224,12 +180,7 @@ public class AssignmentService(
 
         db.AssignmentGrades.Add(grade);
         await db.SaveChangesAsync();
-        return new AssignmentGradeResponse(
-            _sqidsEncoder.Encode(grade.SubmissionId),
-            _sqidsEncoder.Encode(currentUserId),
-            grade.Score,
-            grade.FeedbackText
-        );
+        return _mapper.Map<AssignmentGradeResponse>(grade);
     }
 
     private async Task<List<AssignmentGradeResponse>?> GetGradesAsync(
@@ -239,11 +190,7 @@ public class AssignmentService(
         return await db.AssignmentGrades
             .AsNoTracking()
             .Where(predicate)
-            .Select(g => new AssignmentGradeResponse(
-                _sqidsEncoder.Encode(g.Submission.AssignmentId),
-                _sqidsEncoder.Encode(g.GraderId),
-                g.Score,
-                g.FeedbackText
-            )).ToListAsync();
+            .Select(g => _mapper.Map<AssignmentGradeResponse>(g))
+            .ToListAsync();
     }
 }

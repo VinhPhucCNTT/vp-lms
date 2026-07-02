@@ -6,18 +6,20 @@ public record AssignmentRequest(
     string InstructionsMarkdown,
     string? AllowedFileTypes,
     int MaxFileSizeKb,
+    int? MaxAttempt,
     SubmissionType SubmissionType,
     string? GradingSchemaJson
 );
 
 public record AssignmentResponse(
-    string AssignmentSqid,
+    string Id,
     string InstructionsMarkdown,
     string? AllowedFileTypes,
     int MaxFileSizeKb,
+    int? MaxAttempt,
     SubmissionType SubmissionType,
     string? GradingSchemaJson
-);
+) : IEntityResponse;
 
 public record SubmissionRequest(
     string? SubmissionText,
@@ -26,12 +28,14 @@ public record SubmissionRequest(
 );
 
 public record SubmissionResponse(
-    string AssignmentSqid,
-    string UserSqid,
+    string Id,
+    string AssignmentId,
+    string UserId,
     string? SubmissionText,
     string? FileUrl,
-    string? FileName
-);
+    string? FileName,
+    int AttemptNumber
+) : IEntityResponse;
 
 public record AssignmentGradeRequest(
     decimal Score,
@@ -39,11 +43,12 @@ public record AssignmentGradeRequest(
 );
 
 public record AssignmentGradeResponse(
-    string SubmissionSqid,
-    string GraderSqid,
+    string Id,
+    string SubmissionId,
+    string GraderId,
     decimal Score,
     string? FeedbackText
-);
+) : IEntityResponse;
 
 public record AssignmentStatsResponse(
     int SubmissionCount,
