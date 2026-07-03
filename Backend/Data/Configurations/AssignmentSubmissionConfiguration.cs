@@ -21,7 +21,7 @@ public class AssignmentSubmissionConfiguration : IEntityTypeConfiguration<Assign
         builder.Property(x => x.FileName)
             .HasMaxLength(255);
 
-        builder.HasIndex(x => new { x.AssignmentId, x.UserId, x.AttemptNumber })
+        builder.HasIndex(x => new { x.AssignmentId, x.UserId })
             .IsUnique();
 
         builder.HasOne(x => x.Assignment)

@@ -31,7 +31,7 @@ public class AssessmentQuestionConfiguration : IEntityTypeConfiguration<Assessme
             .HasColumnName("question_data");
 
         builder.HasIndex(x => new { x.AssessmentId, x.OrderIndex })
-            .HasFilter("IsDeleted = false")
+            .HasFilter("is_deleted = false")
             .IsUnique();
 
         builder.HasIndex(x => x.QuestionDataJson)

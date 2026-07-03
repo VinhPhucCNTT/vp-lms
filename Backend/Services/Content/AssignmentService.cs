@@ -28,49 +28,6 @@ public class AssignmentService(
             .FirstOrDefaultAsync();
     }
 
-    public async Task<AssignmentResponse?> CreateAssignmentAsync(ModuleResource resource, AssignmentRequest request)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var assignment = new Assignment
-        {
-            ResourceId = resource.Id,
-            InstructionsMarkdown = request.InstructionsMarkdown,
-            AllowedFileTypes = request.AllowedFileTypes,
-            MaxFileSizeKb = request.MaxFileSizeKb,
-            MaxAttempt = request.MaxAttempt,
-            SubmissionType = request.SubmissionType,
-            GradingSchemaJson = request.GradingSchemaJson
-        };
-        db.Assignments.Add(assignment);
-        await db.SaveChangesAsync();
-        return _mapper.Map<AssignmentResponse>(assignment);
-    }
-
-    // public async Task<bool> ValidateGradingSchemaAsync(string? GradingSchemaJson) { }
-
-    // public async Task ValidateGradingSchemaAsync(string? GradingSchemaJson) { }
-
-    // public async Task ValidateGradingSchemaAsync(string? GradingSchemaJson) { }
-
-    public async Task<AssignmentResponse?> UpdateAssignmentAsync(long assignmentId, AssignmentRequest request)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var assignment = await db.Assignments.FirstOrDefaultAsync(a => a.Id == assignmentId);
-        if (assignment is null)
-            return null;
-
-        assignment.InstructionsMarkdown = request.InstructionsMarkdown;
-        assignment.AllowedFileTypes = request.AllowedFileTypes;
-        assignment.MaxFileSizeKb = request.MaxFileSizeKb;
-        assignment.MaxAttempt = request.MaxAttempt;
-        assignment.SubmissionType = request.SubmissionType;
-        assignment.GradingSchemaJson = request.GradingSchemaJson;
-
-        db.Assignments.Update(assignment);
-        await db.SaveChangesAsync();
-        return _mapper.Map<AssignmentResponse>(assignment);
-    }
-
     public async Task<List<SubmissionResponse>?> GetSubmissionsAsync(long assignmentId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
@@ -81,7 +38,17 @@ public class AssignmentService(
             .ToListAsync();
     }
 
-    public async Task<AssignmentGradeResponse?> GetGradeBySubmissionAsync(long submissionId)
+    public async Task<SubmissionResponse?> GetSubmissionByUserIdAsync(long assignmentId, long userId)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.AssignmentSubmissions
+            .AsNoTracking()
+            .Where(s => s.AssignmentId == assignmentId && s.UserId == userId)
+            .Select(s => _mapper.Map<SubmissionResponse>(s))
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<AssignmentGradeResponse?> GetSubmissionGradeAsync(long submissionId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.AssignmentGrades
@@ -91,7 +58,7 @@ public class AssignmentService(
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<AssignmentGradeResponse>?> GetGradesByAssignmentAsync(long assignmentId)
+    public async Task<List<AssignmentGradeResponse>?> GetAssignmentGradesAsync(long assignmentId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await GetGradesAsync(db, g => g.Submission.AssignmentId == assignmentId);
@@ -127,14 +94,41 @@ public class AssignmentService(
             .ToListAsync();
     }
 
-    public async Task<List<SubmissionResponse>?> GetStudentSubmissionsAsync(long assignmentId, long studentUserId)
+    public async Task<AssignmentResponse?> CreateAssignmentAsync(ModuleResource resource, AssignmentRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        return await db.AssignmentSubmissions
-            .AsNoTracking()
-            .Where(s => s.AssignmentId == assignmentId && s.UserId == studentUserId)
-            .Select(s => _mapper.Map<SubmissionResponse>(s))
-            .ToListAsync();
+        var assignment = new Assignment
+        {
+            ResourceId = resource.Id,
+            InstructionsMarkdown = request.InstructionsMarkdown,
+            AllowedFileTypes = request.AllowedFileTypes,
+            MaxFileSizeKb = request.MaxFileSizeKb,
+            SubmissionType = request.SubmissionType,
+            GradingSchemaJson = request.GradingSchemaJson
+        };
+        db.Assignments.Add(assignment);
+        await db.SaveChangesAsync();
+        return _mapper.Map<AssignmentResponse>(assignment);
+    }
+
+    // public async Task<bool> ValidateGradingSchemaAsync(string? GradingSchemaJson) { }
+
+    public async Task<AssignmentResponse?> UpdateAssignmentAsync(long assignmentId, AssignmentRequest request)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var assignment = await db.Assignments.FirstOrDefaultAsync(a => a.Id == assignmentId);
+        if (assignment is null)
+            return null;
+
+        assignment.InstructionsMarkdown = request.InstructionsMarkdown;
+        assignment.AllowedFileTypes = request.AllowedFileTypes;
+        assignment.MaxFileSizeKb = request.MaxFileSizeKb;
+        assignment.SubmissionType = request.SubmissionType;
+        assignment.GradingSchemaJson = request.GradingSchemaJson;
+
+        db.Assignments.Update(assignment);
+        await db.SaveChangesAsync();
+        return _mapper.Map<AssignmentResponse>(assignment);
     }
 
     // TODO: Implement
@@ -144,22 +138,36 @@ public class AssignmentService(
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var assignment = await db.Assignments.FirstOrDefaultAsync(a => a.Id == assignmentId);
+        var currentUserId = _currentUserService.UserId;
         if (assignment is null)
             return null;
 
-        var currentUserId = _currentUserService.UserId;
-        var submission = new AssignmentSubmission
+        var existingSubmission = await db.AssignmentSubmissions.FirstOrDefaultAsync(s => s.AssignmentId == assignment.Id && s.UserId == currentUserId);
+        if (existingSubmission is null)
         {
-            AssignmentId = assignment.Id,
-            UserId = currentUserId,
-            SubmissionText = request.SubmissionText,
-            FileUrl = request.FileUrl,
-            FileName = request.FileName
-        };
+            var submission = new AssignmentSubmission
+            {
+                AssignmentId = assignment.Id,
+                UserId = currentUserId,
+                SubmissionText = request.SubmissionText,
+                FileUrl = request.FileUrl,
+                FileName = request.FileName
+            };
 
-        db.AssignmentSubmissions.Add(submission);
-        await db.SaveChangesAsync();
-        return _mapper.Map<SubmissionResponse>(submission);
+            db.AssignmentSubmissions.Add(submission);
+            await db.SaveChangesAsync();
+            return _mapper.Map<SubmissionResponse>(submission);
+        }
+        else
+        {
+            existingSubmission.SubmissionText = request.SubmissionText;
+            existingSubmission.FileUrl = request.FileUrl;
+            existingSubmission.FileName = request.FileName;
+
+            db.AssignmentSubmissions.Update(existingSubmission);
+            await db.SaveChangesAsync();
+            return _mapper.Map<SubmissionResponse>(existingSubmission);
+        }
     }
 
     public async Task<AssignmentGradeResponse?> GradeSubmissionAsync(long submissionId, AssignmentGradeRequest request)

@@ -11,7 +11,6 @@ public class AssignmentSubmission : BaseEntity, ISoftDeletable
     public string? SubmissionText { get; set; }
     public string? FileUrl { get; set; }
     public string? FileName { get; set; }
-    public int AttemptNumber { get; set; }
     public DateTime SubmittedOn { get; set; } = DateTime.UtcNow;
 
     public bool IsDeleted { get; set; } = false;

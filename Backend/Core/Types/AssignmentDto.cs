@@ -6,7 +6,6 @@ public record AssignmentRequest(
     string InstructionsMarkdown,
     string? AllowedFileTypes,
     int MaxFileSizeKb,
-    int? MaxAttempt,
     SubmissionType SubmissionType,
     string? GradingSchemaJson
 );
@@ -16,7 +15,6 @@ public record AssignmentResponse(
     string InstructionsMarkdown,
     string? AllowedFileTypes,
     int MaxFileSizeKb,
-    int? MaxAttempt,
     SubmissionType SubmissionType,
     string? GradingSchemaJson
 ) : IEntityResponse;

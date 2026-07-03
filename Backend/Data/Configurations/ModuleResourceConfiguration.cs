@@ -13,7 +13,7 @@ public class ModuleResourceConfiguration : IEntityTypeConfiguration<ModuleResour
             "module_resources",
             t => t.HasCheckConstraint(
                 "CK_ModuleResources_Polymorphic_ExactlyOne",
-                "(\"LessonId\" IS NOT NULL)::int + (\"AssignmentId\" IS NOT NULL)::int + (\"AssessmentId\" IS NOT NULL)::int + (\"ProblemId\" IS NOT NULL)::int = 1"
+                "(\"lesson_id\" IS NOT NULL)::int + (\"assignment_id\" IS NOT NULL)::int + (\"assessment_id\" IS NOT NULL)::int + (\"problem_id\" IS NOT NULL)::int = 1"
             )
         );
 
