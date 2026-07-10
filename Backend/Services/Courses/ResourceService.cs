@@ -50,52 +50,6 @@ public class ResourceService(
             .ToListAsync();
     }
 
-    public async Task<ResourceSetResponse?> CreateResourceAsync(long moduleId, ResourceCreateRequest dto)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var resource = new ModuleResource
-        {
-            ModuleId = moduleId,
-            ResourceType = dto.Type,
-            Title = dto.Title,
-            Description = dto.Description,
-            OrderIndex = dto.OrderIndex,
-            IsPublished = dto.IsPublished,
-            AvailableFrom = dto.AvailableFrom,
-            AvailableUntil = dto.AvailableUntil,
-            AccessPassword = dto.AccessPassword
-        };
-
-        // TODO: Call the appropriate create methods
-        // switch (dto.type)
-        // {
-        // }
-
-        db.ModuleResources.Add(resource);
-        await db.SaveChangesAsync();
-
-        return _mapper.Map<ResourceSetResponse>(resource);
-    }
-
-    public async Task<ResourceSetResponse?> UpdateResourceAsync(long resourceId, ResourceUpdateRequest dto)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var resource = await db.ModuleResources.FirstOrDefaultAsync(r => r.Id == resourceId);
-        if (resource == null)
-            return null;
-
-        resource.Title = dto.Title;
-        resource.Description = dto.Description;
-        resource.OrderIndex = dto.OrderIndex;
-        resource.IsPublished = dto.IsPublished;
-        resource.AvailableFrom = dto.AvailableFrom;
-        resource.AvailableUntil = dto.AvailableUntil;
-        resource.AccessPassword = dto.AccessPassword;
-        await db.SaveChangesAsync();
-
-        return _mapper.Map<ResourceSetResponse>(resource);
-    }
-
     public async Task<bool> DeleteResourceAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
@@ -167,5 +121,43 @@ public class ResourceService(
             .AsNoTracking()
             .Where(c => c.Id == resourceId && c.Module.Course.CreatorId == currentUserId)
             .AnyAsync();
+    }
+
+    static private async Task<ModuleResource> CreateBaseResourceAsync(AppDbContext db, long moduleId, ResourceRequestInfo dto, ResourceType type)
+    {
+        var resource = new ModuleResource
+        {
+            ModuleId = moduleId,
+            ResourceType = type,
+            Title = dto.Title,
+            Description = dto.Description,
+            OrderIndex = dto.OrderIndex,
+            IsPublished = dto.IsPublished,
+            AvailableFrom = dto.AvailableFrom,
+            AvailableUntil = dto.AvailableUntil,
+            AccessPassword = dto.AccessPassword
+        };
+
+        db.ModuleResources.Add(resource);
+        await db.SaveChangesAsync();
+        return resource;
+    }
+
+    static private async Task<ModuleResource?> UpdateBaseResourceAsync(AppDbContext db, long resourceId, ResourceRequestInfo dto)
+    {
+        var resource = await db.ModuleResources.FirstOrDefaultAsync(r => r.Id == resourceId);
+        if (resource == null)
+            return null;
+
+        resource.Title = dto.Title;
+        resource.Description = dto.Description;
+        resource.OrderIndex = dto.OrderIndex;
+        resource.IsPublished = dto.IsPublished;
+        resource.AvailableFrom = dto.AvailableFrom;
+        resource.AvailableUntil = dto.AvailableUntil;
+        resource.AccessPassword = dto.AccessPassword;
+        await db.SaveChangesAsync();
+
+        return resource;
     }
 }

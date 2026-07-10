@@ -1,12 +1,16 @@
 namespace Backend.Core.Types;
 
-public record LessonCreateRequest(
+public record LessonInfo(
     string ContentMarkdown
 );
 
-public record LessonUpdateRequest(string ContentMarkdown);
-
-public record LessonResponse(
-    string LessonSqid,
-    string ContentMarkdown
+public record LessonRequest(
+    ResourceRequestInfo ResourceInfo,
+    LessonInfo Info
 );
+
+public record LessonSetResponse(
+    string Id,
+    ResourceDetailResponse ResourceInfo,
+    LessonInfo Info
+) : IEntityResponse;

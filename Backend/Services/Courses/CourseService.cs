@@ -21,7 +21,6 @@ public class CourseService(
     private readonly IMapper _mapper = mapper;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
 
-
     public async Task<CourseDetailResponse?> GetCourseByIdAsync(long courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
@@ -92,7 +91,7 @@ public class CourseService(
             .ToListAsync();
     }
 
-    public async Task<List<CourseResponse>> GetUserCoursesAsync(long userId)
+    public async Task<List<CourseResponse>> GetCreatedCoursesAsync(long userId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Courses

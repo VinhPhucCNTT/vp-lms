@@ -22,6 +22,7 @@ public class AssignmentSubmissionConfiguration : IEntityTypeConfiguration<Assign
             .HasMaxLength(255);
 
         builder.HasIndex(x => new { x.AssignmentId, x.UserId })
+            .HasFilter("is_deleted = false")
             .IsUnique();
 
         builder.HasOne(x => x.Assignment)

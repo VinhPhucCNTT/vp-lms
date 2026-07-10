@@ -16,7 +16,7 @@ public class LessonService(
     // private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
 
-    public async Task<LessonResponse?> GetLessonByIdAsync(long resourceId)
+    public async Task<LessonSetResponse?> GetLessonByIdAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Lessons
@@ -28,7 +28,7 @@ public class LessonService(
             ).FirstOrDefaultAsync();
     }
 
-    public async Task<LessonResponse> CreateLessonAsync(ModuleResource resource, LessonCreateRequest request)
+    public async Task<LessonSetResponse> CreateLessonAsync(ModuleResource resource, LessonCreateRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var lesson = new Lesson
@@ -44,7 +44,7 @@ public class LessonService(
         );
     }
 
-    public async Task<LessonResponse?> UpdateLessonAsync(long lessonId, LessonUpdateRequest request)
+    public async Task<LessonSetResponse?> UpdateLessonAsync(long lessonId, LessonUpdateRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var lesson = await db.Lessons.FirstOrDefaultAsync(l => l.Id == lessonId);

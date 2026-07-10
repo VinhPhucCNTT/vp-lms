@@ -10,6 +10,7 @@ public class AttemptAnswer : BaseEntity
     public long QuestionId { get; set; }
     public string ResponseDataJson { get; set; } = default!; // JSONB column
     public decimal? Score { get; set; }
+    // TODO: ????
     public bool? IsCorrect { get; set; }
     public long? GradedByUserId { get; set; }
     public DateTime? GradedAt { get; set; }

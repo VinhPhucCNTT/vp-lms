@@ -1,6 +1,6 @@
 namespace Backend.Core.Types;
 
-public record AssessmentRequest(
+public record AssessmentInfo(
     string? InstructionsMarkdown,
     int? TimeLimitMinutes,
     int MaxAttempts,
@@ -9,14 +9,9 @@ public record AssessmentRequest(
     string? GradingSchemaJson
 );
 
-public record AssessmentResponseDto(
-    string AssessmentSqid,
-    string? InstructionsMarkdown,
-    int? TimeLimitMinutes,
-    int MaxAttempts,
-    bool ShuffleQuestions,
-    bool ShowResults,
-    string? GradingSchemaJson
+public record AssessmentRequest(
+    ResourceRequestInfo ResourceInfo,
+    AssessmentInfo Info
 );
 
 public record QuestionRequest(

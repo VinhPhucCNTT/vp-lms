@@ -12,7 +12,7 @@ public class ResourceProgressConfiguration : IEntityTypeConfiguration<ResourcePr
 
         builder.HasKey(x => x.Id);
 
-        builder.HasIndex(x => new { x.UserId, x.ResourceId });
+        builder.HasIndex(x => new { x.UserId, x.ResourceId }).IsUnique();
 
         builder.HasOne(x => x.User)
             .WithMany()

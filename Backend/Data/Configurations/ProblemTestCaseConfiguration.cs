@@ -24,6 +24,7 @@ public class ProblemTestCaseConfiguration : IEntityTypeConfiguration<ProblemTest
             .HasColumnType("text");
 
         builder.HasIndex(x => new { x.ProblemId, x.OrderIndex })
+            .HasFilter("is_deleted = false")
             .IsUnique();
 
         builder.HasOne(x => x.Problem)

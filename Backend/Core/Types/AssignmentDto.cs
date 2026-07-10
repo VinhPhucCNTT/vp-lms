@@ -2,27 +2,18 @@ using Backend.Core.Entities.Resources;
 
 namespace Backend.Core.Types;
 
-public record AssignmentRequest(
+public record AssignmentInfo(
     string InstructionsMarkdown,
     string? AllowedFileTypes,
     int MaxFileSizeKb,
+    int? MaxAttempt,
     SubmissionType SubmissionType,
     string? GradingSchemaJson
 );
 
-public record AssignmentResponse(
-    string Id,
-    string InstructionsMarkdown,
-    string? AllowedFileTypes,
-    int MaxFileSizeKb,
-    SubmissionType SubmissionType,
-    string? GradingSchemaJson
-) : IEntityResponse;
-
-public record SubmissionRequest(
-    string? SubmissionText,
-    string? FileUrl,
-    string? FileName
+public record AssignmentRequest(
+    ResourceRequestInfo ResourceInfo,
+    AssignmentInfo Info
 );
 
 public record SubmissionResponse(

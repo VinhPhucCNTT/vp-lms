@@ -1,5 +1,4 @@
 using AutoMapper;
-using Backend.Core.Entities.Resources;
 using Backend.Core.Entities.Submissions;
 using Backend.Core.Types;
 
@@ -9,18 +8,6 @@ public class AssignmentProfile : Profile
 {
     public AssignmentProfile()
     {
-        // CreateMap<Course, CourseResponse>()
-        //     .MapSqidId()
-        //     .ForMember(
-        //         d => d.CreatorId,
-        //         o => o.ConvertUsing<SqidConverter, long>(x => x.CreatorId))
-        //     .ForMember(
-        //         d => d.CreatorUserName,
-        //         o => o.MapFrom(x => x.Creator != null ? x.Creator.Username : ""));
-
-        CreateMap<Assignment, AssignmentResponse>()
-            .MapSqidId();
-
         CreateMap<AssignmentSubmission, SubmissionResponse>()
             .MapSqidId()
             .ForMember(

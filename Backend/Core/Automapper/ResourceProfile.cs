@@ -1,5 +1,6 @@
 using AutoMapper;
 using Backend.Core.Entities.Courses;
+using Backend.Core.Entities.Resources;
 using Backend.Core.Types;
 
 namespace Backend.Core.Automapper;
@@ -14,7 +15,9 @@ public class ResourceProfile : Profile
         CreateMap<ModuleResource, ResourceDetailResponse>()
             .MapSqidId();
 
-        CreateMap<ModuleResource, ResourceSetResponse>()
-            .MapSqidId();
+        CreateMap<Lesson, LessonInfo>();
+        CreateMap<Assignment, AssignmentInfo>();
+        CreateMap<Assessment, AssessmentInfo>();
+        CreateMap<CodingProblem, CodingProblemInfo>();
     }
 }

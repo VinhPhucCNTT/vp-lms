@@ -18,8 +18,6 @@ public static class ResourceEndpoints
         resource.MapGet("{moduleId}/unpublished", HandleGetUnpublished).RequireAuthorization();
         resource.MapGet("{resourceId}/check", HandleCheckOwner).RequireAuthorization();
 
-        resource.MapPut("{moduleId}", HandleCreate).RequireAuthorization();
-        resource.MapPost("{resourceId}", HandleUpdate).RequireAuthorization();
         resource.MapDelete("{resourceId}", HandleDelete).RequireAuthorization();
 
         resource.MapPost("{moduleId}/publish/{resourceId}", HandlePublish).RequireAuthorization();
@@ -89,43 +87,6 @@ public static class ResourceEndpoints
 
         return TypedResults.Ok(
             await resourceService.CheckOwnerAsync(decoded[0]));
-    }
-
-    private static async
-        Task<Results<Ok<ResourceSetResponse>, BadRequest>>
-        HandleCreate(
-            string moduleId,
-            [FromBody] ResourceCreateRequest request,
-            SqidsEncoder<long> sqidsEncoder,
-            ResourceService resourceService)
-    {
-        var decoded = sqidsEncoder.Decode(moduleId);
-        if (decoded.Count != 1)
-            return TypedResults.BadRequest();
-
-        return TypedResults.Ok(
-            await resourceService.CreateResourceAsync(decoded[0], request));
-    }
-
-    private static async
-        Task<Results<Ok<ResourceSetResponse>, NotFound, BadRequest, UnauthorizedHttpResult>>
-        HandleUpdate(
-            string resourceId,
-            [FromBody] ResourceUpdateRequest request,
-            SqidsEncoder<long> sqidsEncoder,
-            ResourceService resourceService)
-    {
-        var decoded = sqidsEncoder.Decode(resourceId);
-        if (decoded.Count != 1)
-            return TypedResults.BadRequest();
-
-        if (!await resourceService.CheckOwnerAsync(decoded[0]))
-            return TypedResults.Unauthorized();
-
-        var result = await resourceService.UpdateResourceAsync(decoded[0], request);
-        return result is not null
-            ? TypedResults.Ok(result)
-            : TypedResults.NotFound();
     }
 
     private static async

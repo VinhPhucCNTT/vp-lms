@@ -21,10 +21,8 @@ public record ResourceDetailResponse(
     DateTime UpdatedAt
 ) : IEntityResponse;
 
-// public record ResourceRequest();
-
-public record ResourceCreateRequest(
-    ResourceType Type,
+public record ResourceRequestInfo
+(
     string Title,
     string? Description,
     int OrderIndex,
@@ -33,25 +31,3 @@ public record ResourceCreateRequest(
     bool IsPublished,
     string? AccessPassword
 );
-
-public record ResourceUpdateRequest(
-    string Title,
-    string? Description,
-    int OrderIndex,
-    DateTime? AvailableFrom,
-    DateTime? AvailableUntil,
-    bool IsPublished,
-    string? AccessPassword
-);
-
-public record ResourceSetResponse(
-    string Id,
-    ResourceType Type,
-    string Title,
-    string? Description,
-    int OrderIndex,
-    DateTime? AvailableFrom,
-    DateTime? AvailableUntil,
-    bool IsPublished,
-    string? AccessPassword
-) : IEntityResponse;
