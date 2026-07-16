@@ -6,6 +6,7 @@ namespace Backend.Core.Entities.Courses;
 public class Course : BaseEntity, ISoftDeletable
 {
     public long CreatorId { get; set; }
+    public string Code { get; set; } = default!;
     public string Title { get; set; } = default!;
     public string? Description { get; set; }
     public string? ThumbnailUrl { get; set; }

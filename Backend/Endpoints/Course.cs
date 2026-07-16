@@ -15,9 +15,9 @@ public static class CourseEndpoints
         var course = route.MapGroup("/api/course").WithTags("Courses");
 
         course.MapGet("{courseId}", HandleGetById);
-        course.MapGet("user/{userId}", HandleGetCreated).RequireAuthorization();
-        course.MapGet("", HandleGetPublished).RequireAuthorization();
-        course.MapGet("unpublished", HandleGetUnpublished).RequireAuthorization();
+        course.MapGet("student/{userId}", HandleGetStudentCourses).RequireAuthorization();
+        course.MapGet("instructor/{userId}", HandleGetInstructorCourses).RequireAuthorization();
+        course.MapGet("explore", HandleGetExplore).RequireAuthorization();
         course.MapGet("query", HandleQuery);
         course.MapGet("{courseId}/check", HandleCheckOwner).RequireAuthorization();
 
@@ -30,7 +30,7 @@ public static class CourseEndpoints
     }
 
     private static async
-        Task<Results<Ok<CourseDetailResponse>, BadRequest, NotFound>>
+        Task<Results<Ok<CourseResponse>, BadRequest, NotFound>>
         HandleGetById(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
@@ -48,7 +48,7 @@ public static class CourseEndpoints
 
     private static async
         Task<Results<Ok<List<CourseResponse>>, BadRequest>>
-        HandleGetCreated(
+        HandleGetByUser(
             string userId,
             SqidsEncoder<long> sqidsEncoder,
             CourseService courseService)

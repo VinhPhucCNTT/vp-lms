@@ -28,7 +28,7 @@ public class LessonService(
             ).FirstOrDefaultAsync();
     }
 
-    public async Task<LessonSetResponse> CreateLessonAsync(ModuleResource resource, LessonCreateRequest request)
+    public async Task<LessonSetResponse> CreateLessonAsync(CourseResource resource, LessonCreateRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var lesson = new Lesson

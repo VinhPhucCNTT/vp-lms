@@ -14,8 +14,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<CourseModule> CourseModules => Set<CourseModule>();
 
-    public DbSet<ModuleResource> ModuleResources => Set<ModuleResource>();
-    public DbSet<ResourceComment> ResourceComments => Set<ResourceComment>();
+    public DbSet<CourseResource> CourseResources => Set<CourseResource>();
+    public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<ResourceProgress> ResourceProgress => Set<ResourceProgress>();
 
     public DbSet<Lesson> Lessons => Set<Lesson>();
@@ -60,7 +60,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasQueryFilter(e => !e.IsDeleted && !e.Course.IsDeleted);
         builder.Entity<CourseModule>()
             .HasQueryFilter(m => !m.IsDeleted && !m.Course.IsDeleted);
-        builder.Entity<ModuleResource>()
+        builder.Entity<CourseResource>()
             .HasQueryFilter(r => !r.IsDeleted && !r.Module.IsDeleted);
 
         builder.Entity<Lesson>()

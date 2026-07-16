@@ -9,6 +9,14 @@ public record ResourceResponse(
     int OrderIndex
 ) : IEntityResponse;
 
+public record ResourceListResponse(
+    string Id,
+    ResourceType Type,
+    CourseResponse CourseInfo,
+    DateOnly DueDate,
+    bool StatusIsCompleted // false = Pending
+) : IEntityResponse;
+
 public record ResourceDetailResponse(
     string Id,
     ResourceType Type,

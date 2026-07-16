@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Data.Configurations;
 
-public class ModuleResourceConfiguration : IEntityTypeConfiguration<ModuleResource>
+public class ModuleResourceConfiguration : IEntityTypeConfiguration<CourseResource>
 {
-    public void Configure(EntityTypeBuilder<ModuleResource> builder)
+    public void Configure(EntityTypeBuilder<CourseResource> builder)
     {
         builder.ToTable(
             "module_resources",
@@ -19,7 +19,7 @@ public class ModuleResourceConfiguration : IEntityTypeConfiguration<ModuleResour
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.ResourceType)
+        builder.Property(x => x.Type)
             .IsRequired()
             .HasMaxLength(20)
             .HasConversion<string>();

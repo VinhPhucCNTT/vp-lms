@@ -13,5 +13,5 @@ public class ResourceProgress : BaseEntity
 
     // Navigation properties
     public User User { get; set; } = default!;
-    public ModuleResource Resource { get; set; } = default!;
+    public CourseResource Resource { get; set; } = default!;
 }

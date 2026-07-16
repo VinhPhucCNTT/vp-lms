@@ -18,7 +18,7 @@ public class Assessment : BaseEntity, ISoftDeletable
     public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
-    public ModuleResource Resource { get; set; } = default!;
+    public CourseResource Resource { get; set; } = default!;
     public ICollection<AssessmentQuestion> Questions { get; set; } = [];
     public ICollection<AssessmentAttempt> Attempts { get; set; } = [];
 }

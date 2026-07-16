@@ -20,7 +20,7 @@ public class User : BaseEntity
     // Navigation properties
     public ICollection<Course> Courses { get; set; } = [];
     public ICollection<Enrollment> Enrollments { get; set; } = [];
-    public ICollection<ResourceComment> Comments { get; set; } = [];
+    public ICollection<Comment> Comments { get; set; } = [];
 }
 
 public enum UserRoles {

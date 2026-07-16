@@ -35,7 +35,7 @@ public class AssessmentService(
             )).FirstOrDefaultAsync();
     }
 
-    public async Task<AssessmentResponseDto> CreateAssessmentAsync(ModuleResource resource, AssessmentRequest request)
+    public async Task<AssessmentResponseDto> CreateAssessmentAsync(CourseResource resource, AssessmentRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var assessment = new Assessment

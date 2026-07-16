@@ -8,6 +8,7 @@ public class ProblemSubmission : BaseEntity
 {
     public long ProblemId { get; set; }
     public long UserId { get; set; }
+    public int OrderIndex { get; set; }
     public string SubmittedCode { get; set; } = default!;
     public string Language { get; set; } = default!;
     public SubmissionStatus Status { get; set; } = SubmissionStatus.Pending;

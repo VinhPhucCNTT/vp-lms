@@ -3,9 +3,9 @@ using Backend.Core.Entities.Users;
 
 namespace Backend.Core.Entities.Courses;
 
-public class ResourceComment : BaseEntity
+public class Comment : BaseEntity
 {
-    public long ResourceId { get; set; }
+    public long ActivityId { get; set; }
     public long UserId { get; set; }
     public long? ParentCommentId { get; set; }
     public string ContentMarkdown { get; set; } = default!;
@@ -16,8 +16,8 @@ public class ResourceComment : BaseEntity
     public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
-    public ModuleResource Resource { get; set; } = default!;
+    public CourseResource Resource { get; set; } = default!;
     public User User { get; set; } = default!;
-    public ResourceComment? ParentComment { get; set; }
-    public ICollection<ResourceComment> Replies { get; set; } = [];
+    public Comment? ParentComment { get; set; }
+    public ICollection<Comment> Replies { get; set; } = [];
 }

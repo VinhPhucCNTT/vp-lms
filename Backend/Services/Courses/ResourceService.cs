@@ -21,7 +21,7 @@ public class ResourceService(
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
-        return await db.ModuleResources
+        return await db.CourseResources
             .AsNoTracking()
             .Where(r => r.Id == resourceId)
             .Where(r => r.IsPublished || r.Module.Course.CreatorId == currentUserId)
@@ -32,7 +32,7 @@ public class ResourceService(
     public async Task<List<ResourceResponse>> GetPublishedResourcesAsync(long moduleId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        return await db.ModuleResources
+        return await db.CourseResources
             .AsNoTracking()
             .Where(r => r.ModuleId == moduleId && r.IsPublished)
             .Select(r => _mapper.Map<ResourceResponse>(r))
@@ -43,7 +43,7 @@ public class ResourceService(
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
-        return await db.ModuleResources
+        return await db.CourseResources
             .AsNoTracking()
             .Where(r => r.ModuleId == moduleId && !r.IsPublished && r.Module.Course.CreatorId == currentUserId)
             .Select(r => _mapper.Map<ResourceResponse>(r))
@@ -53,10 +53,10 @@ public class ResourceService(
     public async Task<bool> DeleteResourceAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var resource = await db.ModuleResources.FirstOrDefaultAsync(r => r.Id == resourceId);
+        var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Id == resourceId);
         if (resource is null)
             return false;
-        db.ModuleResources.Remove(resource);
+        db.CourseResources.Remove(resource);
         await db.SaveChangesAsync();
         return true;
     }
@@ -68,10 +68,10 @@ public class ResourceService(
 
         try
         {
-            var target = await db.ModuleResources.FirstOrDefaultAsync(m => m.Id == resourceId);
+            var target = await db.CourseResources.FirstOrDefaultAsync(m => m.Id == resourceId);
             if (target == null) return false;
 
-            var resources = db.ModuleResources
+            var resources = db.CourseResources
                 .Where(m => m.ModuleId == target.ModuleId);
             var count = await resources.CountAsync();
 
@@ -97,7 +97,7 @@ public class ResourceService(
     public async Task<bool> SetResourcePublishStatusAsync(long moduleId, long resourceId, bool isPublished)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var count = await db.ModuleResources
+        var count = await db.CourseResources
             .Where(r => r.ModuleId == moduleId && r.Id == resourceId)
             .ExecuteUpdateAsync(r => r.SetProperty(r => r.IsPublished, isPublished));
 
@@ -108,7 +108,7 @@ public class ResourceService(
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
-        return await db.ModuleResources
+        return await db.CourseResources
             .Where(r => r.ModuleId == moduleId && resourceIds.Contains(r.Id) && r.Module.Course.CreatorId == currentUserId)
             .ExecuteUpdateAsync(r => r.SetProperty(r => r.IsPublished, isPublished));
     }
@@ -117,18 +117,18 @@ public class ResourceService(
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
-        return await db.ModuleResources
+        return await db.CourseResources
             .AsNoTracking()
             .Where(c => c.Id == resourceId && c.Module.Course.CreatorId == currentUserId)
             .AnyAsync();
     }
 
-    static private async Task<ModuleResource> CreateBaseResourceAsync(AppDbContext db, long moduleId, ResourceRequestInfo dto, ResourceType type)
+    static private async Task<CourseResource> CreateBaseResourceAsync(AppDbContext db, long moduleId, ResourceRequestInfo dto, ResourceType type)
     {
-        var resource = new ModuleResource
+        var resource = new CourseResource
         {
             ModuleId = moduleId,
-            ResourceType = type,
+            Type = type,
             Title = dto.Title,
             Description = dto.Description,
             OrderIndex = dto.OrderIndex,
@@ -138,14 +138,14 @@ public class ResourceService(
             AccessPassword = dto.AccessPassword
         };
 
-        db.ModuleResources.Add(resource);
+        db.CourseResources.Add(resource);
         await db.SaveChangesAsync();
         return resource;
     }
 
-    static private async Task<ModuleResource?> UpdateBaseResourceAsync(AppDbContext db, long resourceId, ResourceRequestInfo dto)
+    static private async Task<CourseResource?> UpdateBaseResourceAsync(AppDbContext db, long resourceId, ResourceRequestInfo dto)
     {
-        var resource = await db.ModuleResources.FirstOrDefaultAsync(r => r.Id == resourceId);
+        var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Id == resourceId);
         if (resource == null)
             return null;
 

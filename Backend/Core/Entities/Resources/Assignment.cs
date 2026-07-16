@@ -7,7 +7,7 @@ namespace Backend.Core.Entities.Resources;
 public class Assignment : BaseEntity, ISoftDeletable
 {
     public long ResourceId { get; set; }
-    public string InstructionsMarkdown { get; set; } = default!;
+    public string InstructionsMD { get; set; } = default!;
     public string? AllowedFileTypes { get; set; }
     public int MaxFileSizeKb { get; set; } = 10;
     public int? MaxAttempt { get; set; }
@@ -18,7 +18,7 @@ public class Assignment : BaseEntity, ISoftDeletable
     public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
-    public ModuleResource Resource { get; set; } = default!;
+    public CourseResource Resource { get; set; } = default!;
     public ICollection<AssignmentSubmission> Submissions { get; set; } = [];
 }
 

@@ -1,4 +1,3 @@
-
 using Backend.Data;
 using Backend.Core.Common;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +20,7 @@ public class CourseService(
     private readonly IMapper _mapper = mapper;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
 
-    public async Task<CourseDetailResponse?> GetCourseByIdAsync(long courseId)
+    public async Task<CourseStudentResponse?> GetCourseByIdAsync(long courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Courses
@@ -37,7 +36,7 @@ public class CourseService(
             .FirstOrDefaultAsync();
     }
 
-    public async Task<QueryResponse<CourseResponse>> QueryCoursesAsync(CourseRequest query)
+    public async Task<QueryResponse<CourseStudentResponse>> QueryCoursesAsync(CourseRequest query)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var courses = db.Courses.AsNoTracking().Where(c => c.IsPublished);
@@ -56,10 +55,10 @@ public class CourseService(
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
             .Include(c => c.Creator)
-            .Select(c => _mapper.Map<CourseResponse>(c))
+            .Select(c => _mapper.Map<CourseStudentResponse>(c))
             .ToListAsync();
 
-        return new QueryResponse<CourseResponse>(
+        return new QueryResponse<CourseStudentResponse>(
                 query.PageNumber,
                 query.PageSize,
                 await courses.CountAsync(),
@@ -67,8 +66,7 @@ public class CourseService(
     }
 
     // Get all unpublished course belonging to the current user
-    // TODO: May have to reconsider this once course versioning is fully fleshed out
-    public async Task<List<CourseResponse>> GetUnpublishedCoursesAsync()
+    public async Task<List<CourseStudentResponse>> GetUnpublishedCoursesAsync()
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
@@ -76,29 +74,29 @@ public class CourseService(
             .AsNoTracking()
             .Where(c => c.CreatorId == currentUserId && !c.IsPublished)
             .Include(c => c.Creator)
-            .Select(c => _mapper.Map<CourseResponse>(c))
+            .Select(c => _mapper.Map<CourseStudentResponse>(c))
             .ToListAsync();
     }
 
-    public async Task<List<CourseResponse>> GetPublishedCoursesAsync()
+    public async Task<List<CourseStudentResponse>> GetPublishedCoursesAsync()
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Courses
             .AsNoTracking()
             .Where(c => c.IsPublished)
             .Include(c => c.Creator)
-            .Select(c => _mapper.Map<CourseResponse>(c))
+            .Select(c => _mapper.Map<CourseStudentResponse>(c))
             .ToListAsync();
     }
 
-    public async Task<List<CourseResponse>> GetCreatedCoursesAsync(long userId)
+    public async Task<List<CourseStudentResponse>> GetCreatedCoursesAsync(long userId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Courses
             .AsNoTracking()
             .Where(c => c.CreatorId == userId)
             .Include(c => c.Creator)
-            .Select(c => _mapper.Map<CourseResponse>(c))
+            .Select(c => _mapper.Map<CourseStudentResponse>(c))
             .ToListAsync();
     }
 

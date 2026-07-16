@@ -14,12 +14,21 @@ public class CodingProblem : BaseEntity, ISoftDeletable
     public int TimeLimitMs { get; set; } = 1000;
     public int MemoryLimitMb { get; set; } = 256;
     public bool IsPractice { get; set; } = false;
+    public ProblemDifficulty Difficulty { get; set; }
 
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
-    public ModuleResource Resource { get; set; } = default!;
+    public CourseResource Resource { get; set; } = default!;
     public ICollection<ProblemTestCase> TestCases { get; set; } = [];
     public ICollection<ProblemSubmission> Submissions { get; set; } = [];
 }
+
+public enum ProblemDifficulty
+{
+    Unspecified = 0,
+    Easy = 1,
+    Medium = 2,
+    Hard = 3,
+};

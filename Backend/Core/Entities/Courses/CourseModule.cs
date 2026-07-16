@@ -15,5 +15,5 @@ public class CourseModule : BaseEntity, ISoftDeletable
 
     // Navigation properties
     public Course Course { get; set; } = default!;
-    public ICollection<ModuleResource> Resources { get; set; } = [];
+    public ICollection<CourseResource> Resources { get; set; } = [];
 }

@@ -12,13 +12,11 @@ public enum ResourceType
     Problem
 }
 
-public class ModuleResource : BaseEntity, ISoftDeletable, IValidatableObject
+public class CourseResource : BaseEntity, ISoftDeletable, IValidatableObject
 {
     public long ModuleId { get; set; }
-    public ResourceType ResourceType { get; set; }
+    public ResourceType Type { get; set; }
     public string Title { get; set; } = default!;
-    // TODO: This might be redundant...
-    public string? Description { get; set; }
     public int OrderIndex { get; set; }
     public bool IsPublished { get; set; } = false;
     public DateTime? AvailableFrom { get; set; }
@@ -35,7 +33,7 @@ public class ModuleResource : BaseEntity, ISoftDeletable, IValidatableObject
 
     // Navigation properties
     public CourseModule Module { get; set; } = default!;
-    public ICollection<ResourceComment> Comments { get; set; } = [];
+    public ICollection<Comment> Comments { get; set; } = [];
     public ICollection<ResourceProgress> Progress { get; set; } = [];
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

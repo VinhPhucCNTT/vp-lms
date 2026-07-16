@@ -9,10 +9,10 @@ public class ResourceProfile : Profile
 {
     public ResourceProfile()
     {
-        CreateMap<ModuleResource, ResourceResponse>()
+        CreateMap<CourseResource, ResourceResponse>()
             .MapSqidId();
 
-        CreateMap<ModuleResource, ResourceDetailResponse>()
+        CreateMap<CourseResource, ResourceDetailResponse>()
             .MapSqidId();
 
         CreateMap<Lesson, LessonInfo>();

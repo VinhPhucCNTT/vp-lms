@@ -12,5 +12,5 @@ public class Lesson : BaseEntity, ISoftDeletable
     public DateTime? DeletedAt { get; set; }
 
     // Navigation property
-    public ModuleResource Resource { get; set; } = default!;
+    public CourseResource Resource { get; set; } = default!;
 }

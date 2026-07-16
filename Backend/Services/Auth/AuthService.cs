@@ -51,7 +51,6 @@ public class AuthService(
         };
 
         dbContext.Users.Add(user);
-        // TODO: Add error handling
         await dbContext.SaveChangesAsync();
 
         return new RegisterResponse(user.Username, user.Email);

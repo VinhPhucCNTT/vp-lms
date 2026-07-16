@@ -94,7 +94,7 @@ public class AssignmentService(
             .ToListAsync();
     }
 
-    public async Task<AssignmentResponse?> CreateAssignmentAsync(ModuleResource resource, AssignmentRequest request)
+    public async Task<AssignmentResponse?> CreateAssignmentAsync(CourseResource resource, AssignmentRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var assignment = new Assignment
