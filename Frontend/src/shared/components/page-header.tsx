@@ -1,29 +1,20 @@
-import { ChevronRightIcon } from "lucide-react"
-import { Link } from "react-router-dom"
-import { Separator } from "@/components/ui/separator"
-import { cn } from "@/lib/utils"
-import React from "react"
+import React from "react";
+import { ChevronRightIcon } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
-interface BreadcrumbItem {
-  label: string
-  href?: string
-}
+interface BreadcrumbItem { label: string; href?: string; }
 
 interface PageHeaderProps {
-  title: string
-  description?: string
-  breadcrumbs?: BreadcrumbItem[]
-  actions?: React.ReactNode
-  className?: string
+  title: string;
+  description?: string;
+  breadcrumbs?: BreadcrumbItem[];
+  actions?: React.ReactNode;
+  className?: string;
 }
 
-export function PageHeader({
-  title,
-  description,
-  breadcrumbs,
-  actions,
-  className,
-}: PageHeaderProps) {
+export function PageHeader({ title, description, breadcrumbs, actions, className }: PageHeaderProps) {
   return (
     <div className={cn("space-y-2", className)}>
       {breadcrumbs && breadcrumbs.length > 0 && (
@@ -31,18 +22,7 @@ export function PageHeader({
           {breadcrumbs.map((item, index) => (
             <React.Fragment key={index}>
               {index > 0 && <ChevronRightIcon className="size-4" />}
-              {item.href ? (
-                <Link
-                  to={item.href}
-                  className="transition-colors hover:text-foreground"
-                >
-                  {item.label}
-                </Link>
-              ) : (
-                <span className="font-medium text-foreground">
-                  {item.label}
-                </span>
-              )}
+              {item.href ? <Link to={item.href} className="hover:text-foreground transition-colors">{item.label}</Link> : <span className="text-foreground font-medium">{item.label}</span>}
             </React.Fragment>
           ))}
         </nav>
@@ -50,13 +30,11 @@ export function PageHeader({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-          {description && (
-            <p className="text-muted-foreground">{description}</p>
-          )}
+          {description && <p className="text-muted-foreground">{description}</p>}
         </div>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
       <Separator className="mt-4" />
     </div>
-  )
+  );
 }
