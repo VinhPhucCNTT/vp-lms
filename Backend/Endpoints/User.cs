@@ -18,8 +18,8 @@ public static class UserEndpoints
         user.MapGet("{id}/stat", HandleGetUserStat).RequireAuthorization();
         user.MapGet("query", HandleQuery).RequireAuthorization();
 
-        user.MapPut("", HandleCreate).RequireAuthorization();
-        user.MapPost("{id}", HandleUpdate).RequireAuthorization();
+        user.MapPost("", HandleCreate).RequireAuthorization();
+        user.MapPut("{id}", HandleUpdate).RequireAuthorization();
         user.MapDelete("{id}", HandleDelete).RequireAuthorization();
 
         user.MapGet("{id}/check", HandleCheckActive).RequireAuthorization();

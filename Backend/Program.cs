@@ -40,6 +40,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddOpenApi();
 
+// Authorization requirements
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("CourseOwner", policy =>
         {

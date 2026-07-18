@@ -12,8 +12,8 @@ public static class LessonEndpoints
         var lesson = route.MapGroup("/api/lesson");
 
         lesson.MapGet("{resourceId}", HandleGetById).RequireAuthorization();
-        lesson.MapPut("{moduleId}", HandleCreate).RequireAuthorization();
-        lesson.MapPost("{resourceId}", HandleUpdate).RequireAuthorization();
+        lesson.MapPost("{moduleId}", HandleCreate).RequireAuthorization();
+        lesson.MapPut("{resourceId}", HandleUpdate).RequireAuthorization();
     }
 
     private static async

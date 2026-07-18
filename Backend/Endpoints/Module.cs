@@ -13,31 +13,12 @@ public static class ModuleEndpoints
     {
         var module = route.MapGroup("/api/module").WithTags("Modules");
 
-        // module.MapGet("{moduleId}/check", HandleCheckOwner).RequireAuthorization();
+        module.MapPut("{moduleId}", HandleUpdate).RequireAuthorization("CourseOwner");
+        module.MapDelete("{moduleId}", HandleDelete).RequireAuthorization("CourseOwner");
 
-        module.MapPut("{moduleId}", HandleUpdate).RequireAuthorization();
-        module.MapDelete("{moduleId}", HandleDelete).RequireAuthorization();
-        module.MapPost("bulk-delete", HandleBulkDelete).RequireAuthorization();
-
-        module.MapPost("publish/{moduleId}", HandlePublish).RequireAuthorization();
-        module.MapPost("unpublish/{moduleId}", HandleUnpublish).RequireAuthorization();
-        module.MapPost("reorder/{moduleId}", HandleReorder).RequireAuthorization();
-    }
-
-    private static async
-        Task<Results<Ok<ModuleSetResponse>, BadRequest>>
-        HandleCreate(
-            string courseId,
-            [FromBody] ModuleSetRequest request,
-            SqidsEncoder<long> sqidsEncoder,
-            ModuleService moduleService)
-    {
-        var decoded = sqidsEncoder.Decode(courseId);
-        if (decoded.Count != 1)
-            return TypedResults.BadRequest();
-
-        return TypedResults.Ok(
-            await moduleService.CreateModuleAsync(decoded[0], request));
+        module.MapPost("publish/{moduleId}", HandlePublish).RequireAuthorization("CourseOwner");
+        module.MapPost("unpublish/{moduleId}", HandleUnpublish).RequireAuthorization("CourseOwner");
+        module.MapPost("reorder/{moduleId}", HandleReorder).RequireAuthorization("CourseOwner");
     }
 
     private static async
@@ -51,9 +32,6 @@ public static class ModuleEndpoints
         var decoded = sqidsEncoder.Decode(moduleId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
-
-        if (!await moduleService.CheckOwnerAsync(decoded[0]))
-            return TypedResults.Unauthorized();
 
         var result = await moduleService.UpdateModuleAsync(decoded[0], request);
         return result is not null
@@ -72,36 +50,8 @@ public static class ModuleEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        if (!await moduleService.CheckOwnerAsync(decoded[0]))
-            return TypedResults.Unauthorized();
-
         return await moduleService.DeleteModuleAsync(decoded[0])
             ? TypedResults.Ok()
-            : TypedResults.NotFound();
-    }
-
-    private static async
-        Task<Results<Ok<int>, BadRequest, NotFound>>
-        HandleBulkDelete(
-            [FromBody] List<string> moduleIds,
-            SqidsEncoder<long> sqidsEncoder,
-            ModuleService moduleService)
-    {
-        if (moduleIds is null || moduleIds.Count == 0)
-            return TypedResults.Ok(0);
-
-        List<long> decodedIds = [];
-        foreach (var id in moduleIds)
-        {
-            var decoded = sqidsEncoder.Decode(id);
-            if (decoded.Count != 1)
-                return TypedResults.BadRequest();
-            decodedIds.Add(decoded[0]);
-        }
-
-        var count = await moduleService.DeleteModulesAsync(decodedIds);
-        return count > 0
-            ? TypedResults.Ok(count)
             : TypedResults.NotFound();
     }
 
@@ -117,9 +67,6 @@ public static class ModuleEndpoints
         var dCourseId = sqidsEncoder.Decode(courseId);
         if (dModuleId.Count != 1 || dCourseId.Count != 1)
             return TypedResults.BadRequest();
-
-        if (!await moduleService.CheckOwnerAsync(dModuleId[0]))
-            return TypedResults.Unauthorized();
 
         var result = await moduleService.SetModulePublishStatusAsync(dCourseId[0], dModuleId[0], true);
         return result
@@ -140,9 +87,6 @@ public static class ModuleEndpoints
         if (dModuleId.Count != 1 || dCourseId.Count != 1)
             return TypedResults.BadRequest();
 
-        if (!await moduleService.CheckOwnerAsync(dModuleId[0]))
-            return TypedResults.Unauthorized();
-
         var result = await moduleService.SetModulePublishStatusAsync(dCourseId[0], dModuleId[0], false);
         return result
             ? TypedResults.Ok()
@@ -160,9 +104,6 @@ public static class ModuleEndpoints
         var decoded = sqidsEncoder.Decode(moduleId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
-
-        if (!await moduleService.CheckOwnerAsync(decoded[0]))
-            return TypedResults.Unauthorized();
 
         return await moduleService.ReorderModuleAsync(decoded[0], orderIndex)
             ? TypedResults.Ok()

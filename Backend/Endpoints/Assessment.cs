@@ -13,7 +13,7 @@ public static class AssessmentEndpoints
 
         assessment.MapGet("{resourceId}", HandleGetById);
         assessment.MapPut("{moduleId}", HandleCreate);
-        assessment.MapPost("{resourceId}", HandleUpdate);
+        assessment.MapPut("{resourceId}", HandleUpdate);
 
         assessment.MapPost("{resourceId}/start", HandleStart);
         assessment.MapPost("{resourceId}/set-answer", HandleSetAnswer);

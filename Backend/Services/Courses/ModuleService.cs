@@ -1,35 +1,17 @@
 using Backend.Data;
 using Backend.Core.Types;
 using Microsoft.EntityFrameworkCore;
-using Backend.Services.Common;
 using Backend.Core.Entities.Courses;
-using Sqids;
 using AutoMapper;
 
 namespace Backend.Services.Courses;
 
 public class ModuleService(
     IDbContextFactory<AppDbContext> dbFactory,
-    CurrentUserService currentUserService,
-    IMapper mapper,
-    SqidsEncoder<long> sqidsEncoder)
+    IMapper mapper)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
-    private readonly CurrentUserService _currentUserService = currentUserService;
-    private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
     private readonly IMapper _mapper = mapper;
-
-    public async Task<ModuleResponse?> GetModuleByIdAsync(long moduleId)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var currentUserId = _currentUserService.UserId;
-        return await db.CourseModules
-            .AsNoTracking()
-            .Where(m => m.Id == moduleId)
-            .Where(m => m.IsPublished || m.Course.CreatorId == currentUserId)
-            .Select(m => _mapper.Map<ModuleResponse>(m))
-            .FirstOrDefaultAsync();
-    }
 
     public async Task<List<ModuleResponse>> GetCourseModulesAsync(long courseId)
     {
@@ -84,16 +66,6 @@ public class ModuleService(
         return count > 0;
     }
 
-    public async Task<int> SetModulesPublishStatusAsync(long courseId, List<long> moduleIds, bool isPublished)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var currentUserId = _currentUserService.UserId;
-        return await db.CourseModules
-            .Where(m => m.CourseId == courseId && m.IsPublished != isPublished && m.Course.CreatorId == currentUserId)
-            .Where(m => moduleIds.Contains(m.Id))
-            .ExecuteUpdateAsync(m => m.SetProperty(m => m.IsPublished, isPublished));
-    }
-
     public async Task<bool> DeleteModuleAsync(long moduleId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
@@ -105,19 +77,6 @@ public class ModuleService(
         return true;
     }
 
-    public async Task<int> DeleteModulesAsync(List<long> moduleIds)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var currentUserId = _currentUserService.UserId;
-        var modules = db.CourseModules
-            .Where(m => moduleIds.Contains(m.Id) && m.Course.CreatorId == currentUserId);
-        var count = await modules.CountAsync();
-        db.CourseModules.RemoveRange(modules);
-        await db.SaveChangesAsync();
-        return count;
-    }
-
-    // TODO: Reorder multiple modules at once
     public async Task<bool> ReorderModuleAsync(long moduleId, int orderIndex)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
@@ -157,20 +116,10 @@ public class ModuleService(
         throw new NotImplementedException();
     }
 
-    private async Task<bool> CanDeleteModuleAsync(CourseModule module)
+    static private async Task<bool> CanDeleteModuleAsync(CourseModule module)
     {
         // TODO: Internally track if courses (and consequently it's dependents) can be deleted, otherwise archirve it, keeping all records instead.
         // => Implement CourseService.CanBeDeletedAsync()
         return true;
-    }
-
-    public async Task<bool> CheckOwnerAsync(long moduleId)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var currentUserId = _currentUserService.UserId;
-        return await db.CourseModules
-            .AsNoTracking()
-            .Where(c => c.Id == moduleId && c.Course.CreatorId == currentUserId)
-            .AnyAsync();
     }
 }

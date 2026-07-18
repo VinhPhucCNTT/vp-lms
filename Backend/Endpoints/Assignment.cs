@@ -12,8 +12,8 @@ public static class AssignmentEndpoints
         var assignment = route.MapGroup("/api/assignment").RequireAuthorization();
 
         assignment.MapGet("{resourceId}", HandleGetById);
-        assignment.MapPut("{moduleId}", HandleCreate);
-        assignment.MapPost("{resourceId}", HandleUpdate);
+        assignment.MapPost("{moduleId}", HandleCreate);
+        assignment.MapPut("{resourceId}", HandleUpdate);
 
         assignment.MapPut("{resourceId}/submit", HandleSubmit);
         assignment.MapGet("{resourceId}/file", HandleGetFile);
