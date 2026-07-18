@@ -2,33 +2,29 @@ namespace Backend.Core.Types;
 
 public record CourseResponse(
     string Id,
-    string CreatorUserName,
-    string CreatorFullName,
+    string CreatorUsername,
+    string CreatorFullname,
     string Code,
     string Title,
-    string Description,
+    string? Description,
     string? ThumbnailUrl,
-    int StudentCount
+    int EnrollmentCount
+) : IEntityResponse;
+
+public record CourseProgress(
+    int Completed,
+    int Total
 );
 
 public record CourseStudentResponse(
-    string Id,
-    string CreatorUserName,
-    string CreatorFullName,
-    string Code,
-    string Title,
-    string Description,
-    string? ThumbnailUrl,
-    int CompletedActivities,
-    int TotalActivities,
-    int StudentCount,
-    bool EnrollmentOpen
+    CourseResponse Info,
+    CourseProgress Progress
 );
 
 public record CourseExploreResponse(
-    List<CourseResponse> FeaturedCourses,
-    Dictionary<string, List<CourseResponse>> CoursesByDepartment,
-    List<CourseResponse> RecentlyUpdated
+    List<CourseResponse> Featured,
+    Dictionary<string, List<CourseResponse>> ByDepartment,
+    List<CourseResponse> Recent
 );
 
 public record CourseRequest(
@@ -36,8 +32,8 @@ public record CourseRequest(
     int PageSize = 10,
     string? Code = null,
     string? Title = null,
-    string? CreatorUserName = null,
-    string? CreatorFullName = null,
+    string? CreatorUsername = null,
+    string? CreatorFullname = null,
     bool? EnrollmentOpen = null
 );
 

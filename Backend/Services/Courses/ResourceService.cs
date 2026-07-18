@@ -130,7 +130,6 @@ public class ResourceService(
             ModuleId = moduleId,
             Type = type,
             Title = dto.Title,
-            Description = dto.Description,
             OrderIndex = dto.OrderIndex,
             IsPublished = dto.IsPublished,
             AvailableFrom = dto.AvailableFrom,
@@ -150,7 +149,6 @@ public class ResourceService(
             return null;
 
         resource.Title = dto.Title;
-        resource.Description = dto.Description;
         resource.OrderIndex = dto.OrderIndex;
         resource.IsPublished = dto.IsPublished;
         resource.AvailableFrom = dto.AvailableFrom;
@@ -159,5 +157,29 @@ public class ResourceService(
         await db.SaveChangesAsync();
 
         return resource;
+    }
+
+    static public async Task<List<long>> GetCourseResourceIdsAsync(AppDbContext db, long courseId)
+    {
+        var moduleIds = await db.CourseModules
+            .AsNoTracking()
+            .Where(m => m.CourseId == courseId)
+            .Select(m => m.Id)
+            .ToListAsync();
+        return await db.CourseResources
+            .AsNoTracking()
+            .Where(r => moduleIds.Contains(r.ModuleId))
+            .Select(r => r.Id)
+            .ToListAsync();
+    }
+
+    static public async Task<CourseProgress> GetCourseProgressAsync(AppDbContext db, long courseId, long userId)
+    {
+        var resourceIds = await GetCourseResourceIdsAsync(db, courseId);
+        var completed = await db.ResourceProgress
+            .AsNoTracking()
+            .Where(r => r.UserId == userId && r.IsCompleted && resourceIds.Contains(r.ResourceId))
+            .CountAsync();
+        return new CourseProgress(Completed: completed, Total: resourceIds.Count);
     }
 }

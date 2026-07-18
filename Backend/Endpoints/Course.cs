@@ -14,15 +14,17 @@ public static class CourseEndpoints
     {
         var course = route.MapGroup("/api/course").WithTags("Courses");
 
-        course.MapGet("{courseId}", HandleGetById);
-        course.MapGet("student/{userId}", HandleGetStudentCourses).RequireAuthorization();
-        course.MapGet("instructor/{userId}", HandleGetInstructorCourses).RequireAuthorization();
+        course.MapGet("{courseId}", HandleGetCourseById).RequireAuthorization();
+        course.MapGet("student", HandleGetStudent).RequireAuthorization();
+        course.MapGet("instructor", HandleGetInstructor).RequireAuthorization();
         course.MapGet("explore", HandleGetExplore).RequireAuthorization();
-        course.MapGet("query", HandleQuery);
-        course.MapGet("{courseId}/check", HandleCheckOwner).RequireAuthorization();
+        course.MapGet("", HandleQuery).RequireAuthorization();
 
-        course.MapPut("", HandleCreate).RequireAuthorization();
-        course.MapPost("{courseId}", HandleUpdate).RequireAuthorization();
+        course.MapGet("{courseId}/modules", HandleGetModules).RequireAuthorization();
+        course.MapPost("{courseId}/modules", HandleCreateModule).RequireAuthorization();
+
+        course.MapPost("", HandleCreate).RequireAuthorization();
+        course.MapPut("{courseId}", HandleUpdate).RequireAuthorization();
         course.MapDelete("{courseId}", HandleDelete).RequireAuthorization();
 
         course.MapPost("{courseId}/publish", HandlePublish).RequireAuthorization();
@@ -31,7 +33,7 @@ public static class CourseEndpoints
 
     private static async
         Task<Results<Ok<CourseResponse>, BadRequest, NotFound>>
-        HandleGetById(
+        HandleGetCourseById(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
             CourseService courseService)
@@ -47,35 +49,28 @@ public static class CourseEndpoints
     }
 
     private static async
-        Task<Results<Ok<List<CourseResponse>>, BadRequest>>
-        HandleGetByUser(
-            string userId,
-            SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService)
+        Task<Ok<List<CourseStudentResponse>>>
+        HandleGetStudent(CourseService courseService)
     {
-        var decoded = sqidsEncoder.Decode(userId);
-        if (decoded.Count != 1)
-            return TypedResults.BadRequest();
-
         return TypedResults.Ok(
-            await courseService.GetCreatedCoursesAsync(decoded[0]));
+            await courseService.GetStudentCoursesAsync());
     }
 
     private static async
         Task<Ok<List<CourseResponse>>>
-        HandleGetPublished(CourseService courseService)
+        HandleGetInstructor(CourseService courseService)
     {
         return TypedResults.Ok(
-            await courseService.GetPublishedCoursesAsync());
+            await courseService.GetInstructorCoursesAsync());
     }
 
     private static async
-        Task<Ok<List<CourseResponse>>>
-        HandleGetUnpublished(CourseService courseService)
+        Task<Ok<CourseExploreResponse>>
+        HandleGetExplore(CourseService courseService)
     {
         return TypedResults.Ok(
-            await courseService.GetUnpublishedCoursesAsync());
-    }
+            await courseService.GetExploreAsync());
+    } 
 
     private static async
         Task<Ok<QueryResponse<CourseResponse>>>
@@ -86,18 +81,34 @@ public static class CourseEndpoints
     }
 
     private static async
-        Task<Results<Ok<bool>, BadRequest>>
-        HandleCheckOwner(
+        Task<Results<Ok<List<ModuleResponse>>, BadRequest>>
+        HandleGetModules(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService)
+            ModuleService moduleService)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
         return TypedResults.Ok(
-            await courseService.CheckOwnerAsync(decoded[0]));
+            await moduleService.GetCourseModulesAsync(decoded[0]));
+    }
+
+    private static async
+        Task<Results<Ok<ModuleSetResponse>, BadRequest>>
+        HandleCreateModule(
+            string courseId,
+            [FromBody] ModuleSetRequest request,
+            SqidsEncoder<long> sqidsEncoder,
+            ModuleService moduleService)
+    {
+        var decoded = sqidsEncoder.Decode(courseId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        return TypedResults.Ok(
+            await moduleService.CreateModuleAsync(decoded[0], request));
     }
 
     private static async

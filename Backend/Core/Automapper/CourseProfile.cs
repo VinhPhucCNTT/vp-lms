@@ -11,11 +11,14 @@ public class CourseProfile : Profile
         CreateMap<Course, CourseResponse>()
             .MapSqidId()
             .ForMember(
-                d => d.CreatorId,
-                o => o.ConvertUsing<SqidConverter, long>(x => x.CreatorId))
+                d => d.CreatorUsername,
+                o => o.MapFrom(x => x.Creator != null ? x.Creator.Username : ""))
             .ForMember(
-                d => d.CreatorUserName,
-                o => o.MapFrom(x => x.Creator != null ? x.Creator.Username : ""));
+                d => d.CreatorFullname,
+                o => o.MapFrom(x => x.Creator != null ? x.Creator.Fullname : ""))
+            .ForMember(
+                d => d.EnrollmentCount,
+                o => o.MapFrom(x => x.Enrollments.Count));
 
         CreateMap<Course, CourseSetResponse>()
             .MapSqidId()

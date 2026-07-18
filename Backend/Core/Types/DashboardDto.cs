@@ -9,7 +9,7 @@ public record StudentDashboardStats(
 
 public record StudentDashboardResponse(
     StudentDashboardStats Stats,
-    List<CourseResponse> RecentCourses,
+    List<CourseStudentResponse> RecentCourses,
     List<ICourseActivityResponse> ActivitiesDue,
     List<CourseProgressResponse> Progresses,
     List<CourseEventResponse> RecentActivities
@@ -27,6 +27,6 @@ public record InstructorDashboardStats(
 public record InstructorDashboardResponse(
     InstructorDashboardStats Stats,
     List<SubmissionResponse> PendingSubmissions,
-    List<CourseResponse> RecentCourses,
+    List<CourseStudentResponse> RecentCourses,
     List<AnnouncementResponse> RecentAnnouncements
 );

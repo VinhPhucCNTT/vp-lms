@@ -11,9 +11,6 @@ public class ModuleProfile : Profile
         CreateMap<CourseModule, ModuleResponse>()
             .MapSqidId();
 
-        CreateMap<CourseModule, ModuleDetailResponse>()
-            .MapSqidId();
-
         CreateMap<CourseModule, ModuleSetResponse>()
             .MapSqidId();
     }

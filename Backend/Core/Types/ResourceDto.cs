@@ -12,7 +12,7 @@ public record ResourceResponse(
 public record ResourceListResponse(
     string Id,
     ResourceType Type,
-    CourseResponse CourseInfo,
+    CourseStudentResponse CourseInfo,
     DateOnly DueDate,
     bool StatusIsCompleted // false = Pending
 ) : IEntityResponse;
@@ -21,7 +21,6 @@ public record ResourceDetailResponse(
     string Id,
     ResourceType Type,
     string Title,
-    string? Description,
     int OrderIndex,
     DateTime? AvailableFrom,
     DateTime? AvailableUntil,
@@ -32,7 +31,6 @@ public record ResourceDetailResponse(
 public record ResourceRequestInfo
 (
     string Title,
-    string? Description,
     int OrderIndex,
     DateTime? AvailableFrom,
     DateTime? AvailableUntil,

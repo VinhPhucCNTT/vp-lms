@@ -13,7 +13,7 @@ public static class AuthEndpoints
 
         auth.MapGet("", async () => TypedResults.Ok).RequireAuthorization();
         auth.MapPost("login", HandleLogin);
-        auth.MapPost("register", HandleRegister);
+        // auth.MapPost("register", HandleRegister);
     }
 
     private static async

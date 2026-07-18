@@ -19,7 +19,7 @@ public class ModuleService(
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<ModuleDetailResponse?> GetModuleByIdAsync(long moduleId)
+    public async Task<ModuleResponse?> GetModuleByIdAsync(long moduleId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
@@ -27,27 +27,16 @@ public class ModuleService(
             .AsNoTracking()
             .Where(m => m.Id == moduleId)
             .Where(m => m.IsPublished || m.Course.CreatorId == currentUserId)
-            .Select(m => _mapper.Map<ModuleDetailResponse>(m))
+            .Select(m => _mapper.Map<ModuleResponse>(m))
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<ModuleResponse>> GetPublishedModulesAsync(long courseId)
+    public async Task<List<ModuleResponse>> GetCourseModulesAsync(long courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.CourseModules
             .AsNoTracking()
-            .Where(m => m.CourseId == courseId && m.IsPublished)
-            .Select(m => _mapper.Map<ModuleResponse>(m))
-            .ToListAsync();
-    }
-
-    public async Task<List<ModuleResponse>> GetUnpublishedModulesAsync(long courseId)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var currentUserId = _currentUserService.UserId;
-        return await db.CourseModules
-            .AsNoTracking()
-            .Where(m => m.CourseId == courseId && !m.IsPublished && m.Course.CreatorId == currentUserId)
+            .Where(m => m.CourseId == courseId)
             .Select(m => _mapper.Map<ModuleResponse>(m))
             .ToListAsync();
     }
