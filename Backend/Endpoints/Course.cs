@@ -23,12 +23,12 @@ public static class CourseEndpoints
         course.MapGet("{courseId}/modules", HandleGetModules).RequireAuthorization();
         course.MapPost("{courseId}/modules", HandleCreateModule).RequireAuthorization();
 
-        course.MapPost("", HandleCreate).RequireAuthorization();
-        course.MapPut("{courseId}", HandleUpdate).RequireAuthorization();
-        course.MapDelete("{courseId}", HandleDelete).RequireAuthorization();
+        course.MapPost("", HandleCreate).RequireAuthorization("CourseOwner");
+        course.MapPut("{courseId}", HandleUpdate).RequireAuthorization("CourseOwner");
+        course.MapDelete("{courseId}", HandleDelete).RequireAuthorization("CourseOwner");
 
-        course.MapPost("{courseId}/publish", HandlePublish).RequireAuthorization();
-        course.MapPost("{courseId}/unpublish", HandleUnpublish).RequireAuthorization();
+        course.MapPost("{courseId}/publish", HandlePublish).RequireAuthorization("CourseOwner");
+        course.MapPost("{courseId}/unpublish", HandleUnpublish).RequireAuthorization("CourseOwner");
     }
 
     private static async

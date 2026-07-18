@@ -66,11 +66,9 @@ public class AuthService(
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
-            new(ClaimTypes.Name, user.Username)
+            new(ClaimTypes.Name, user.Username),
+            new(ClaimTypes.Role, user.Role.ToString())
         };
-
-        // TODO: Handle admin role
-        // claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
         var creds = new SigningCredentials(
             key, SecurityAlgorithms.HmacSha256);

@@ -28,8 +28,4 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor)
 
     public bool IsAuthenticated =>
         _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
-
-    // TODO: Handle admin role
-    // public bool IsInRole(string role) =>
-    //     _httpContextAccessor.HttpContext?.User?.IsInRole(role) ?? false;
 }

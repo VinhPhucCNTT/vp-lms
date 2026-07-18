@@ -16,6 +16,7 @@ using Backend.Services.Courses;
 using Backend.Services.Users;
 using Backend.Core.Automapper;
 using Backend.Core.Helpers;
+using Backend.Core.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,7 +40,17 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddOpenApi();
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("CourseOwner", policy =>
+        {
+            policy.RequireAuthenticatedUser();
+            policy.AddRequirements(new CourseOwnerRequirement());
+        })
+    .AddPolicy("CourseParticipant", policy =>
+        {
+            policy.RequireAuthenticatedUser();
+            policy.AddRequirements(new CourseParticipantRequirement());
+        });
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
