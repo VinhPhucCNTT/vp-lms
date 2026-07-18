@@ -21,7 +21,6 @@ import {
   ArrowLeftIcon,
   GraduationCapIcon,
   ZapIcon,
-  LockIcon,
   PinIcon,
   ExternalLinkIcon,
 } from "lucide-react";
@@ -30,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
@@ -44,7 +43,7 @@ import {
 import { announcements, instructors, students } from "@/shared/data/users";
 import { problems } from "@/shared/data/problems";
 import type { CourseActivity, ActivityType } from "@/types";
-import { useAuth } from "@/features/auth/auth-context";
+// import { useAuth } from "@/features/auth/auth-context";
 
 // ── Icon + colour helpers ────────────────────────────────────────────────────
 
@@ -684,7 +683,7 @@ function CourseSidebar({
 
 export function CourseWorkspace() {
   const { courseId } = useParams<{ courseId: string }>();
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const course = courses.find((c) => c.id === courseId) ?? courses[0];
   const instructor = instructors.find((i) => i.id === course.instructorId);
   const courseAnnouncements = announcements.filter((a) => a.courseId === course.id);

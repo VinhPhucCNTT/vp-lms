@@ -95,6 +95,7 @@ export interface Assessment {
   id: string;
   moduleId: string;
   title: string;
+  description: string;
   duration: number;
   passingScore: number;
   maxAttempts: number;

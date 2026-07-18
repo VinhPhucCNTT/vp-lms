@@ -1,4 +1,3 @@
-import * as React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,8 +24,6 @@ import { InstructorNotifications } from "@/features/courses/pages/instructor-not
 import { InstructorSubmissions } from "@/features/courses/pages/instructor-submissions";
 import { InstructorCodingProblems } from "@/features/courses/pages/instructor-coding-problems";
 
-import { StudentAssignments } from "@/features/assignments/pages/student-assignments";
-import { StudentAssessments } from "@/features/assessments/pages/student-assessments";
 import { StudentActivity } from "@/features/activity/pages/student-activity";
 import { StudentExplore } from "@/features/explore/pages/student-explore";
 

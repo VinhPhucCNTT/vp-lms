@@ -7,7 +7,6 @@ import {
   getPaginationRowModel,
   useReactTable,
   type ColumnDef,
-  type ColumnFiltersState,
 } from "@tanstack/react-table";
 import { SearchIcon, ClockIcon, CheckCircleIcon, AlertCircleIcon, ListTodoIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

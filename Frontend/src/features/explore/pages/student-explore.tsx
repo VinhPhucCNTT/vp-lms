@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { SearchIcon, BookOpenIcon, UsersIcon } from "lucide-react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,33 +25,18 @@ interface ExploreCourseCardProps {
 }
 
 function ExploreCourseCard({ course }: ExploreCourseCardProps) {
-  const instructor = instructors.find((i) => i.id === course.instructorId);
-
   return (
     <Card className="group hover:shadow-md transition-shadow overflow-hidden">
       <div className="h-24 bg-gradient-to-br from-primary/20 to-accent/20 relative flex items-center justify-center">
         <BookOpenIcon className="size-8 text-primary/40" />
-        {course.featured && (
-          <Badge className="absolute top-2 right-2" variant="success">Featured</Badge>
-        )}
       </div>
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
           <Badge variant="outline">{course.code}</Badge>
-          {course.level && (
-            <Badge variant="secondary">{course.level}</Badge>
-          )}
         </div>
         <CardTitle className="text-base line-clamp-1">{course.title}</CardTitle>
         <CardDescription className="line-clamp-2">{course.description}</CardDescription>
       </CardHeader>
-      <CardContent className="pb-2">
-        <div className="flex flex-wrap gap-1">
-          {course.tags?.slice(0, 3).map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
-          ))}
-        </div>
-      </CardContent>
       <CardFooter className="pt-2 border-t">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -59,9 +44,6 @@ function ExploreCourseCard({ course }: ExploreCourseCardProps) {
             <span>{course.enrolledCount} students</span>
           </div>
           <div className="flex items-center gap-2">
-            {course.credits && (
-              <Badge variant="outline" className="text-xs">{course.credits} cr</Badge>
-            )}
             <Link to={`/student/courses/${course.id}`}>
               <Button size="sm" variant="secondary">View</Button>
             </Link>
