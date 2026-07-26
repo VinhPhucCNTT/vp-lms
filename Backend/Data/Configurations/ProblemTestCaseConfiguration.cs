@@ -1,4 +1,4 @@
-using Backend.Core.Entities.Resources;
+using Backend.Core.Entities.Content;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -20,8 +20,8 @@ public class ProblemTestCaseConfiguration : IEntityTypeConfiguration<ProblemTest
             .IsRequired()
             .HasColumnType("text");
 
-        builder.Property(x => x.Explanation)
-            .HasColumnType("text");
+        // builder.Property(x => x.Explanation)
+        //     .HasColumnType("text");
 
         builder.HasIndex(x => new { x.ProblemId, x.OrderIndex })
             .HasFilter("is_deleted = false")

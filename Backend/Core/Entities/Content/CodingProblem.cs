@@ -1,8 +1,8 @@
 using Backend.Core.Common.Models;
 using Backend.Core.Entities.Courses;
-using Backend.Core.Entities.Submissions;
+using Backend.Core.Entities.Judge;
 
-namespace Backend.Core.Entities.Resources;
+namespace Backend.Core.Entities.Content;
 
 public class CodingProblem : BaseEntity, ISoftDeletable
 {
@@ -12,7 +12,7 @@ public class CodingProblem : BaseEntity, ISoftDeletable
     public string FunctionSignature { get; set; } = default!;
     public string Language { get; set; } = default!;
     public int TimeLimitMs { get; set; } = 1000;
-    public int MemoryLimitMb { get; set; } = 256;
+    public int MemoryLimitKb { get; set; } = 256;
     public bool IsPractice { get; set; } = false;
     public ProblemDifficulty Difficulty { get; set; }
 

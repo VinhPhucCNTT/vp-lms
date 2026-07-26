@@ -1,6 +1,6 @@
 using Backend.Core.Common.Models;
 
-namespace Backend.Core.Entities.Resources;
+namespace Backend.Core.Entities.Content;
 
 public class AssessmentSection : BaseEntity, ISoftDeletable
 {

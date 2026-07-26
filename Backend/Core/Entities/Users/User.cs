@@ -1,4 +1,5 @@
 using Backend.Core.Common.Models;
+using Backend.Core.Entities.Content;
 using Backend.Core.Entities.Courses;
 
 namespace Backend.Core.Entities.Users;
@@ -21,6 +22,7 @@ public class User : BaseEntity
     public ICollection<Course> Courses { get; set; } = [];
     public ICollection<Enrollment> Enrollments { get; set; } = [];
     public ICollection<Comment> Comments { get; set; } = [];
+    public ICollection<FileAsset> FileAssets { get; set; } = [];
 }
 
 public enum UserRoles {

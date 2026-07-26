@@ -9,14 +9,15 @@ using Sqids;
 
 using Backend.Data;
 using Backend.Endpoints;
-using Backend.Core.Common;
 using Backend.Services.Common;
 using Backend.Services.Auth;
 using Backend.Services.Courses;
 using Backend.Services.Users;
 using Backend.Core.Automapper;
 using Backend.Core.Helpers;
-using Backend.Core.Authorization;
+using System.IdentityModel.Tokens.Jwt;
+using Backend.Core.Authorization.Requirements;
+using Backend.Core.Authorization.Handlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,18 +41,14 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddOpenApi();
 
-// Authorization requirements
+// Authorization
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("CourseOwner", policy =>
         {
             policy.RequireAuthenticatedUser();
             policy.AddRequirements(new CourseOwnerRequirement());
-        })
-    .AddPolicy("CourseParticipant", policy =>
-        {
-            policy.RequireAuthenticatedUser();
-            policy.AddRequirements(new CourseParticipantRequirement());
         });
+builder.Services.AddSingleton<CourseOwnerHandler>();
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
@@ -60,7 +57,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
         .UseSnakeCaseNamingConvention();
 });
 
-var sqidsSettings = builder.Configuration.GetSection("Sqids").Get<SqidsSettings>();
+var sqidsSettings = builder.Configuration.GetSection("Sqids").Get<Backend.Core.Common.SqidsOptions>();
 builder.Services.AddSingleton(provider =>
     new SqidsEncoder<long>(new()
     {
@@ -93,7 +90,7 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(key),
 
         RoleClaimType = ClaimTypes.Role,
-        NameClaimType = ClaimTypes.Name
+        NameClaimType = JwtRegisteredClaimNames.Sub
     };
 
     // DEBUG
@@ -116,6 +113,7 @@ builder.Services.AddAutoMapper(cfg => { },
 
 // Inject services
 builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<CourseOwnershipResolver>();
 builder.Services.AddScoped<AuthService>();
 
 builder.Services.AddScoped<UserService>();

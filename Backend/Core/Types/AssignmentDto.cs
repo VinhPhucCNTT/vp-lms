@@ -1,4 +1,4 @@
-using Backend.Core.Entities.Resources;
+using Backend.Core.Entities.Content;
 
 namespace Backend.Core.Types;
 

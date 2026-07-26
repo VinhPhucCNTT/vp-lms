@@ -1,16 +1,16 @@
 using Backend.Core.Entities.Courses;
-using Backend.Core.Entities.Resources;
+using Backend.Core.Entities.Content;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Data.Configurations;
 
-public class ModuleResourceConfiguration : IEntityTypeConfiguration<CourseResource>
+public class CourseResourceConfiguration : IEntityTypeConfiguration<CourseResource>
 {
     public void Configure(EntityTypeBuilder<CourseResource> builder)
     {
         builder.ToTable(
-            "module_resources",
+            "course_resources",
             t => t.HasCheckConstraint(
                 "CK_ModuleResources_Polymorphic_ExactlyOne",
                 "(\"lesson_id\" IS NOT NULL)::int + (\"assignment_id\" IS NOT NULL)::int + (\"assessment_id\" IS NOT NULL)::int + (\"problem_id\" IS NOT NULL)::int = 1"
@@ -28,8 +28,8 @@ public class ModuleResourceConfiguration : IEntityTypeConfiguration<CourseResour
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(x => x.Description)
-            .HasColumnType("text");
+        // builder.Property(x => x.Description)
+        //     .HasColumnType("text");
 
         builder.Property(x => x.AccessPassword)
             .HasMaxLength(255);

@@ -1,13 +1,14 @@
 using Backend.Core.Common.Models;
-using Backend.Core.Entities.Resources;
+using Backend.Core.Entities.Content;
 using Backend.Core.Entities.Users;
 
-namespace Backend.Core.Entities.Submissions;
+namespace Backend.Core.Entities.Assessments;
 
 public class AssessmentAttempt : BaseEntity, ISoftDeletable
 {
     public long AssessmentId { get; set; }
     public long UserId { get; set; }
+
     public DateTime StartedAt { get; set; } = DateTime.UtcNow;
     public DateTime? SubmittedAt { get; set; }
     public decimal? TotalScore { get; set; }

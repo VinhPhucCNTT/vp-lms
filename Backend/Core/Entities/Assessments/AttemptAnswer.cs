@@ -1,13 +1,14 @@
 using Backend.Core.Common.Models;
-using Backend.Core.Entities.Resources;
+using Backend.Core.Entities.Content;
 using Backend.Core.Entities.Users;
 
-namespace Backend.Core.Entities.Submissions;
+namespace Backend.Core.Entities.Assessments;
 
 public class AttemptAnswer : BaseEntity
 {
     public long AttemptId { get; set; }
     public long QuestionId { get; set; }
+
     public string ResponseDataJson { get; set; } = default!; // JSONB column
     public decimal? Score { get; set; }
     // TODO: ????

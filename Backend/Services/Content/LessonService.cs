@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Backend.Core.Types;
 using Backend.Core.Entities.Courses;
 using Sqids;
-using Backend.Core.Entities.Resources;
+using Backend.Core.Entities.Content;
 
 namespace Backend.Services.Content;
 

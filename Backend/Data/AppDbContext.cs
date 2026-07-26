@@ -1,17 +1,20 @@
 using Backend.Core.Common.Models;
 using Backend.Core.Entities.Courses;
-using Backend.Core.Entities.Resources;
-using Backend.Core.Entities.Submissions;
+using Backend.Core.Entities.Content;
 using Backend.Core.Entities.Users;
 using Microsoft.EntityFrameworkCore;
+using Backend.Core.Entities.Assignments;
+using Backend.Core.Entities.Judge;
+using Backend.Core.Entities.Assessments;
+using Backend.Core.Entities.Learning;
 
 namespace Backend.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
+    public DbSet<FileAsset> FileAssets => Set<FileAsset>();
 
-    public DbSet<Department> Departments => Set<Department>();
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<CourseModule> CourseModules => Set<CourseModule>();
 

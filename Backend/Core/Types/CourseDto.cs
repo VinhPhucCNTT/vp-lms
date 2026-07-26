@@ -2,6 +2,7 @@ namespace Backend.Core.Types;
 
 public record CourseResponse(
     string Id,
+    string CreatorId,
     string CreatorUsername,
     string CreatorFullname,
     string Code,

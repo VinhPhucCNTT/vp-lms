@@ -1,8 +1,8 @@
 using Backend.Core.Common.Models;
 using Backend.Core.Entities.Courses;
-using Backend.Core.Entities.Submissions;
+using Backend.Core.Entities.Assignments;
 
-namespace Backend.Core.Entities.Resources;
+namespace Backend.Core.Entities.Content;
 
 public class Assignment : BaseEntity, ISoftDeletable
 {

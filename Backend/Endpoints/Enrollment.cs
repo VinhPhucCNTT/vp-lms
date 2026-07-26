@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Backend.Core.Types;
-using Backend.Core.Common;
-using Backend.Services.Courses;
 using Microsoft.AspNetCore.Mvc;
 using Sqids;
 using Backend.Services.Users;

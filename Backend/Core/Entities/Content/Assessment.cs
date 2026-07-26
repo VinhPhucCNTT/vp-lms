@@ -1,8 +1,8 @@
 using Backend.Core.Common.Models;
+using Backend.Core.Entities.Assessments;
 using Backend.Core.Entities.Courses;
-using Backend.Core.Entities.Submissions;
 
-namespace Backend.Core.Entities.Resources;
+namespace Backend.Core.Entities.Content;
 
 public class Assessment : BaseEntity, ISoftDeletable
 {

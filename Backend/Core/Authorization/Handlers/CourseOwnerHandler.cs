@@ -1,0 +1,37 @@
+using System.IdentityModel.Tokens.Jwt;
+using Backend.Core.Authorization.Requirements;
+using Backend.Core.Entities.Users;
+using Backend.Core.Types;
+using Microsoft.AspNetCore.Authorization;
+
+namespace Backend.Core.Authorization.Handlers;
+
+public sealed class CourseOwnerHandler(
+    IHttpContextAccessor httpContextAccessor) : AuthorizationHandler<CourseOwnerRequirement, CourseAuthorizationResource>
+{
+    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+
+    protected override async Task HandleRequirementAsync(
+        AuthorizationHandlerContext context,
+        CourseOwnerRequirement requirement,
+        CourseAuthorizationResource resource)
+    {
+        if (context.User.IsInRole(UserRoles.Admin.ToString()))
+        {
+            context.Succeed(requirement);
+            return;
+        }
+
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext == null)
+            return;
+
+        if (!long.TryParse(
+            httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value,
+            out var userId))
+            return;
+
+        if (resource.CreatorId == userId)
+            context.Succeed(requirement);
+    }
+}

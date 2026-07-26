@@ -13,12 +13,12 @@ public static class ModuleEndpoints
     {
         var module = route.MapGroup("/api/module").WithTags("Modules");
 
-        module.MapPut("{moduleId}", HandleUpdate).RequireAuthorization("CourseOwner");
-        module.MapDelete("{moduleId}", HandleDelete).RequireAuthorization("CourseOwner");
+        module.MapPut("{moduleId}", HandleUpdate).RequireAuthorization();
+        module.MapDelete("{moduleId}", HandleDelete).RequireAuthorization();
 
-        module.MapPost("publish/{moduleId}", HandlePublish).RequireAuthorization("CourseOwner");
-        module.MapPost("unpublish/{moduleId}", HandleUnpublish).RequireAuthorization("CourseOwner");
-        module.MapPost("reorder/{moduleId}", HandleReorder).RequireAuthorization("CourseOwner");
+        module.MapPost("publish/{moduleId}", HandlePublish).RequireAuthorization();
+        module.MapPost("unpublish/{moduleId}", HandleUnpublish).RequireAuthorization();
+        module.MapPost("reorder/{moduleId}", HandleReorder).RequireAuthorization();
     }
 
     private static async

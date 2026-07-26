@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Backend.Core.Common.Models;
-using Backend.Core.Entities.Resources;
+using Backend.Core.Entities.Content;
 
 namespace Backend.Core.Entities.Courses;
 

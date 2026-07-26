@@ -1,4 +1,4 @@
-using Backend.Core.Entities.Submissions;
+using Backend.Core.Entities.Assignments;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

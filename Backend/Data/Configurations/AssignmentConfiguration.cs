@@ -1,4 +1,4 @@
-using Backend.Core.Entities.Resources;
+using Backend.Core.Entities.Content;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -12,9 +12,9 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.InstructionsMarkdown)
-            .IsRequired()
-            .HasColumnType("text");
+        // builder.Property(x => x.InstructionsMarkdown)
+        //     .IsRequired()
+        //     .HasColumnType("text");
 
         // builder.Property(x => x.MaxScore)
         //     .HasColumnType("decimal(5,2)");

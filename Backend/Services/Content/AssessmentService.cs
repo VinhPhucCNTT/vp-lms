@@ -4,7 +4,7 @@ using Backend.Services.Common;
 using Backend.Core.Types;
 using Backend.Core.Entities.Courses;
 using Sqids;
-using Backend.Core.Entities.Resources;
+using Backend.Core.Entities.Content;
 using Backend.Core.Entities.Submissions;
 
 namespace Backend.Services.Content;

@@ -14,7 +14,6 @@ public static class ResourceEndpoints
         var resource = route.MapGroup("/api/resource").WithTags("Resources");
 
         resource.MapGet("{resourceId}", HandleGetById);
-        resource.MapGet("{resourceId}/check", HandleCheckOwner).RequireAuthorization();
 
         resource.MapDelete("{resourceId}", HandleDelete).RequireAuthorization();
 
@@ -38,21 +37,6 @@ public static class ResourceEndpoints
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();
-    }
-
-    private static async
-        Task<Results<Ok<bool>, BadRequest>>
-        HandleCheckOwner(
-            string resourceId,
-            SqidsEncoder<long> sqidsEncoder,
-            ResourceService resourceService)
-    {
-        var decoded = sqidsEncoder.Decode(resourceId);
-        if (decoded.Count != 1)
-            return TypedResults.BadRequest();
-
-        return TypedResults.Ok(
-            await resourceService.CheckOwnerAsync(decoded[0]));
     }
 
     private static async

@@ -1,7 +1,7 @@
 using Backend.Core.Common.Models;
 using Backend.Core.Entities.Courses;
 
-namespace Backend.Core.Entities.Resources;
+namespace Backend.Core.Entities.Content;
 
 public class Lesson : BaseEntity, ISoftDeletable
 {

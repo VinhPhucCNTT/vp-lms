@@ -215,4 +215,14 @@ public class CourseService(
             .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync();
     }
+
+    public async Task<CourseAuthorizationResource?> GetAuthorizationResourceAsync(long courseId)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.Courses
+            .AsNoTracking()
+            .Where(c => c.Id == courseId)
+            .Select(c => new CourseAuthorizationResource(c.Id, c.CreatorId))
+            .FirstOrDefaultAsync();
+    }
 }

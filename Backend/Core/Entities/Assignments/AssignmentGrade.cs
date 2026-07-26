@@ -1,12 +1,13 @@
 using Backend.Core.Common.Models;
 using Backend.Core.Entities.Users;
 
-namespace Backend.Core.Entities.Submissions;
+namespace Backend.Core.Entities.Assignments;
 
 public class AssignmentGrade : BaseEntity
 {
     public long SubmissionId { get; set; }
     public long GraderId { get; set; }
+
     public decimal Score { get; set; }
     public string? FeedbackText { get; set; }
 

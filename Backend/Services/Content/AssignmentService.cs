@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Backend.Services.Common;
 using Backend.Core.Types;
 using Backend.Core.Entities.Courses;
-using Backend.Core.Entities.Resources;
+using Backend.Core.Entities.Content;
 using Backend.Core.Entities.Submissions;
 using AutoMapper;
 

@@ -1,7 +1,8 @@
 using Backend.Core.Common.Models;
+using Backend.Core.Entities.Courses;
 using Backend.Core.Entities.Users;
 
-namespace Backend.Core.Entities.Courses;
+namespace Backend.Core.Entities.Learning;
 
 public class ResourceProgress : BaseEntity
 {

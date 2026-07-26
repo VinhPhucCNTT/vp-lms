@@ -5,6 +5,8 @@ using Backend.Core.Common;
 using Backend.Services.Courses;
 using Microsoft.AspNetCore.Mvc;
 using Sqids;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Backend.Endpoints;
 
@@ -12,23 +14,23 @@ public static class CourseEndpoints
 {
     public static void AddCourseEndpoints(this IEndpointRouteBuilder route)
     {
-        var course = route.MapGroup("/api/course").WithTags("Courses");
+        var course = route.MapGroup("/api/course").WithTags("Courses").RequireAuthorization();
 
-        course.MapGet("{courseId}", HandleGetCourseById).RequireAuthorization();
-        course.MapGet("student", HandleGetStudent).RequireAuthorization();
-        course.MapGet("instructor", HandleGetInstructor).RequireAuthorization();
-        course.MapGet("explore", HandleGetExplore).RequireAuthorization();
-        course.MapGet("", HandleQuery).RequireAuthorization();
+        course.MapGet("{courseId}", HandleGetCourseById);
+        course.MapGet("student", HandleGetStudent);
+        course.MapGet("instructor", HandleGetInstructor);
+        course.MapGet("explore", HandleGetExplore);
+        course.MapGet("", HandleQuery);
 
-        course.MapGet("{courseId}/modules", HandleGetModules).RequireAuthorization();
-        course.MapPost("{courseId}/modules", HandleCreateModule).RequireAuthorization();
+        course.MapGet("{courseId}/modules", HandleGetModules);
+        course.MapPost("{courseId}/modules", HandleCreateModule);
 
-        course.MapPost("", HandleCreate).RequireAuthorization("CourseOwner");
-        course.MapPut("{courseId}", HandleUpdate).RequireAuthorization("CourseOwner");
-        course.MapDelete("{courseId}", HandleDelete).RequireAuthorization("CourseOwner");
+        course.MapPost("", HandleCreate);
+        course.MapPut("{courseId}", HandleUpdate);
+        course.MapDelete("{courseId}", HandleDelete);
 
-        course.MapPost("{courseId}/publish", HandlePublish).RequireAuthorization("CourseOwner");
-        course.MapPost("{courseId}/unpublish", HandleUnpublish).RequireAuthorization("CourseOwner");
+        course.MapPost("{courseId}/publish", HandlePublish);
+        course.MapPost("{courseId}/unpublish", HandleUnpublish);
     }
 
     private static async
@@ -36,11 +38,20 @@ public static class CourseEndpoints
         HandleGetCourseById(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
+            IAuthorizationService authService,
+            ClaimsPrincipal user,
             CourseService courseService)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
+
+        var resource = await courseService.GetAuthorizationResourceAsync(decoded[0]);
+        if (resource is null)
+            return TypedResults.NotFound();
+        var authResult = await authService.AuthorizeAsync(user, resource, "CourseOwner");
+        if (!authResult.Succeeded)
+            return TypedResults.NotFound();
 
         var result = await courseService.GetCourseByIdAsync(decoded[0]);
         return result is not null

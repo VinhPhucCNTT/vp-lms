@@ -1,13 +1,14 @@
 using Backend.Core.Common.Models;
-using Backend.Core.Entities.Resources;
+using Backend.Core.Entities.Content;
 using Backend.Core.Entities.Users;
 
-namespace Backend.Core.Entities.Submissions;
+namespace Backend.Core.Entities.Judge;
 
 public class ProblemSubmission : BaseEntity
 {
     public long ProblemId { get; set; }
     public long UserId { get; set; }
+
     public int OrderIndex { get; set; }
     public string SubmittedCode { get; set; } = default!;
     public string Language { get; set; } = default!;

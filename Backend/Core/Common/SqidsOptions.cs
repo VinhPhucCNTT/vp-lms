@@ -1,6 +1,6 @@
 namespace Backend.Core.Common;
 
-public class SqidsSettings
+public class SqidsOptions
 {
     public string Alphabet { get; set; } = "";
     public int MinLength { get; set; }

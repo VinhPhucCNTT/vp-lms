@@ -1,5 +1,4 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace Backend.Services.Common;
 
@@ -12,19 +11,19 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor)
         get
         {
             var userIdClaim = _httpContextAccessor.HttpContext?
-                .User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                .User?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
             return userIdClaim != null ? long.Parse(userIdClaim) : -1;
         }
     }
 
-    public string Email =>
-        _httpContextAccessor.HttpContext?
-            .User?.FindFirst(JwtRegisteredClaimNames.Email)?.Value ?? string.Empty;
-
-    public string FullName =>
-        _httpContextAccessor.HttpContext?
-            .User?.FindFirst(ClaimTypes.Name)?.Value ?? string.Empty;
+    // public string Email =>
+    //     _httpContextAccessor.HttpContext?
+    //         .User?.FindFirst(JwtRegisteredClaimNames.Email)?.Value ?? string.Empty;
+    //
+    // public string FullName =>
+    //     _httpContextAccessor.HttpContext?
+    //         .User?.FindFirst(ClaimTypes.Name)?.Value ?? string.Empty;
 
     public bool IsAuthenticated =>
         _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
