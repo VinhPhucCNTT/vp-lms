@@ -3,7 +3,7 @@ using Backend.Api.Core.Entities.Content;
 namespace Backend.Api.Core.Types;
 
 public record AssignmentInfo(
-    string InstructionsMarkdown,
+    string InstructionsMD,
     string? AllowedFileTypes,
     int MaxFileSizeKb,
     int? MaxAttempt,
@@ -14,6 +14,17 @@ public record AssignmentInfo(
 public record AssignmentRequest(
     ResourceRequestInfo ResourceInfo,
     AssignmentInfo Info
+);
+
+public record AssignmentResponse(
+    ResourceDetailResponse ResourceInfo,
+    AssignmentInfo Info
+);
+
+public record SubmissionRequest(
+    string? SubmissionText,
+    string? FileUrl,
+    string? FileName
 );
 
 public record SubmissionResponse(

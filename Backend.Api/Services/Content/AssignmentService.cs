@@ -4,8 +4,9 @@ using Backend.Api.Services.Common;
 using Backend.Api.Core.Types;
 using Backend.Api.Core.Entities.Courses;
 using Backend.Api.Core.Entities.Content;
-using Backend.Api.Core.Entities.Submissions;
 using AutoMapper;
+using Backend.Api.Services.Courses;
+using Backend.Api.Core.Entities.Assignments;
 
 namespace Backend.Api.Services.Content;
 
@@ -24,7 +25,10 @@ public class AssignmentService(
         return await db.Assignments
             .AsNoTracking()
             .Where(a => a.ResourceId == resourceId)
-            .Select(a => _mapper.Map<AssignmentResponse>(a))
+            .Select(a => new AssignmentResponse(
+                _mapper.Map<ResourceDetailResponse>(a.Resource),
+                _mapper.Map<AssignmentInfo>(a)
+            ))
             .FirstOrDefaultAsync();
     }
 
@@ -94,21 +98,25 @@ public class AssignmentService(
             .ToListAsync();
     }
 
-    public async Task<AssignmentResponse?> CreateAssignmentAsync(CourseResource resource, AssignmentRequest request)
+    public async Task<AssignmentResponse?> CreateAssignmentAsync(AssignmentRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
+        var resource = await ResourceService.CreateResourceAsync(db, request.ResourceInfo, ResourceType.Assignment);
         var assignment = new Assignment
         {
             ResourceId = resource.Id,
-            InstructionsMarkdown = request.InstructionsMarkdown,
-            AllowedFileTypes = request.AllowedFileTypes,
-            MaxFileSizeKb = request.MaxFileSizeKb,
-            SubmissionType = request.SubmissionType,
-            GradingSchemaJson = request.GradingSchemaJson
+            InstructionsMD = request.Info.InstructionsMD,
+            AllowedFileTypes = request.Info.AllowedFileTypes,
+            MaxFileSizeKb = request.Info.MaxFileSizeKb,
+            SubmissionType = request.Info.SubmissionType,
+            GradingSchemaJson = request.Info.GradingSchemaJson
         };
+
         db.Assignments.Add(assignment);
         await db.SaveChangesAsync();
-        return _mapper.Map<AssignmentResponse>(assignment);
+        return new AssignmentResponse(
+            _mapper.Map<ResourceDetailResponse>(resource),
+            _mapper.Map<AssignmentInfo>(assignment));
     }
 
     // public async Task<bool> ValidateGradingSchemaAsync(string? GradingSchemaJson) { }
@@ -120,11 +128,13 @@ public class AssignmentService(
         if (assignment is null)
             return null;
 
-        assignment.InstructionsMarkdown = request.InstructionsMarkdown;
-        assignment.AllowedFileTypes = request.AllowedFileTypes;
-        assignment.MaxFileSizeKb = request.MaxFileSizeKb;
-        assignment.SubmissionType = request.SubmissionType;
-        assignment.GradingSchemaJson = request.GradingSchemaJson;
+        var resource = await ResourceService.UpdateResourceAsync(db, assignment.ResourceId, request.ResourceInfo);
+
+        assignment.InstructionsMD = request.Info.InstructionsMD;
+        assignment.AllowedFileTypes = request.Info.AllowedFileTypes;
+        assignment.MaxFileSizeKb = request.Info.MaxFileSizeKb;
+        assignment.SubmissionType = request.Info.SubmissionType;
+        assignment.GradingSchemaJson = request.Info.GradingSchemaJson;
 
         db.Assignments.Update(assignment);
         await db.SaveChangesAsync();
@@ -134,10 +144,10 @@ public class AssignmentService(
     // TODO: Implement
     // public async Task GetAssignmentStatsAsync(long assignmentId) { }
 
-    public async Task<SubmissionResponse?> SubmitAssignmentAsync(long assignmentId, SubmissionRequest request)
+    public async Task<SubmissionResponse?> SubmitAssignmentAsync(long assignmentRId, SubmissionRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var assignment = await db.Assignments.FirstOrDefaultAsync(a => a.Id == assignmentId);
+        var assignment = await db.Assignments.FirstOrDefaultAsync(a => a.ResourceId == assignmentRId);
         var currentUserId = _currentUserService.UserId;
         if (assignment is null)
             return null;

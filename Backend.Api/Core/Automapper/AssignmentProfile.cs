@@ -1,5 +1,6 @@
 using AutoMapper;
-using Backend.Api.Core.Entities.Submissions;
+using Backend.Api.Core.Entities.Assignments;
+using Backend.Api.Core.Entities.Content;
 using Backend.Api.Core.Types;
 
 namespace Backend.Api.Core.Automapper;
@@ -8,6 +9,8 @@ public class AssignmentProfile : Profile
 {
     public AssignmentProfile()
     {
+        CreateMap<Assignment, AssignmentInfo>();
+
         CreateMap<AssignmentSubmission, SubmissionResponse>()
             .MapSqidId()
             .ForMember(
