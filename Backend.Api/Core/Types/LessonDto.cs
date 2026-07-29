@@ -9,8 +9,7 @@ public record LessonRequest(
     LessonInfo Info
 );
 
-public record LessonSetResponse(
-    string Id,
+public record LessonResponse(
     ResourceDetailResponse ResourceInfo,
     LessonInfo Info
-) : IEntityResponse;
+);

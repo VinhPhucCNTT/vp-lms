@@ -182,4 +182,43 @@ public class ResourceService(
             .CountAsync();
         return new CourseProgress(Completed: completed, Total: resourceIds.Count);
     }
+
+    static public async Task<CourseResource> CreateResourceAsync(AppDbContext db, ResourceRequestInfo info, ResourceType type)
+    {
+        var resource = new CourseResource
+        {
+            Type = type,
+            Title = info.Title,
+            OrderIndex = info.OrderIndex,
+            AvailableFrom = info.AvailableFrom,
+            AvailableUntil = info.AvailableUntil,
+            IsPublished = info.IsPublished,
+            AccessPassword = info.AccessPassword
+        };
+
+        db.CourseResources.Add(resource);
+        await db.SaveChangesAsync();
+        return resource;
+    }
+
+    static public async Task<CourseResource> UpdateResourceAsync(AppDbContext db, long resourceId, ResourceRequestInfo info)
+    {
+        var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Id == resourceId);
+        if (resource is not null)
+        {
+            resource.Title = info.Title;
+            resource.OrderIndex = info.OrderIndex;
+            resource.AvailableFrom = info.AvailableFrom;
+            resource.AvailableUntil = info.AvailableUntil;
+            resource.IsPublished = info.IsPublished;
+            resource.AccessPassword = info.AccessPassword;
+
+            db.CourseResources.Update(resource);
+            await db.SaveChangesAsync();
+
+            return resource;
+        }
+
+        throw new Exception($"UpdateResourceAsync: Resource id {resourceId} does not exist.");
+    }
 }
