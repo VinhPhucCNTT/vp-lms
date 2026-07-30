@@ -101,6 +101,7 @@ public class AssignmentService(
     public async Task<AssignmentResponse?> CreateAssignmentAsync(AssignmentRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
+
         var resource = await ResourceService.CreateResourceAsync(db, request.ResourceInfo, ResourceType.Assignment);
         var assignment = new Assignment
         {

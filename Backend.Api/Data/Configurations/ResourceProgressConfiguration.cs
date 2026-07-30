@@ -1,4 +1,4 @@
-using Backend.Api.Core.Entities.Courses;
+using Backend.Api.Core.Entities.Learning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

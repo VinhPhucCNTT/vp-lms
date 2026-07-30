@@ -5,86 +5,81 @@ using Backend.Api.Core.Types;
 using Backend.Api.Core.Entities.Courses;
 using Sqids;
 using Backend.Api.Core.Entities.Content;
-using Backend.Api.Core.Entities.Submissions;
+using AutoMapper;
+using Backend.Api.Services.Courses;
+using Backend.Api.Core.Entities.Assessments;
 
 namespace Backend.Api.Services.Content;
 
 public class AssessmentService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
+    IMapper mapper,
     SqidsEncoder<long> sqidsEncoder)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
+    private readonly IMapper _mapper = mapper;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
 
-    public async Task<AssessmentResponseDto?> GetAssessmentByIdAsync(long resourceId)
+    public async Task<AssessmentResponse?> GetAssessmentByIdAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Assessments
             .AsNoTracking()
             .Where(a => a.ResourceId == resourceId)
-            .Select(a => new AssessmentResponseDto(
-                _sqidsEncoder.Encode(a.Id),
-                a.InstructionsMarkdown,
-                a.TimeLimitMinutes,
-                a.MaxAttempts,
-                a.ShuffleQuestions,
-                a.ShowResults,
-                a.GradingSchemaJson
-            )).FirstOrDefaultAsync();
+            .Select(a => new AssessmentResponse(
+                _mapper.Map<ResourceDetailResponse>(a.Resource),
+                _mapper.Map<AssessmentInfo>(a)
+            ))
+            .FirstOrDefaultAsync();
     }
 
-    public async Task<AssessmentResponseDto> CreateAssessmentAsync(CourseResource resource, AssessmentRequest request)
+    public async Task<AssessmentResponse> CreateAssessmentAsync(AssessmentRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
+
+        var resource = await ResourceService.CreateResourceAsync(db, request.ResourceInfo, ResourceType.Assessment);
         var assessment = new Assessment
         {
             ResourceId = resource.Id,
-            InstructionsMarkdown = request.InstructionsMarkdown,
-            TimeLimitMinutes = request.TimeLimitMinutes,
-            MaxAttempts = request.MaxAttempts,
-            ShuffleQuestions = request.ShuffleQuestions,
-            ShowResults = request.ShowResults,
-            GradingSchemaJson = request.GradingSchemaJson
+            InstructionsMarkdown = request.Info.InstructionsMarkdown,
+            TimeLimitMinutes = request.Info.TimeLimitMinutes,
+            MaxAttempts = request.Info.MaxAttempts,
+            ShuffleQuestions = request.Info.ShuffleQuestions,
+            ShowResults = request.Info.ShowResults,
+            GradingSchemaJson = request.Info.GradingSchemaJson
         };
+
         db.Assessments.Add(assessment);
         await db.SaveChangesAsync();
-        return new AssessmentResponseDto(
-            _sqidsEncoder.Encode(assessment.Id),
-            assessment.InstructionsMarkdown,
-            assessment.TimeLimitMinutes,
-            assessment.MaxAttempts,
-            assessment.ShuffleQuestions,
-            assessment.ShowResults,
-            assessment.GradingSchemaJson
+        return new AssessmentResponse(
+            _mapper.Map<ResourceDetailResponse>(resource),
+            _mapper.Map<AssessmentInfo>(assessment)
         );
     }
 
-    public async Task<AssessmentResponseDto?> UpdateAssessmentAsync(long assessmentId, AssessmentRequest request)
+    public async Task<AssessmentResponse?> UpdateAssessmentAsync(long assessmentId, AssessmentRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var assessment = await db.Assessments.FirstOrDefaultAsync(a => a.Id == assessmentId);
         if (assessment is null)
             return null;
 
-        assessment.InstructionsMarkdown = request.InstructionsMarkdown;
-        assessment.TimeLimitMinutes = request.TimeLimitMinutes;
-        assessment.MaxAttempts = request.MaxAttempts;
-        assessment.ShuffleQuestions = request.ShuffleQuestions;
-        assessment.ShowResults = request.ShowResults;
-        assessment.GradingSchemaJson = request.GradingSchemaJson;
+        var resource = await ResourceService.UpdateResourceAsync(db, assessment.ResourceId, request.ResourceInfo);
+
+        assessment.InstructionsMarkdown = request.Info.InstructionsMarkdown;
+        assessment.TimeLimitMinutes = request.Info.TimeLimitMinutes;
+        assessment.MaxAttempts = request.Info.MaxAttempts;
+        assessment.ShuffleQuestions = request.Info.ShuffleQuestions;
+        assessment.ShowResults = request.Info.ShowResults;
+        assessment.GradingSchemaJson = request.Info.GradingSchemaJson;
 
         db.Assessments.Update(assessment);
         await db.SaveChangesAsync();
-        return new AssessmentResponseDto(
-            _sqidsEncoder.Encode(assessment.Id),
-            assessment.InstructionsMarkdown,
-            assessment.TimeLimitMinutes,
-            assessment.MaxAttempts,
-            assessment.ShuffleQuestions,
-            assessment.ShowResults,
-            assessment.GradingSchemaJson
+        return new AssessmentResponse(
+            _mapper.Map<ResourceDetailResponse>(resource),
+            _mapper.Map<AssessmentInfo>(assessment)
         );
     }
 

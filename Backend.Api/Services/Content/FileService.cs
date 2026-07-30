@@ -1,6 +1,5 @@
 using System.Buffers;
 using System.Security.Cryptography;
-using Backend.Api.Core.Common;
 using Backend.Api.Core.Entities.Content;
 using Backend.Api.Core.Types;
 using Backend.Api.Data;
@@ -67,12 +66,12 @@ public class FileService(
 
         return new FileAsset
         {
+            UploaderId = userId,
             OriginalFileName = originalFileName,
             StoragePath = relativePath.Replace('\\', '/'),
             ContentType = contentType,
             SizeInBytes = size,
-            Sha256Hash = hash,
-            UserId = userId
+            Sha256Hash = hash
         };
     }
 

@@ -10,26 +10,26 @@ public class DashboardService(
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
 
-    public async Task<StudentDashboardResponse?> GetStudentDashboardAsync(long studentUserId)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
+    // public async Task<StudentDashboardResponse?> GetStudentDashboardAsync(long studentUserId)
+    // {
+    //     using var db = await _dbFactory.CreateDbContextAsync();
+    //
+    //     var activeCourses = db.Enrollments
+    //         .AsNoTracking()
+    //         .Where(e => e.UserId == studentUserId)
+    //         .DistinctBy(e => e.CourseId)
+    //         .CountAsync();
+    //     var pendingAssign = CountPendingAssignmentsAsync(db, studentUserId);
+    //     var pendingAssess = CountPendingAssessmentsAsync(db, studentUserId);
+    //     var pendingProblems = CountPendingProblemsAsync(db, studentUserId);
+    //
+    //     var results = await Task.WhenAll(activeCourses, pendingAssign, pendingAssess, pendingProblems);
+    //     var stats = new StudentDashboardStats(results[0], results[1], results[2], results[3]);
+    // }
 
-        var activeCourses = db.Enrollments
-            .AsNoTracking()
-            .Where(e => e.UserId == studentUserId)
-            .DistinctBy(e => e.CourseId)
-            .CountAsync();
-        var pendingAssign = CountPendingAssignmentsAsync(db, studentUserId);
-        var pendingAssess = CountPendingAssessmentsAsync(db, studentUserId);
-        var pendingProblems = CountPendingProblemsAsync(db, studentUserId);
-
-        var results = await Task.WhenAll(activeCourses, pendingAssign, pendingAssess, pendingProblems);
-        var stats = new StudentDashboardStats(results[0], results[1], results[2], results[3]);
-    }
-
-    public async Task<InstructorDashboardResponse?> GetInstructorDashboardAsync(long instructorUserId)
-    {
-    }
+    // public async Task<InstructorDashboardResponse?> GetInstructorDashboardAsync(long instructorUserId)
+    // {
+    // }
 
     static private async Task<int> CountPendingAssignmentsAsync(AppDbContext db, long userId)
     {

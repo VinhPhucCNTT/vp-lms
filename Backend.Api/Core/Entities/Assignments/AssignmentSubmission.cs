@@ -8,6 +8,7 @@ public class AssignmentSubmission : BaseEntity, ISoftDeletable
 {
     public long AssignmentId { get; set; }
     public long UserId { get; set; }
+
     public string? SubmissionText { get; set; }
     public string? FileUrl { get; set; }
     public string? FileName { get; set; }

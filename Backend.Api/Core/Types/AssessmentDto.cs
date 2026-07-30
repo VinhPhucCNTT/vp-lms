@@ -14,6 +14,11 @@ public record AssessmentRequest(
     AssessmentInfo Info
 );
 
+public record AssessmentResponse(
+    ResourceDetailResponse ResourceInfo,
+    AssessmentInfo Info
+);
+
 public record QuestionRequest(
     string? QuestionSqid,
     string QuestionType,

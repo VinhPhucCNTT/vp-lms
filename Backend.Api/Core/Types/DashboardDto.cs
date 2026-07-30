@@ -7,13 +7,13 @@ public record StudentDashboardStats(
     int PendingProblems
 );
 
-public record StudentDashboardResponse(
-    StudentDashboardStats Stats,
-    List<CourseStudentResponse> RecentCourses,
-    List<ICourseActivityResponse> ActivitiesDue,
-    List<CourseProgressResponse> Progresses,
-    List<CourseEventResponse> RecentActivities
-);
+// public record StudentDashboardResponse(
+//     StudentDashboardStats Stats,
+//     List<CourseStudentResponse> RecentCourses,
+//     List<ICourseActivityResponse> ActivitiesDue,
+//     List<CourseProgressResponse> Progresses,
+//     List<CourseEventResponse> RecentActivities
+// );
 
 public record InstructorDashboardStats(
     int TotalStudents,
@@ -24,9 +24,9 @@ public record InstructorDashboardStats(
     int PendingProblems
 );
 
-public record InstructorDashboardResponse(
-    InstructorDashboardStats Stats,
-    List<SubmissionResponse> PendingSubmissions,
-    List<CourseStudentResponse> RecentCourses,
-    List<AnnouncementResponse> RecentAnnouncements
-);
+// public record InstructorDashboardResponse(
+//     InstructorDashboardStats Stats,
+//     List<SubmissionResponse> PendingSubmissions,
+//     List<CourseStudentResponse> RecentCourses,
+//     List<AnnouncementResponse> RecentAnnouncements
+// );
