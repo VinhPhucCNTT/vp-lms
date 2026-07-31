@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Backend.Api.Services.Common;
 
@@ -14,6 +15,14 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor)
                 .User?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
             return userIdClaim != null ? long.Parse(userIdClaim) : -1;
+        }
+    }
+
+    public ClaimsPrincipal? Principal
+    {
+        get
+        {
+            return _httpContextAccessor.HttpContext?.User;
         }
     }
 
