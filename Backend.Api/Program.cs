@@ -16,8 +16,6 @@ using Backend.Api.Services.Users;
 using Backend.Api.Core.Automapper;
 using Backend.Api.Core.Helpers;
 using System.IdentityModel.Tokens.Jwt;
-using Backend.Api.Core.Authorization.Requirements;
-using Backend.Api.Core.Authorization.Handlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,13 +40,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddOpenApi();
 
 // Authorization
-builder.Services.AddAuthorizationBuilder()
-    .AddPolicy("CourseOwner", policy =>
-        {
-            policy.RequireAuthenticatedUser();
-            policy.AddRequirements(new CourseOwnerRequirement());
-        });
-builder.Services.AddSingleton<CourseOwnerHandler>();
+builder.Services.AddAuthorization();
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
@@ -114,7 +106,7 @@ builder.Services.AddAutoMapper(cfg => { },
 // Inject services
 builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<CourseOwnershipResolver>();
-builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<AuthenticationService>();
 
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<EnrollmentService>();

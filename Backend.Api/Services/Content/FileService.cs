@@ -9,12 +9,11 @@ using Microsoft.Extensions.Options;
 namespace Backend.Api.Services.Content;
 
 public class FileService(
-    IDbContextFactory<AppDbContext> dbFactory,
-    IOptions<Core.Common.FileOptions> fileOptions
-    )
+    IOptions<Core.Common.FileOptions> fileOptions,
+    IDbContextFactory<AppDbContext> dbFactory)
 {
-    private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly string _root = fileOptions.Value.RootPath;
+    private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
 
     public async Task<FileAsset> UploadAsync(
         Stream stream,
@@ -82,14 +81,38 @@ public class FileService(
         return Task.FromResult(stream);
     }
 
-    public Task DeleteAsync(string storagePath)
+    public async Task<IResult?> GetFileAsync(long fileId, CancellationToken ct = default)
     {
-        var path = Path.Combine(_root, storagePath);
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var file = await db.FileAssets
+            .AsNoTracking()
+            .FirstOrDefaultAsync(f => f.Id == fileId, ct);
+        if (file is null) return null;
+
+        var path = Path.Combine(_root, file.StoragePath);
+        Stream stream = File.OpenRead(path);
+
+        return Results.File(
+            stream,
+            file.ContentType,
+            enableRangeProcessing: true);
+    }
+
+    public async Task DeleteAsync(long fileId, CancellationToken ct = default)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var file = await db.FileAssets
+            .AsNoTracking()
+            .FirstOrDefaultAsync(f => f.Id == fileId, ct);
+        if (file is null) return;
+
+        var path = Path.Combine(_root, file.StoragePath);
 
         if (File.Exists(path))
             File.Delete(path);
 
-        return Task.CompletedTask;
+        db.FileAssets.Remove(file);
+        await db.SaveChangesAsync(ct);
     }
 
     static private string GetFolder(FileCategory category)

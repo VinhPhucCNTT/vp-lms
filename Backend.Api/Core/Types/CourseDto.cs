@@ -8,7 +8,6 @@ public record CourseResponse(
     string Code,
     string Title,
     string? Description,
-    string? ThumbnailUrl,
     int EnrollmentCount
 ) : IEntityResponse;
 
@@ -42,7 +41,6 @@ public record CourseSetRequest(
     string Code,
     string Title,
     string? Description,
-    string? ThumbnailUrl,
     bool IsPublished,
     bool EnrollmentOpen
 );
@@ -53,7 +51,6 @@ public record CourseSetResponse(
     string Code,
     string Title,
     string? Description,
-    string? ThumbnailUrl,
     bool IsPublished,
     bool EnrollmentOpen
 ) : IEntityResponse;

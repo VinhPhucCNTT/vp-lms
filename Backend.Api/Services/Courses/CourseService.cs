@@ -5,19 +5,30 @@ using Backend.Api.Services.Common;
 using Backend.Api.Core.Types;
 using Backend.Api.Core.Entities.Courses;
 using AutoMapper;
+using Backend.Api.Services.Content;
 
 namespace Backend.Api.Services.Courses;
 
 public class CourseService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
+    FileService fileService,
     IMapper mapper)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
+    private readonly FileService _fileService = fileService;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<CourseResponse?> GetCourseByIdAsync(long courseId)
+    public async Task<Course?> GetAsync(long courseId)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.Courses
+            .Where(c => c.Id == courseId)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<CourseResponse?> GetDtoAsync(long courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Courses
@@ -136,6 +147,33 @@ public class CourseService(
                 list);
     }
 
+    public async Task UploadBackgroundAsync(
+        Course course,
+        IFormFile file,
+        CancellationToken ct)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        // TODO: Validation
+        await using var stream = file.OpenReadStream();
+        var stored = await _fileService.UploadAsync(
+            stream,
+            file.FileName,
+            file.ContentType,
+            _currentUserService.UserId,
+            FileCategory.CourseBackground,
+            ct);
+
+        if (course.BackgroundFileId is not null)
+        {
+            await _fileService.DeleteAsync((long)course.BackgroundFileId, ct);
+            db.FileAssets.Remove(course.BackgroundFile!);
+        }
+
+        course.BackgroundFile = stored;
+        await db.SaveChangesAsync(ct);
+    }
+
     public async Task<CourseSetResponse> CreateCourseAsync(CourseSetRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
@@ -144,7 +182,6 @@ public class CourseService(
             CreatorId = _currentUserService.UserId,
             Title = request.Title,
             Description = request.Description,
-            ThumbnailUrl = request.ThumbnailUrl,
             IsPublished = request.IsPublished,
             EnrollmentOpen = request.EnrollmentOpen
         };
@@ -153,16 +190,12 @@ public class CourseService(
         return _mapper.Map<CourseSetResponse>(course);
     }
 
-    public async Task<CourseSetResponse?> UpdateCourseAsync(long courseId, CourseSetRequest request)
+    public async Task<CourseSetResponse> UpdateCourseAsync(Course course, CourseSetRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
-        if (course is null)
-            return null;
 
         course.Title = request.Title;
         course.Description = request.Description;
-        course.ThumbnailUrl = request.ThumbnailUrl;
         course.IsPublished = request.IsPublished;
         course.EnrollmentOpen = request.EnrollmentOpen;
 
@@ -171,38 +204,20 @@ public class CourseService(
         return _mapper.Map<CourseSetResponse>(course);
     }
 
-    public async Task<bool> DeleteCourseAsync(long courseId)
+    public async Task DeleteCourseAsync(Course course)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var currentUserId = _currentUserService.UserId;
-        var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId && c.CreatorId == currentUserId);
-        if (course is null)
-            return false;
         db.Courses.Remove(course);
         await db.SaveChangesAsync();
-        return true;
+        return;
     }
 
-    public async Task<bool> SetCoursePublishStatusAsync(long courseId, bool value)
+    public async Task SetCoursePublishStatusAsync(Course course, bool value)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var currentUserId = _currentUserService.UserId;
-        var count = await db.Courses
-            .Where(c => c.Id == courseId && c.CreatorId == currentUserId)
-            .Where(c => c.IsPublished != value)
-            .ExecuteUpdateAsync(c => c.SetProperty(c => c.IsPublished, value));
-
-        return count > 0;
-    }
-
-    public async Task<bool> CheckOwnerAsync(long courseId)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var currentUserId = _currentUserService.UserId;
-        return await db.Courses
-            .AsNoTracking()
-            .Where(c => c.Id == courseId && c.CreatorId == currentUserId)
-            .AnyAsync();
+        course.IsPublished = value;
+        await db.SaveChangesAsync();
+        return;
     }
 
     // Placeholder
@@ -214,15 +229,5 @@ public class CourseService(
             .Take(10)
             .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync();
-    }
-
-    public async Task<CourseAuthorizationResource?> GetAuthorizationResourceAsync(long courseId)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        return await db.Courses
-            .AsNoTracking()
-            .Where(c => c.Id == courseId)
-            .Select(c => new CourseAuthorizationResource(c.Id, c.CreatorId))
-            .FirstOrDefaultAsync();
     }
 }

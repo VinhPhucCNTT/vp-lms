@@ -5,8 +5,7 @@ using Backend.Api.Core.Common;
 using Backend.Api.Services.Courses;
 using Microsoft.AspNetCore.Mvc;
 using Sqids;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
+using Backend.Api.Core.Authorization;
 
 namespace Backend.Api.Endpoints;
 
@@ -28,6 +27,7 @@ public static class CourseEndpoints
         course.MapPost("", HandleCreate);
         course.MapPut("{courseId}", HandleUpdate);
         course.MapDelete("{courseId}", HandleDelete);
+        course.MapPost("{courseId}/upload-background", HandleUploadBackground);
 
         course.MapPost("{courseId}/publish", HandlePublish);
         course.MapPost("{courseId}/unpublish", HandleUnpublish);
@@ -38,22 +38,13 @@ public static class CourseEndpoints
         HandleGetCourseById(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
-            IAuthorizationService authService,
-            ClaimsPrincipal user,
             CourseService courseService)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var resource = await courseService.GetAuthorizationResourceAsync(decoded[0]);
-        if (resource is null)
-            return TypedResults.NotFound();
-        var authResult = await authService.AuthorizeAsync(user, resource, "CourseOwner");
-        if (!authResult.Succeeded)
-            return TypedResults.NotFound();
-
-        var result = await courseService.GetCourseByIdAsync(decoded[0]);
+        var result = await courseService.GetDtoAsync(decoded[0]);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();
@@ -81,7 +72,7 @@ public static class CourseEndpoints
     {
         return TypedResults.Ok(
             await courseService.GetExploreAsync());
-    } 
+    }
 
     private static async
         Task<Ok<QueryResponse<CourseResponse>>>
@@ -131,63 +122,87 @@ public static class CourseEndpoints
     }
 
     private static async
-        Task<Results<Ok<CourseSetResponse>, NotFound, BadRequest, UnauthorizedHttpResult>>
+        Task<Results<Ok<CourseSetResponse>, NotFound, BadRequest>>
         HandleUpdate(
             string courseId,
             [FromBody] CourseSetRequest request,
             SqidsEncoder<long> sqidsEncoder,
+            CourseAuthorization auth,
             CourseService courseService)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        if (!await courseService.CheckOwnerAsync(decoded[0]))
-            return TypedResults.Unauthorized();
+        var course = await courseService.GetAsync(decoded[0]);
+        if (course is null || !await auth.IsCourseOwnerAsync(course))
+            return TypedResults.NotFound();
 
-        var result = await courseService.UpdateCourseAsync(decoded[0], request);
+        var result = await courseService.UpdateCourseAsync(course, request);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();
     }
 
     private static async
-        Task<Results<Ok, NotFound, BadRequest, UnauthorizedHttpResult>>
+        Task<Results<Ok, NotFound, BadRequest>>
         HandleDelete(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
+            CourseAuthorization auth,
             CourseService courseService)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        if (!await courseService.CheckOwnerAsync(decoded[0]))
-            return TypedResults.Unauthorized();
+        var course = await courseService.GetAsync(decoded[0]);
+        if (course is null || !await auth.IsCourseOwnerAsync(course))
+            return TypedResults.NotFound();
 
-        return await courseService.DeleteCourseAsync(decoded[0])
-            ? TypedResults.Ok()
-            : TypedResults.NotFound();
+        await courseService.DeleteCourseAsync(course);
+        return TypedResults.Ok();
     }
 
     private static async
-        Task<Results<Ok, NotFound, BadRequest, UnauthorizedHttpResult>>
+        Task<Results<Ok, BadRequest, NotFound>>
+        HandleUploadBackground(
+            string courseId,
+            IFormFile file,
+            SqidsEncoder<long> sqidsEncoder,
+            CourseAuthorization auth,
+            CourseService courseService,
+            CancellationToken ct)
+    {
+        var decoded = sqidsEncoder.Decode(courseId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        var course = await courseService.GetAsync(decoded[0]);
+        if (course is null || !await auth.IsCourseOwnerAsync(course))
+            return TypedResults.NotFound();
+
+        var result = await courseService.UploadBackgroundAsync(course, file, ct);
+    }
+
+    private static async
+        Task<Results<Ok, NotFound, BadRequest>>
         HandlePublish(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
+            CourseAuthorization auth,
             CourseService courseService)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        if (!await courseService.CheckOwnerAsync(decoded[0]))
-            return TypedResults.Unauthorized();
+        var course = await courseService.GetAsync(decoded[0]);
+        if (course is null || !await auth.IsCourseOwnerAsync(course))
+            return TypedResults.NotFound();
 
-        var result = await courseService.SetCoursePublishStatusAsync(decoded[0], true);
-        return result
-            ? TypedResults.Ok()
-            : TypedResults.NotFound();
+        await courseService.SetCoursePublishStatusAsync(course, true);
+        return TypedResults.Ok();
     }
 
     private static async
@@ -195,18 +210,18 @@ public static class CourseEndpoints
         HandleUnpublish(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
+            CourseAuthorization auth,
             CourseService courseService)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        if (!await courseService.CheckOwnerAsync(decoded[0]))
-            return TypedResults.Unauthorized();
+        var course = await courseService.GetAsync(decoded[0]);
+        if (course is null || !await auth.IsCourseOwnerAsync(course))
+            return TypedResults.NotFound();
 
-        var result = await courseService.SetCoursePublishStatusAsync(decoded[0], false);
-        return result
-            ? TypedResults.Ok()
-            : TypedResults.NotFound();
+        await courseService.SetCoursePublishStatusAsync(course, false);
+        return TypedResults.Ok();
     }
 }

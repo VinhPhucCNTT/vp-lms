@@ -18,7 +18,7 @@ public static class AuthEndpoints
 
     private static async
         Task<Results<Ok<LoginResponse>, BadRequest>>
-        HandleLogin(LoginRequest dto, AuthService authService)
+        HandleLogin(LoginRequest dto, AuthenticationService authService)
     {
         var response = await authService.LoginAsync(dto);
         if (response is null)
@@ -29,7 +29,7 @@ public static class AuthEndpoints
 
     private static async
         Task<Results<Ok<RegisterResponse>, BadRequest>>
-        HandleRegister(RegisterRequest dto, AuthService authService)
+        HandleRegister(RegisterRequest dto, AuthenticationService authService)
     {
         var response = await authService.RegisterAsync(dto);
         if (response is null)

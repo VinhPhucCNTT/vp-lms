@@ -12,7 +12,7 @@ using Isopoh.Cryptography.Argon2;
 
 namespace Backend.Api.Services.Auth;
 
-public class AuthService(
+public class AuthenticationService(
     IConfiguration config,
     IDbContextFactory<AppDbContext> contextFactory)
 {
