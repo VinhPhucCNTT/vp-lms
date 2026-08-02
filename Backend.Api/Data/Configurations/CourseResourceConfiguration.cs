@@ -9,13 +9,14 @@ public class CourseResourceConfiguration : IEntityTypeConfiguration<CourseResour
 {
     public void Configure(EntityTypeBuilder<CourseResource> builder)
     {
-        builder.ToTable(
-            "course_resources",
-            t => t.HasCheckConstraint(
-                "CK_ModuleResources_Polymorphic_ExactlyOne",
-                "(\"lesson_id\" IS NOT NULL)::int + (\"assignment_id\" IS NOT NULL)::int + (\"assessment_id\" IS NOT NULL)::int + (\"problem_id\" IS NOT NULL)::int = 1"
-            )
-        );
+        // builder.ToTable(
+        //     "course_resources",
+        //     t => t.HasCheckConstraint(
+        //         "CK_CourseResources_Polymorphic_ExactlyOne",
+        //         "(\"lesson_id\" IS NOT NULL)::int + (\"assignment_id\" IS NOT NULL)::int + (\"assessment_id\" IS NOT NULL)::int + (\"problem_id\" IS NOT NULL)::int = 1"
+        //     )
+        // );
+        builder.ToTable("course_resources");
 
         builder.HasKey(x => x.Id);
 

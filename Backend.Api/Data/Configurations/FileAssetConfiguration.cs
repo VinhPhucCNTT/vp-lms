@@ -1,4 +1,5 @@
 using Backend.Api.Core.Entities.Content;
+using Backend.Api.Core.Entities.Courses;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,5 +17,10 @@ public class FileAssetConfiguration : IEntityTypeConfiguration<FileAsset>
             .WithMany(x => x.FileAssets)
             .HasForeignKey(x => x.UploaderId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.Course)
+            .WithOne(x => x.BackgroundFile)
+            .HasForeignKey<Course>(x => x.BackgroundFileId)
+            .IsRequired(false);
     }
 }

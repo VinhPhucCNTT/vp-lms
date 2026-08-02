@@ -16,6 +16,8 @@ using Backend.Api.Services.Users;
 using Backend.Api.Core.Automapper;
 using Backend.Api.Core.Helpers;
 using System.IdentityModel.Tokens.Jwt;
+using Backend.Api.Services.Content;
+using Backend.Api.Core.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,7 +39,10 @@ builder.Services.AddCors(options =>
         });
 });
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+});
 
 // Authorization
 builder.Services.AddAuthorization();
@@ -105,9 +110,11 @@ builder.Services.AddAutoMapper(cfg => { },
 
 // Inject services
 builder.Services.AddScoped<CurrentUserService>();
-builder.Services.AddScoped<CourseOwnershipResolver>();
 builder.Services.AddScoped<AuthenticationService>();
 
+builder.Services.AddScoped<CourseAuthorization>();
+
+builder.Services.AddScoped<FileService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<EnrollmentService>();
 
@@ -116,6 +123,7 @@ builder.Services.AddScoped<ModuleService>();
 builder.Services.AddScoped<ResourceService>();
 
 var app = builder.Build();
+app.UseHttpsRedirection();
 
 app.UseExceptionHandler();
 
@@ -125,9 +133,9 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
-}
 
-app.UseHttpsRedirection();
+    app.AddDevEndpoints();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

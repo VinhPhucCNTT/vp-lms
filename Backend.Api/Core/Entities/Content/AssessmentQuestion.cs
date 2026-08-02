@@ -20,6 +20,6 @@ public class AssessmentQuestion : BaseEntity, ISoftDeletable
     
     // Navigation properties
     public Assessment Assessment { get; set; } = default!;
-    public AssessmentSection Section { get; set; } = default!;
+    // public AssessmentSection Section { get; set; } = default!;
     public ICollection<AttemptAnswer> Answers { get; set; } = [];
 }
