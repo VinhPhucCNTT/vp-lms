@@ -15,11 +15,11 @@ public static class CourseEndpoints
     {
         var course = route.MapGroup("/api/course").WithTags("Courses").RequireAuthorization();
 
-        course.MapGet("{courseId}", HandleGetCourseById);
-        course.MapGet("student", HandleGetStudent);
-        course.MapGet("instructor", HandleGetInstructor);
-        course.MapGet("explore", HandleGetExplore);
-        course.MapGet("", HandleQuery);
+        course.MapGet("{courseId}", HandleGetCourseById).WithDescription("Get by Id.");
+        course.MapGet("student", HandleGetStudent).WithDescription("Get current student courses.");
+        course.MapGet("instructor", HandleGetInstructor).WithDescription("Get current instructor courses.");
+        course.MapGet("explore", HandleGetExplore).WithDescription("Get explore page info.");
+        course.MapGet("", HandleQuery).WithDescription("Query for courses.");
 
         course.MapGet("{courseId}/modules", HandleGetModules);
         course.MapPost("{courseId}/modules", HandleCreateModule);
@@ -165,7 +165,7 @@ public static class CourseEndpoints
     }
 
     private static async
-        Task<Results<Ok, BadRequest, NotFound>>
+        Task<Results<Ok<string>, BadRequest, NotFound>>
         HandleUploadBackground(
             string courseId,
             IFormFile file,
@@ -182,7 +182,10 @@ public static class CourseEndpoints
         if (course is null || !await auth.IsCourseOwnerAsync(course))
             return TypedResults.NotFound();
 
-        var result = await courseService.UploadBackgroundAsync(course, file, ct);
+        var fileId = await courseService.UploadBackgroundAsync(course, file, ct);
+
+        return TypedResults.Ok(
+            sqidsEncoder.Encode(fileId));
     }
 
     private static async

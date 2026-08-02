@@ -57,6 +57,9 @@ public class UserService(
         if (!string.IsNullOrEmpty(query.Fullname))
             users = users.Where(u => u.Fullname.Contains(query.Fullname, StringComparison.OrdinalIgnoreCase));
 
+        if (query.Role is not null)
+            users = users.Where(u => u.Role == query.Role);
+
         var list = await users
             .OrderBy(u => u.Id)
             .Select(u => _mapper.Map<UserResponse>(u))
@@ -71,7 +74,7 @@ public class UserService(
             list);
     }
 
-    public async Task<UserSetResponse> CreateUserAsync(UserSetRequest dto)
+    public async Task<UserSetResponse> CreateUserAsync(UserCreateRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var hashedPassword = Argon2.Hash(dto.Password);
@@ -82,6 +85,7 @@ public class UserService(
             PasswordHash = hashedPassword,
             Fullname = dto.Fullname,
             AvatarUrl = dto.AvatarUrl,
+            Role = dto.Role,
             IsActive = true
         };
         db.Users.Add(user);
@@ -89,7 +93,7 @@ public class UserService(
         return _mapper.Map<UserSetResponse>(user);
     }
 
-    public async Task<UserSetResponse?> UpdateUserAsync(long userId, UserSetRequest dto)
+    public async Task<UserSetResponse?> UpdateUserAsync(long userId, UserUpdateRequest dto)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.Where(u => u.IsActive).FirstOrDefaultAsync(u => u.Id == userId);

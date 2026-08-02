@@ -30,7 +30,7 @@ public class AuthenticationService(
         if (!Argon2.Verify(user.PasswordHash, dto.Password))
             return null;
 
-        return new LoginResponse(user.Email, GenerateToken(user));
+        return new LoginResponse(user.Email, GenerateToken(user), user.Role);
     }
 
     public async Task<RegisterResponse?> RegisterAsync(RegisterRequest dto)
@@ -47,13 +47,14 @@ public class AuthenticationService(
             Email = dto.Email,
             Fullname = dto.Fullname,
             AvatarUrl = dto.AvatarUrl,
-            PasswordHash = hashedPassword
+            PasswordHash = hashedPassword,
+            Role = dto.Role
         };
 
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync();
 
-        return new RegisterResponse(user.Username, user.Email);
+        return new RegisterResponse(user.Username, user.Email, user.Role);
     }
 
     private string GenerateToken(User user)

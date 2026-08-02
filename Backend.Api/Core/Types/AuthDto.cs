@@ -1,13 +1,17 @@
+using Backend.Api.Core.Entities.Users;
+
 namespace Backend.Api.Core.Types;
 
 public record LoginRequest(
     string Email,
-    string Password
+    string Password,
+    UserRoles Role
 );
 
 public record LoginResponse(
     string Email,
-    string Token
+    string Token,
+    UserRoles Role
 );
 
 public record RegisterRequest(
@@ -15,10 +19,12 @@ public record RegisterRequest(
     string Email,
     string Password,
     string Fullname,
-    string? AvatarUrl
+    string? AvatarUrl,
+    UserRoles Role
 );
 
 public record RegisterResponse(
     string Username,
-    string Email
+    string Email,
+    UserRoles Role
 );

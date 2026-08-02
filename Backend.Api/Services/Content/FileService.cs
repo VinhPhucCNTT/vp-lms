@@ -15,7 +15,7 @@ public class FileService(
     private readonly string _root = fileOptions.Value.RootPath;
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
 
-    public async Task<FileAsset> UploadAsync(
+    public async Task<long> UploadAsync(
         Stream stream,
         string originalFileName,
         string contentType,
@@ -63,7 +63,8 @@ public class FileService(
             hash = Convert.ToHexString(sha.Hash!);
         }
 
-        return new FileAsset
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var file = new FileAsset
         {
             UploaderId = userId,
             OriginalFileName = originalFileName,
@@ -72,6 +73,10 @@ public class FileService(
             SizeInBytes = size,
             Sha256Hash = hash
         };
+        db.FileAssets.Add(file);
+        await db.SaveChangesAsync(ct);
+
+        return file.Id;
     }
 
     public Task<Stream> ReadAsync(string storagePath)

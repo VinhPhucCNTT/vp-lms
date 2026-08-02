@@ -28,6 +28,15 @@ public class CourseService(
             .FirstOrDefaultAsync();
     }
 
+    public async Task<Course?> GetFromModuleAsync(long moduleId)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.CourseModules
+            .Where(m => m.Id == moduleId)
+            .Select(m => m.Course)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<CourseResponse?> GetDtoAsync(long courseId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
@@ -147,7 +156,7 @@ public class CourseService(
                 list);
     }
 
-    public async Task UploadBackgroundAsync(
+    public async Task<long> UploadBackgroundAsync(
         Course course,
         IFormFile file,
         CancellationToken ct)
@@ -156,7 +165,7 @@ public class CourseService(
 
         // TODO: Validation
         await using var stream = file.OpenReadStream();
-        var stored = await _fileService.UploadAsync(
+        long fileId = await _fileService.UploadAsync(
             stream,
             file.FileName,
             file.ContentType,
@@ -165,13 +174,12 @@ public class CourseService(
             ct);
 
         if (course.BackgroundFileId is not null)
-        {
             await _fileService.DeleteAsync((long)course.BackgroundFileId, ct);
-            db.FileAssets.Remove(course.BackgroundFile!);
-        }
 
-        course.BackgroundFile = stored;
+        course.BackgroundFileId = fileId;
         await db.SaveChangesAsync(ct);
+
+        return fileId;
     }
 
     public async Task<CourseSetResponse> CreateCourseAsync(CourseSetRequest request)

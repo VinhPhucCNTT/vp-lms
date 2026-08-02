@@ -9,11 +9,11 @@ public static class AuthEndpoints
 {
     public static void AddAuthEndpoints(this IEndpointRouteBuilder route)
     {
-        var auth = route.MapGroup("/api/auth");
+        var auth = route.MapGroup("/api/auth").WithTags("Authentication");
 
-        auth.MapGet("", async () => TypedResults.Ok).RequireAuthorization();
-        auth.MapPost("login", HandleLogin);
-        auth.MapPost("register", HandleRegister);
+        auth.MapGet("/", async () => TypedResults.Ok).WithDescription("Authentication check.").RequireAuthorization();
+        auth.MapPost("login", HandleLogin).WithDescription("Login.");
+        auth.MapPost("register", HandleRegister).WithDescription("Create an account.");
     }
 
     private static async

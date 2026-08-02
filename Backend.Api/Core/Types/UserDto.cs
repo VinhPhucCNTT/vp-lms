@@ -5,6 +5,7 @@ namespace Backend.Api.Core.Types;
 public record UserResponse(
     string Id,
     string Username,
+    UserRoles Role,
     string? AvatarUrl) : IEntityResponse;
 
 public record UserDetailResponse(
@@ -13,6 +14,7 @@ public record UserDetailResponse(
     string Email,
     string Fullname,
     string? AvatarUrl,
+    UserRoles Role,
     DateTime CreatedAt
 ) : IEntityResponse;
 
@@ -21,7 +23,8 @@ public record UserRequest(
     int PageSize,
     string? Username,
     string? Email,
-    string? Fullname
+    string? Fullname,
+    UserRoles? Role
 );
 
 public record UserStatResponse(
@@ -30,7 +33,16 @@ public record UserStatResponse(
 // int CourseCompleted // TODO: Get completed courses
 );
 
-public record UserSetRequest(
+public record UserCreateRequest(
+    string Username,
+    string Email,
+    string Fullname,
+    string Password,
+    string? AvatarUrl,
+    UserRoles Role
+);
+
+public record UserUpdateRequest(
     string Username,
     string Email,
     string Fullname,
@@ -43,5 +55,6 @@ public record UserSetResponse(
     string Username,
     string Email,
     string Fullname,
-    string? AvatarUrl
+    string? AvatarUrl,
+    UserRoles Role
 ) : IEntityResponse;

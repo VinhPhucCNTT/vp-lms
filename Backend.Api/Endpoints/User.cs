@@ -74,7 +74,7 @@ public static class UserEndpoints
     private static async
         Task<Ok<UserSetResponse>>
         HandleCreate(
-            [FromBody] UserSetRequest request,
+            [FromBody] UserCreateRequest request,
             UserService userService)
     {
         var result = await userService.CreateUserAsync(request);
@@ -85,7 +85,7 @@ public static class UserEndpoints
         Task<Results<Ok<UserSetResponse>, BadRequest, NotFound>>
         HandleUpdate(
             string id,
-            [FromBody] UserSetRequest request,
+            [FromBody] UserUpdateRequest request,
             SqidsEncoder<long> sqidsEncoder,
             UserService userService)
     {
