@@ -22,5 +22,10 @@ public class FileAssetConfiguration : IEntityTypeConfiguration<FileAsset>
             .WithOne(x => x.BackgroundFile)
             .HasForeignKey<Course>(x => x.BackgroundFileId)
             .IsRequired(false);
+
+        builder.HasMany(x => x.AssignmentFiles)
+            .WithOne(x => x.File)
+            .HasForeignKey(x => x.FileId)
+            .IsRequired(false);
     }
 }

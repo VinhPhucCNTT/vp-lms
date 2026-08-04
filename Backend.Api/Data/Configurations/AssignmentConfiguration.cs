@@ -31,5 +31,7 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
         builder.Property(x => x.GradingSchemaJson)
             .HasColumnType("jsonb")
             .HasColumnName("grading_schema");
+
+        builder.HasMany(x => x.AssignmentFiles)
     }
 }

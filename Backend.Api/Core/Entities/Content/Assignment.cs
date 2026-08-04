@@ -10,7 +10,7 @@ public class Assignment : BaseEntity, ISoftDeletable
     public string InstructionsMD { get; set; } = default!;
     public string? AllowedFileTypes { get; set; }
     public int MaxFileSizeKb { get; set; } = 10;
-    public int? MaxAttempt { get; set; }
+    public int? MaxFileCount { get; set; }
     public SubmissionType SubmissionType { get; set; } = SubmissionType.Both;
     public string? GradingSchemaJson { get; set; } // JSONB in PostgreSQL
 
@@ -20,6 +20,7 @@ public class Assignment : BaseEntity, ISoftDeletable
     // Navigation properties
     public CourseResource Resource { get; set; } = default!;
     public ICollection<AssignmentSubmission> Submissions { get; set; } = [];
+    public ICollection<AssignmentFile> Files { get; set; } = [];
 }
 
 public enum SubmissionType

@@ -7,16 +7,21 @@ using Backend.Api.Core.Entities.Content;
 using AutoMapper;
 using Backend.Api.Services.Courses;
 using Backend.Api.Core.Entities.Assignments;
+using System.ComponentModel.DataAnnotations;
+using Backend.Api.Core.Common;
+using ByteSizeLib;
 
 namespace Backend.Api.Services.Content;
 
 public class AssignmentService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
+    FileService fileService,
     IMapper mapper)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
+    private readonly FileService _fileService = fileService;
     private readonly IMapper _mapper = mapper;
 
     public async Task<AssignmentResponse?> GetAssignmentByIdAsync(long resourceId)
@@ -32,22 +37,22 @@ public class AssignmentService(
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<SubmissionResponse>?> GetSubmissionsAsync(long assignmentId)
+    public async Task<List<SubmissionResponse>?> GetSubmissionsAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.AssignmentSubmissions
             .AsNoTracking()
-            .Where(s => s.AssignmentId == assignmentId)
+            .Where(s => s.AssignmentId == resourceId)
             .Select(s => _mapper.Map<SubmissionResponse>(s))
             .ToListAsync();
     }
 
-    public async Task<SubmissionResponse?> GetSubmissionByUserIdAsync(long assignmentId, long userId)
+    public async Task<SubmissionResponse?> GetSubmissionByUserIdAsync(long resourceId, long userId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.AssignmentSubmissions
             .AsNoTracking()
-            .Where(s => s.AssignmentId == assignmentId && s.UserId == userId)
+            .Where(s => s.AssignmentId == resourceId && s.UserId == userId)
             .Select(s => _mapper.Map<SubmissionResponse>(s))
             .FirstOrDefaultAsync();
     }
@@ -62,10 +67,10 @@ public class AssignmentService(
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<AssignmentGradeResponse>?> GetAssignmentGradesAsync(long assignmentId)
+    public async Task<List<AssignmentGradeResponse>?> GetAssignmentGradesAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        return await GetGradesAsync(db, g => g.Submission.AssignmentId == assignmentId);
+        return await GetGradesAsync(db, g => g.Submission.AssignmentId == resourceId);
     }
 
     public async Task<List<AssignmentGradeResponse>?> GetGradedBySelfAsync()
@@ -82,18 +87,18 @@ public class AssignmentService(
         return await GetGradesAsync(db, g => g.Submission.UserId == currentUserId);
     }
 
-    public async Task<List<AssignmentGradeResponse>?> GetStudentGradesAsync(long assignmentId, long studentUserId)
+    public async Task<List<AssignmentGradeResponse>?> GetStudentGradesAsync(long resourceId, long studentUserId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        return await GetGradesAsync(db, g => g.Submission.AssignmentId == assignmentId && g.Submission.UserId == studentUserId);
+        return await GetGradesAsync(db, g => g.Submission.AssignmentId == resourceId && g.Submission.UserId == studentUserId);
     }
 
-    public async Task<List<SubmissionResponse>?> GetUngradedSubmissionsAsync(long assignmentId)
+    public async Task<List<SubmissionResponse>?> GetUngradedSubmissionsAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.AssignmentSubmissions
             .AsNoTracking()
-            .Where(s => s.AssignmentId == assignmentId && s.Grade == null)
+            .Where(s => s.AssignmentId == resourceId && s.Grade == null)
             .Select(s => _mapper.Map<SubmissionResponse>(s))
             .ToListAsync();
     }
@@ -122,10 +127,10 @@ public class AssignmentService(
 
     // public async Task<bool> ValidateGradingSchemaAsync(string? GradingSchemaJson) { }
 
-    public async Task<AssignmentResponse?> UpdateAssignmentAsync(long assignmentId, AssignmentRequest request)
+    public async Task<AssignmentResponse?> UpdateAssignmentAsync(long resourceId, AssignmentRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var assignment = await db.Assignments.FirstOrDefaultAsync(a => a.Id == assignmentId);
+        var assignment = await db.Assignments.FirstOrDefaultAsync(a => a.Id == resourceId);
         if (assignment is null)
             return null;
 
@@ -143,12 +148,12 @@ public class AssignmentService(
     }
 
     // TODO: Implement
-    // public async Task GetAssignmentStatsAsync(long assignmentId) { }
+    // public async Task GetAssignmentStatsAsync(long resourceId) { }
 
-    public async Task<SubmissionResponse?> SubmitAssignmentAsync(long assignmentRId, SubmissionRequest request)
+    public async Task<SubmissionResponse?> SubmitAssignmentAsync(long resourceId, SubmissionRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var assignment = await db.Assignments.FirstOrDefaultAsync(a => a.ResourceId == assignmentRId);
+        var assignment = await db.Assignments.FirstOrDefaultAsync(a => a.ResourceId == resourceId);
         var currentUserId = _currentUserService.UserId;
         if (assignment is null)
             return null;
@@ -181,6 +186,31 @@ public class AssignmentService(
         }
     }
 
+    public async Task<AssignmentFileResponse> UploadAssignmentFileAsync(Assignment assignment, IFormFile file, CancellationToken ct)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var stream = file.OpenReadStream();
+        var fileId = await _fileService.UploadAsync(
+            stream,
+            file.FileName,
+            file.ContentType,
+            _currentUserService.UserId,
+            FileCategory.AssignmentSubmission,
+            ct);
+
+        int fileCount = await db.AssignmentFiles.AsNoTracking().CountAsync(f => f.AssignmentId == assignment.Id, ct);
+        var assignmentFile = new AssignmentFile
+        {
+            AssignmentId = assignment.Id,
+            FileId = fileId,
+            OrderIndex = fileCount
+        };
+        db.AssignmentFiles.Add(assignmentFile);
+        await db.SaveChangesAsync(ct);
+
+        return new AssignmentFileResponse(assignment.ResourceId, fileId);
+    }
+
     public async Task<AssignmentGradeResponse?> GradeSubmissionAsync(long submissionId, AssignmentGradeRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
@@ -202,6 +232,38 @@ public class AssignmentService(
         return _mapper.Map<AssignmentGradeResponse>(grade);
     }
 
+    public async Task<Result<Assignment>> ValidateSubmittedFileAsync(
+        long resourceId,
+        IFormFile file,
+        CancellationToken ct)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var assignment = await db.Assignments
+            .Where(a => a.ResourceId == resourceId)
+            .FirstOrDefaultAsync(ct);
+        if (assignment is null) return Result<Assignment>.Failure(ErrorType.NotFound, "Assignment not found");
+
+        if (assignment.SubmissionType == SubmissionType.Text)
+            return Result<Assignment>.Failure(ErrorType.Validation, "Assignment does not accept files.");
+
+        if (assignment.AllowedFileTypes is not null)
+        {
+            var allowedFileTypes = GetAllowedFileTypes(assignment.AllowedFileTypes);
+            if (!allowedFileTypes.Contains(file.ContentType))
+                return Result<Assignment>.Failure(ErrorType.Validation, $"This assignment does not accept {file.ContentType}.");
+        }
+
+        var maxFileSize = ByteSize.FromKiloBytes(assignment.MaxFileSizeKb);
+        if (file.Length > maxFileSize.Bytes)
+            return Result<Assignment>.Failure(ErrorType.Validation, $"File is too large ({file.Length} > {assignment.MaxFileSizeKb} Kb).");
+
+        int currentFileCount = await db.AssignmentFiles.AsNoTracking().CountAsync(f => f.AssignmentId == assignment.Id, ct);
+        if (currentFileCount >= assignment.MaxFileCount)
+            return Result<Assignment>.Failure(ErrorType.Validation, $"File count exceeded (max is {assignment.MaxFileCount}).");
+
+        return Result<Assignment>.Success(assignment);
+    }
+
     private async Task<List<AssignmentGradeResponse>?> GetGradesAsync(
         AppDbContext db,
         System.Linq.Expressions.Expression<Func<AssignmentGrade, bool>> predicate)
@@ -211,5 +273,10 @@ public class AssignmentService(
             .Where(predicate)
             .Select(g => _mapper.Map<AssignmentGradeResponse>(g))
             .ToListAsync();
+    }
+
+    private static string[] GetAllowedFileTypes(string allowedFileTypes)
+    {
+        return allowedFileTypes.Split(",");
     }
 }

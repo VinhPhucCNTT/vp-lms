@@ -1,4 +1,5 @@
 using Backend.Api.Core.Common.Models;
+using Backend.Api.Core.Entities.Assignments;
 using Backend.Api.Core.Entities.Courses;
 using Backend.Api.Core.Entities.Users;
 
@@ -19,5 +20,6 @@ public class FileAsset : BaseEntity, ISoftDeletable
 
     // Navigation properties
     public User User { get; set; } = default!;
-    public Course Course { get; set; } = default!; // Course background
+    public Course? Course { get; set; } // Course background
+    public ICollection<AssignmentFile> AssignmentFiles { get; set; } = [];
 }

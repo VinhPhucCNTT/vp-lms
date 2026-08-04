@@ -54,3 +54,8 @@ public record AssignmentStatsResponse(
     int SubmissionCount,
     int GradedSubmissionCount
 );
+
+public record AssignmentFileResponse(
+    long ResourceId,
+    long FileId
+);

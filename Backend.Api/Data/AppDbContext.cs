@@ -28,6 +28,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Assignment> Assignments => Set<Assignment>();
     public DbSet<AssignmentSubmission> AssignmentSubmissions => Set<AssignmentSubmission>();
     public DbSet<AssignmentGrade> AssignmentGrades => Set<AssignmentGrade>();
+    public DbSet<AssignmentFile> AssignmentFiles => Set<AssignmentFile>();
 
     public DbSet<CodingProblem> CodingProblems => Set<CodingProblem>();
     public DbSet<ProblemTestCase> ProblemTestCases => Set<ProblemTestCase>();
