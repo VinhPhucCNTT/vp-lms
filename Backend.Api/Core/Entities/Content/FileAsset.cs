@@ -7,7 +7,7 @@ namespace Backend.Api.Core.Entities.Content;
 
 public class FileAsset : BaseEntity, ISoftDeletable
 {
-    public long UploaderId { get; set; }
+    public long UserId { get; set; }
 
     public string OriginalFileName { get; set; } = null!;
     public string StoragePath { get; set; } = null!;

@@ -7,9 +7,9 @@ using Backend.Api.Core.Entities.Content;
 using AutoMapper;
 using Backend.Api.Services.Courses;
 using Backend.Api.Core.Entities.Assignments;
-using System.ComponentModel.DataAnnotations;
 using Backend.Api.Core.Common;
 using ByteSizeLib;
+using Sqids;
 
 namespace Backend.Api.Services.Content;
 
@@ -17,11 +17,13 @@ public class AssignmentService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
     FileService fileService,
+    SqidsEncoder<long> sqidsEncoder,
     IMapper mapper)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly FileService _fileService = fileService;
+    private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
     private readonly IMapper _mapper = mapper;
 
     public async Task<AssignmentResponse?> GetAssignmentByIdAsync(long resourceId)
@@ -37,23 +39,39 @@ public class AssignmentService(
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<SubmissionResponse>?> GetSubmissionsAsync(long resourceId)
+    public async Task<Result<AssignmentSubmitResponse>> GetSubmissionAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        return await db.AssignmentSubmissions
-            .AsNoTracking()
-            .Where(s => s.AssignmentId == resourceId)
-            .Select(s => _mapper.Map<SubmissionResponse>(s))
-            .ToListAsync();
+        var assignment = await db.Assignments.AsNoTracking().FirstOrDefaultAsync(a => a.ResourceId == resourceId);
+        if (assignment is null)
+            return Result<AssignmentSubmitResponse>.Failure(ErrorType.NotFound, "Assignment not found.");
+
+        var userId = _currentUserService.UserId;
+        var submission = await db.AssignmentSubmissions.AsNoTracking().FirstOrDefaultAsync(s => s.AssignmentId == assignment.Id && s.UserId == userId);
+        if (submission is null)
+            return Result<AssignmentSubmitResponse>.Success(new(
+                _sqidsEncoder.Encode(assignment.Id),
+                _sqidsEncoder.Encode(userId),
+                null, []));
+
+        FileResponse[] files = await db.AssignmentFiles.AsNoTracking()
+            .Where(f => f.SubmissionId == submission.Id)
+            .Select(f => _mapper.Map<FileResponse>(f))
+            .ToArrayAsync();
+
+        return Result<AssignmentSubmitResponse>.Success(new(
+            _sqidsEncoder.Encode(assignment.Id),
+            _sqidsEncoder.Encode(userId),
+            submission.SubmissionText, files));
     }
 
-    public async Task<SubmissionResponse?> GetSubmissionByUserIdAsync(long resourceId, long userId)
+    public async Task<AssignmentSubmitResponse?> GetSubmissionByUserIdAsync(long resourceId, long userId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.AssignmentSubmissions
             .AsNoTracking()
             .Where(s => s.AssignmentId == resourceId && s.UserId == userId)
-            .Select(s => _mapper.Map<SubmissionResponse>(s))
+            .Select(s => _mapper.Map<AssignmentSubmitResponse>(s))
             .FirstOrDefaultAsync();
     }
 
@@ -93,13 +111,13 @@ public class AssignmentService(
         return await GetGradesAsync(db, g => g.Submission.AssignmentId == resourceId && g.Submission.UserId == studentUserId);
     }
 
-    public async Task<List<SubmissionResponse>?> GetUngradedSubmissionsAsync(long resourceId)
+    public async Task<List<AssignmentSubmitResponse>?> GetUngradedSubmissionsAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.AssignmentSubmissions
             .AsNoTracking()
             .Where(s => s.AssignmentId == resourceId && s.Grade == null)
-            .Select(s => _mapper.Map<SubmissionResponse>(s))
+            .Select(s => _mapper.Map<AssignmentSubmitResponse>(s))
             .ToListAsync();
     }
 
@@ -112,7 +130,7 @@ public class AssignmentService(
         {
             ResourceId = resource.Id,
             InstructionsMD = request.Info.InstructionsMD,
-            AllowedFileTypes = request.Info.AllowedFileTypes,
+            AllowedExtensions = request.Info.AllowedExtensions,
             MaxFileSizeKb = request.Info.MaxFileSizeKb,
             SubmissionType = request.Info.SubmissionType,
             GradingSchemaJson = request.Info.GradingSchemaJson
@@ -137,7 +155,7 @@ public class AssignmentService(
         var resource = await ResourceService.UpdateResourceAsync(db, assignment.ResourceId, request.ResourceInfo);
 
         assignment.InstructionsMD = request.Info.InstructionsMD;
-        assignment.AllowedFileTypes = request.Info.AllowedFileTypes;
+        assignment.AllowedExtensions = request.Info.AllowedExtensions;
         assignment.MaxFileSizeKb = request.Info.MaxFileSizeKb;
         assignment.SubmissionType = request.Info.SubmissionType;
         assignment.GradingSchemaJson = request.Info.GradingSchemaJson;
@@ -150,7 +168,7 @@ public class AssignmentService(
     // TODO: Implement
     // public async Task GetAssignmentStatsAsync(long resourceId) { }
 
-    public async Task<SubmissionResponse?> SubmitAssignmentAsync(long resourceId, SubmissionRequest request)
+    public async Task<AssignmentSubmitResponse?> SubmitAssignmentAsync(long resourceId, AssignmentSubmitRequest request)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var assignment = await db.Assignments.FirstOrDefaultAsync(a => a.ResourceId == resourceId);
@@ -172,7 +190,7 @@ public class AssignmentService(
 
             db.AssignmentSubmissions.Add(submission);
             await db.SaveChangesAsync();
-            return _mapper.Map<SubmissionResponse>(submission);
+            return _mapper.Map<AssignmentSubmitResponse>(submission);
         }
         else
         {
@@ -182,7 +200,7 @@ public class AssignmentService(
 
             db.AssignmentSubmissions.Update(existingSubmission);
             await db.SaveChangesAsync();
-            return _mapper.Map<SubmissionResponse>(existingSubmission);
+            return _mapper.Map<AssignmentSubmitResponse>(existingSubmission);
         }
     }
 
@@ -246,9 +264,9 @@ public class AssignmentService(
         if (assignment.SubmissionType == SubmissionType.Text)
             return Result<Assignment>.Failure(ErrorType.Validation, "Assignment does not accept files.");
 
-        if (assignment.AllowedFileTypes is not null)
+        if (assignment.AllowedExtensions is not null)
         {
-            var allowedFileTypes = GetAllowedFileTypes(assignment.AllowedFileTypes);
+            var allowedFileTypes = GetAllowedFileTypes(assignment.AllowedExtensions);
             if (!allowedFileTypes.Contains(file.ContentType))
                 return Result<Assignment>.Failure(ErrorType.Validation, $"This assignment does not accept {file.ContentType}.");
         }

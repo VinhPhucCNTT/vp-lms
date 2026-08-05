@@ -66,7 +66,7 @@ public class FileService(
         using var db = await _dbFactory.CreateDbContextAsync(ct);
         var file = new FileAsset
         {
-            UploaderId = userId,
+            UserId = userId,
             OriginalFileName = originalFileName,
             StoragePath = relativePath.Replace('\\', '/'),
             ContentType = contentType,

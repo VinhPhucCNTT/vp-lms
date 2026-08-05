@@ -11,8 +11,7 @@ public class AssignmentProfile : Profile
     {
         CreateMap<Assignment, AssignmentInfo>();
 
-        CreateMap<AssignmentSubmission, SubmissionResponse>()
-            .MapSqidId()
+        CreateMap<AssignmentSubmission, AssignmentSubmitResponse>()
             .ForMember(
                 d => d.AssignmentId,
                 o => o.ConvertUsing<SqidConverter, long>(x => x.AssignmentId))
@@ -20,13 +19,13 @@ public class AssignmentProfile : Profile
                 d => d.UserId,
                 o => o.ConvertUsing<SqidConverter, long>(x => x.UserId));
 
-        CreateMap<AssignmentGrade, AssignmentGradeResponse>()
-            .MapSqidId()
-            .ForMember(
-                d => d.SubmissionId,
-                o => o.ConvertUsing<SqidConverter, long>(x => x.SubmissionId))
-            .ForMember(
-                d => d.GraderId,
-                o => o.ConvertUsing<SqidConverter, long>(x => x.GraderId));
+        // CreateMap<AssignmentGrade, AssignmentGradeResponse>()
+        //     .MapSqidId()
+        //     .ForMember(
+        //         d => d.SubmissionId,
+        //         o => o.ConvertUsing<SqidConverter, long>(x => x.SubmissionId))
+        //     .ForMember(
+        //         d => d.GraderId,
+        //         o => o.ConvertUsing<SqidConverter, long>(x => x.GraderId));
     }
 }

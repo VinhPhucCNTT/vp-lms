@@ -9,3 +9,12 @@ public enum FileCategory
     AssignmentSubmission,
     QuestionImage
 }
+
+public record FileResponse(
+    string Id,
+    string UserId,
+    string OriginalFileName,
+    string ContentType,
+    long SizeInBytes,
+    string Sha256Hash
+) : IEntityResponse;

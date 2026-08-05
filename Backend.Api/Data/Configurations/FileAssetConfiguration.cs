@@ -15,7 +15,7 @@ public class FileAssetConfiguration : IEntityTypeConfiguration<FileAsset>
 
         builder.HasOne(x => x.User)
             .WithMany(x => x.FileAssets)
-            .HasForeignKey(x => x.UploaderId)
+            .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(x => x.Course)

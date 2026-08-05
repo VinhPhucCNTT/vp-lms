@@ -4,10 +4,12 @@ namespace Backend.Api.Core.Types;
 
 public record AssignmentInfo(
     string InstructionsMD,
-    string? AllowedFileTypes,
-    int MaxFileSizeKb,
-    int? MaxAttempt,
     SubmissionType SubmissionType,
+    string[]? AllowedExtensions,
+    int MaxFileSizeKb,
+    int? MaxFileCount,
+    int? MinTextLength,
+    int? MaxTextLength,
     string? GradingSchemaJson
 );
 
@@ -21,21 +23,21 @@ public record AssignmentResponse(
     AssignmentInfo Info
 );
 
-public record SubmissionRequest(
-    string? SubmissionText,
-    string? FileUrl,
-    string? FileName
+public record AssignmentFileResponse(
+    long ResourceId,
+    FileResponse FileInfo
 );
 
-public record SubmissionResponse(
-    string Id,
+public record AssignmentSubmitRequest(
+    string? SubmissionText
+);
+
+public record AssignmentSubmitResponse(
     string AssignmentId,
     string UserId,
     string? SubmissionText,
-    string? FileUrl,
-    string? FileName,
-    int AttemptNumber
-) : IEntityResponse;
+    FileResponse[] Files
+);
 
 public record AssignmentGradeRequest(
     decimal Score,
@@ -53,9 +55,4 @@ public record AssignmentGradeResponse(
 public record AssignmentStatsResponse(
     int SubmissionCount,
     int GradedSubmissionCount
-);
-
-public record AssignmentFileResponse(
-    long ResourceId,
-    long FileId
 );

@@ -15,12 +15,6 @@ public class AssignmentSubmissionConfiguration : IEntityTypeConfiguration<Assign
         builder.Property(x => x.SubmissionText)
             .HasColumnType("text");
 
-        builder.Property(x => x.FileUrl)
-            .HasMaxLength(500);
-
-        builder.Property(x => x.FileName)
-            .HasMaxLength(255);
-
         builder.HasIndex(x => new { x.AssignmentId, x.UserId })
             .HasFilter("is_deleted = false")
             .IsUnique();
@@ -39,5 +33,9 @@ public class AssignmentSubmissionConfiguration : IEntityTypeConfiguration<Assign
             .WithOne(g => g.Submission)
             .HasForeignKey<AssignmentGrade>(g => g.SubmissionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.Files)
+            .WithOne(x => x.Submission)
+            .HasForeignKey(x => x.SubmissionId);
     }
 }

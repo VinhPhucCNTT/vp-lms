@@ -5,11 +5,11 @@ namespace Backend.Api.Core.Entities.Assignments;
 
 public class AssignmentFile : BaseEntity
 {
-    public long AssignmentId { get; set; }
+    public long SubmissionId { get; set; }
     public long FileId { get; set; }
     public int OrderIndex { get; set; }
 
     // Navigation properties
-    public Assignment Assignment { get; set; } = default!;
+    public AssignmentSubmission Submission { get; set; } = default!;
     public FileAsset File { get; set; } = default!;
 }
