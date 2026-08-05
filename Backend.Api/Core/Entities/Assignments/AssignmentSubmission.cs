@@ -20,4 +20,5 @@ public class AssignmentSubmission : BaseEntity, ISoftDeletable
     public Assignment Assignment { get; set; } = default!;
     public User User { get; set; } = default!;
     public AssignmentGrade? Grade { get; set; }
+    public ICollection<AssignmentFile> Files { get; set; } = [];
 }
