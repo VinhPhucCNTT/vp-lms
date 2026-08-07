@@ -18,6 +18,7 @@ using Backend.Api.Core.Helpers;
 using System.IdentityModel.Tokens.Jwt;
 using Backend.Api.Services.Content;
 using Backend.Api.Core.Authorization;
+using Backend.Api.Core.Entities.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +47,15 @@ builder.Services.AddOpenApi(options =>
 
 // Authorization
 builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("IsStudent", options => {
+        options.RequireAuthenticatedUser();
+        options.RequireRole(UserRoles.Student.ToString(), UserRoles.Admin.ToString());
+    })
+    .AddPolicy("IsInstructor", options => {
+        options.RequireAuthenticatedUser();
+        options.RequireRole(UserRoles.Instructor.ToString(), UserRoles.Admin.ToString());
+    });
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
