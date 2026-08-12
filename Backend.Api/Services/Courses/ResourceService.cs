@@ -94,15 +94,14 @@ public class ResourceService(
         return true;
     }
 
-    public async Task<bool> SetResourcePublishStatusAsync(long moduleId, long resourceId, bool isPublished)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var count = await db.CourseResources
-            .Where(r => r.ModuleId == moduleId && r.Id == resourceId)
-            .ExecuteUpdateAsync(r => r.SetProperty(r => r.IsPublished, isPublished));
-
-        return count > 0;
-    }
+    // public static async Task<bool> SetResourcePublishStatusAsync(AppDbContext db, long resourceId, bool isPublished, CancellationToken ct = default)
+    // {
+    //     var count = await db.CourseResources
+    //         .Where(r => r.Id == resourceId)
+    //         .ExecuteUpdateAsync(r => r.SetProperty(r => r.IsPublished, isPublished), ct);
+    //
+    //     return count > 0;
+    // }
 
     public async Task<int> SetResourcesPublishStatusAsync(long moduleId, List<long> resourceIds, bool isPublished)
     {
@@ -121,42 +120,6 @@ public class ResourceService(
             .AsNoTracking()
             .Where(c => c.Id == resourceId && c.Module.Course.CreatorId == currentUserId)
             .AnyAsync();
-    }
-
-    static private async Task<CourseResource> CreateBaseResourceAsync(AppDbContext db, long moduleId, ResourceRequestInfo dto, ResourceType type)
-    {
-        var resource = new CourseResource
-        {
-            ModuleId = moduleId,
-            Type = type,
-            Title = dto.Title,
-            OrderIndex = dto.OrderIndex,
-            IsPublished = dto.IsPublished,
-            AvailableFrom = dto.AvailableFrom,
-            AvailableUntil = dto.AvailableUntil,
-            AccessPassword = dto.AccessPassword
-        };
-
-        db.CourseResources.Add(resource);
-        await db.SaveChangesAsync();
-        return resource;
-    }
-
-    static private async Task<CourseResource?> UpdateBaseResourceAsync(AppDbContext db, long resourceId, ResourceRequestInfo dto)
-    {
-        var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Id == resourceId);
-        if (resource == null)
-            return null;
-
-        resource.Title = dto.Title;
-        resource.OrderIndex = dto.OrderIndex;
-        resource.IsPublished = dto.IsPublished;
-        resource.AvailableFrom = dto.AvailableFrom;
-        resource.AvailableUntil = dto.AvailableUntil;
-        resource.AccessPassword = dto.AccessPassword;
-        await db.SaveChangesAsync();
-
-        return resource;
     }
 
     static public async Task<List<long>> GetCourseResourceIdsAsync(AppDbContext db, long courseId)
@@ -190,8 +153,6 @@ public class ResourceService(
             Type = type,
             Title = info.Title,
             OrderIndex = info.OrderIndex,
-            AvailableFrom = info.AvailableFrom,
-            AvailableUntil = info.AvailableUntil,
             IsPublished = info.IsPublished,
             AccessPassword = info.AccessPassword
         };
@@ -208,8 +169,6 @@ public class ResourceService(
         {
             resource.Title = info.Title;
             resource.OrderIndex = info.OrderIndex;
-            resource.AvailableFrom = info.AvailableFrom;
-            resource.AvailableUntil = info.AvailableUntil;
             resource.IsPublished = info.IsPublished;
             resource.AccessPassword = info.AccessPassword;
 

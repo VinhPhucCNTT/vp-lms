@@ -121,7 +121,7 @@ public class CourseService(
         return new CourseExploreResponse(featuredCourses, coursesByDepartment, recentlyUpdated);
     }
 
-    public async Task<QueryResponse<CourseResponse>> QueryCoursesAsync(CourseRequest query)
+    public async Task<PaginatedResponse<CourseResponse>> QueryCoursesAsync(CourseRequest query)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var courses = db.Courses.AsNoTracking().Where(c => c.IsPublished);
@@ -149,7 +149,7 @@ public class CourseService(
             .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync();
 
-        return new QueryResponse<CourseResponse>(
+        return new PaginatedResponse<CourseResponse>(
                 query.PageNumber,
                 query.PageSize,
                 await courses.CountAsync(),

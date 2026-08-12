@@ -1,14 +1,14 @@
 namespace Backend.Api.Core.Common;
 
-public class QueryResponse<T>(
-    int pageNumber,
-    int pageSize,
-    int maxPage,
-    List<T> data
+public record PaginatedResponse<T>(
+    int PageNumber,
+    int PageSize,
+    int MaxCount,
+    List<T> Data
 )
 {
-    public int PageNumber { get; set; } = pageNumber;
-    public int PageSize { get; set; } = pageSize;
-    public int MaxPage { get; set; } = maxPage;
-    public List<T> Data { get; set; } = data;
+    public int PageNumber { get; init; } = PageNumber;
+    public int PageSize { get; init; } = PageSize;
+    public int MaxCount { get; init; } = MaxCount;
+    public List<T> Data { get; init; } = Data;
 }

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Sqids;
 using Backend.Api.Core.Authorization;
 
-namespace Backend.Api.Endpoints;
+namespace Backend.Api.Endpoints.Course;
 
 public static class CourseEndpoints
 {
@@ -75,7 +75,7 @@ public static class CourseEndpoints
     }
 
     private static async
-        Task<Ok<QueryResponse<CourseResponse>>>
+        Task<Ok<PaginatedResponse<CourseResponse>>>
         HandleQuery([AsParameters] CourseRequest query, CourseService courseService)
     {
         return TypedResults.Ok(

@@ -33,9 +33,5 @@ public class AssignmentSubmissionConfiguration : IEntityTypeConfiguration<Assign
             .WithOne(g => g.Submission)
             .HasForeignKey<AssignmentGrade>(g => g.SubmissionId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasMany(x => x.Files)
-            .WithOne(x => x.Submission)
-            .HasForeignKey(x => x.SubmissionId);
     }
 }

@@ -18,6 +18,8 @@ public class Assignment : BaseEntity, ISoftDeletable
     public int? MinTextLength { get; set; }
     public int? MaxTextLength { get; set; }
 
+    public DateTime? OpenDate { get; set; }
+    public DateTime? CloseDate { get; set; }
     public string? GradingSchemaJson { get; set; } // JSONB in PostgreSQL
 
     public bool IsDeleted { get; set; } = false;

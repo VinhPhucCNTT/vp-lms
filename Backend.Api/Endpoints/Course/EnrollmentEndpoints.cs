@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Sqids;
 using Backend.Api.Services.Users;
 
-namespace Backend.Api.Endpoints;
+namespace Backend.Api.Endpoints.Course;
 
 public static class EnrollmentEndpoints
 {

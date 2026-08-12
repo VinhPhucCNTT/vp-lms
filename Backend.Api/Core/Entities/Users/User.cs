@@ -1,4 +1,5 @@
 using Backend.Api.Core.Common.Models;
+using Backend.Api.Core.Entities.Assignments;
 using Backend.Api.Core.Entities.Content;
 using Backend.Api.Core.Entities.Courses;
 

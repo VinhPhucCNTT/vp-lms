@@ -62,7 +62,7 @@ public static class UserEndpoints
     }
 
     private static async
-        Task<Ok<QueryResponse<UserResponse>>>
+        Task<Ok<PaginatedResponse<UserResponse>>>
         HandleQuery(
             [AsParameters] UserRequest query,
             UserService userService)

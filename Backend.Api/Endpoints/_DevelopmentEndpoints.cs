@@ -16,7 +16,7 @@ public static class DevelopmentOnlyEndpoints
     }
 
     private static async
-        Task<Ok<QueryResponse<UserResponse>>>
+        Task<Ok<PaginatedResponse<UserResponse>>>
         HandleGetUsers(
             [AsParameters] UserRequest query,
             UserService userService)

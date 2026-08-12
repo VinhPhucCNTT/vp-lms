@@ -11,7 +11,7 @@ public class AssignmentSubmission : BaseEntity, ISoftDeletable
 
     public string? SubmissionText { get; set; }
 
-    public DateTime SubmittedOn { get; set; } = DateTime.UtcNow;
+    public DateTime? SubmittedOn { get; set; }
 
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }

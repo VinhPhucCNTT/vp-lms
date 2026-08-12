@@ -13,6 +13,7 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
             t.HasCheckConstraint("CK_MinTextLength_NonNegative", "min_text_length >= 0");
             t.HasCheckConstraint("CK_MaxTextLength_NonNegative", "max_text_length >= 0");
             t.HasCheckConstraint("CK_TextLength_MinLessOrEqualMax", "min_text_length <= max_text_length");
+            t.HasCheckConstraint("CK_MaxFileCount_GreaterThanZero", "max_file_count > 0");
         });
 
         builder.HasKey(x => x.Id);

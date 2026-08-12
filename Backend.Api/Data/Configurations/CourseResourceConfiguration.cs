@@ -29,9 +29,6 @@ public class CourseResourceConfiguration : IEntityTypeConfiguration<CourseResour
             .IsRequired()
             .HasMaxLength(200);
 
-        // builder.Property(x => x.Description)
-        //     .HasColumnType("text");
-
         builder.Property(x => x.AccessPassword)
             .HasMaxLength(255);
 

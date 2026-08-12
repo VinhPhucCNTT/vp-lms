@@ -8,6 +8,7 @@ using Backend.Api.Core.Entities.Content;
 using AutoMapper;
 using Backend.Api.Services.Courses;
 using Backend.Api.Core.Entities.Assessments;
+using Backend.Api.Core.Common;
 
 namespace Backend.Api.Services.Content;
 
@@ -22,9 +23,9 @@ public class AssessmentService(
     private readonly IMapper _mapper = mapper;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
 
-    public async Task<AssessmentResponse?> GetAssessmentByIdAsync(long resourceId)
+    public async Task<AssessmentResponse?> GetDtoByIdAsync(long resourceId, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
         return await db.Assessments
             .AsNoTracking()
             .Where(a => a.ResourceId == resourceId)
@@ -32,7 +33,7 @@ public class AssessmentService(
                 _mapper.Map<ResourceDetailResponse>(a.Resource),
                 _mapper.Map<AssessmentInfo>(a)
             ))
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
     }
 
     public async Task<AssessmentResponse> CreateAssessmentAsync(AssessmentRequest request)
@@ -216,4 +217,17 @@ public class AssessmentService(
     // public async Task GradeAttemptAsync() { }
 
     // public async Task GetAssessmentStatsAsync() { }
+
+    public async Task<Result<bool>> SetPublishStatusAsync(long resourceId, bool isPublished, CancellationToken ct = default)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Type == ResourceType.Assignment && r.Id == resourceId, ct);
+        if (resource is null)
+            return Result<bool>.Failure(ErrorType.NotFound, "Assessment not found.");
+
+        resource.IsPublished = isPublished;
+        await db.SaveChangesAsync(ct);
+
+        return Result<bool>.Success(resource.IsPublished);
+    }
 }

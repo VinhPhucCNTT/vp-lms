@@ -21,8 +21,6 @@ public class CourseResource : BaseEntity, ISoftDeletable
     public string Title { get; set; } = default!;
     public int OrderIndex { get; set; }
     public bool IsPublished { get; set; } = false;
-    public DateTime? AvailableFrom { get; set; }
-    public DateTime? AvailableUntil { get; set; }
     public string? AccessPassword { get; set; }
 
     public bool IsDeleted { get; set; } = false;

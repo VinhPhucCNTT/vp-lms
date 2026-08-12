@@ -10,6 +10,8 @@ public record AssignmentInfo(
     int? MaxFileCount,
     int? MinTextLength,
     int? MaxTextLength,
+    DateTime? OpenDate,
+    DateTime? CloseDate,
     string? GradingSchemaJson
 );
 
@@ -24,19 +26,25 @@ public record AssignmentResponse(
 );
 
 public record AssignmentFileResponse(
-    long ResourceId,
+    string ResourceId,
     FileResponse FileInfo
 );
 
-public record AssignmentSubmitRequest(
+public record SubmissionRequest(
     string? SubmissionText
 );
 
-public record AssignmentSubmitResponse(
+public record SubmissionDetailResponse(
     string AssignmentId,
     string UserId,
     string? SubmissionText,
     FileResponse[] Files
+);
+
+public record SubmissionResponse(
+    string AssignmentId,
+    string SubmissionId,
+    string UserId
 );
 
 public record AssignmentGradeRequest(

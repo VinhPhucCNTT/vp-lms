@@ -17,6 +17,8 @@ public static class LessonEndpoints
         lesson.MapGet("{resourceId}", HandleGetById).RequireAuthorization();
         lesson.MapPost("{moduleId}", HandleCreate).RequireAuthorization();
         lesson.MapPut("{resourceId}", HandleUpdate).RequireAuthorization();
+
+        lesson.MapPost("{resourceId}/set-publish", HandleSetPublish);
     }
 
     private static async
@@ -82,6 +84,31 @@ public static class LessonEndpoints
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();
+    }
+
+    private static async
+        Task<Results<Ok<bool>, BadRequest, NotFound<string>>>
+        HandleSetPublish(
+            string resourceId,
+            SqidsEncoder<long> sqidsEncoder,
+            CourseService courseService,
+            CourseAuthorization auth,
+            LessonService lessonService,
+            CancellationToken ct,
+            [AsParameters] bool isPublished = true)
+    {
+        var decoded = sqidsEncoder.Decode(resourceId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        var course = await courseService.GetFromModuleAsync(decoded[0]);
+        if (course is null || !await auth.IsCourseOwnerAsync(course))
+            return TypedResults.NotFound("Course not found.");
+
+        var result = await lessonService.SetPublishStatusAsync(decoded[0], isPublished, ct);
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : TypedResults.NotFound(result.Error!.Message);
     }
 }
 

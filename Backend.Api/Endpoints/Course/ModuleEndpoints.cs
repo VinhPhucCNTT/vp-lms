@@ -5,7 +5,7 @@ using Backend.Api.Services.Courses;
 using Microsoft.AspNetCore.Mvc;
 using Sqids;
 
-namespace Backend.Api.Endpoints;
+namespace Backend.Api.Endpoints.Course;
 
 public static class ModuleEndpoints
 {

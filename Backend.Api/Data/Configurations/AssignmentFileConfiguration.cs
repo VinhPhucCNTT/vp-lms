@@ -12,7 +12,11 @@ public class AssignmentFileConfiguration : IEntityTypeConfiguration<AssignmentFi
 
         builder.HasKey(x => x.Id);
 
-        builder.HasIndex(x => new { x.AssignmentId, x.FileId, x.OrderIndex })
+        builder.HasIndex(x => new { x.SubmissionId, x.FileId, x.OrderIndex })
             .IsUnique();
+
+        builder.HasOne(x => x.Submission)
+            .WithMany(x => x.Files)
+            .HasForeignKey(x => x.SubmissionId);
     }
 }

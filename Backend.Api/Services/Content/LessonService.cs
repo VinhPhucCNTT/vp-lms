@@ -5,6 +5,7 @@ using Backend.Api.Core.Entities.Courses;
 using Backend.Api.Core.Entities.Content;
 using AutoMapper;
 using Backend.Api.Services.Courses;
+using Backend.Api.Core.Common;
 
 namespace Backend.Api.Services.Content;
 
@@ -63,5 +64,18 @@ public class LessonService(
         return new LessonResponse(
             _mapper.Map<ResourceDetailResponse>(resource),
             new LessonInfo(lesson.ContentMarkdown));
+    }
+
+    public async Task<Result<bool>> SetPublishStatusAsync(long resourceId, bool isPublished, CancellationToken ct = default)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Type == ResourceType.Lesson && r.Id == resourceId, ct);
+        if (resource is null)
+            return Result<bool>.Failure(ErrorType.NotFound, "Lesson not found.");
+
+        resource.IsPublished = isPublished;
+        await db.SaveChangesAsync(ct);
+
+        return Result<bool>.Success(resource.IsPublished);
     }
 }

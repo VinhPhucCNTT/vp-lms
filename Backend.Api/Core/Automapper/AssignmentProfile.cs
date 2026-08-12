@@ -11,7 +11,7 @@ public class AssignmentProfile : Profile
     {
         CreateMap<Assignment, AssignmentInfo>();
 
-        CreateMap<AssignmentSubmission, AssignmentSubmitResponse>()
+        CreateMap<AssignmentSubmission, SubmissionResponse>()
             .ForMember(
                 d => d.AssignmentId,
                 o => o.ConvertUsing<SqidConverter, long>(x => x.AssignmentId))

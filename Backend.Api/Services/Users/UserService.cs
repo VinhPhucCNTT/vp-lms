@@ -43,7 +43,7 @@ public class UserService(
         );
     }
 
-    public async Task<QueryResponse<UserResponse>> QueryUsersAsync(UserRequest query)
+    public async Task<PaginatedResponse<UserResponse>> QueryUsersAsync(UserRequest query)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var users = db.Users.AsNoTracking().Where(u => u.IsActive);
@@ -67,7 +67,7 @@ public class UserService(
             .Take(query.PageSize)
             .ToListAsync();
 
-        return new QueryResponse<UserResponse>(
+        return new PaginatedResponse<UserResponse>(
             query.PageNumber,
             query.PageSize,
             await users.CountAsync(),
