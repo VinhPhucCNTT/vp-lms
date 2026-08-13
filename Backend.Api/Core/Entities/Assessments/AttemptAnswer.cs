@@ -1,24 +1,21 @@
+using System.Text.Json;
 using Backend.Api.Core.Common.Models;
-using Backend.Api.Core.Entities.Content;
 using Backend.Api.Core.Entities.Users;
 
 namespace Backend.Api.Core.Entities.Assessments;
 
 public class AttemptAnswer : BaseEntity
 {
-    public long AttemptId { get; set; }
-    public long QuestionId { get; set; }
+    public long? GraderId { get; set; }
+    public long AttemptQuestionId { get; set; }
 
-    public string ResponseDataJson { get; set; } = default!; // JSONB column
+    public JsonDocument? AnswerData { get; set; }
     public decimal? Score { get; set; }
-    // TODO: ????
     public bool? IsCorrect { get; set; }
-    public long? GradedByUserId { get; set; }
+    public DateTime? AnsweredAt { get; set; }
     public DateTime? GradedAt { get; set; }
-    public string? FeedbackText { get; set; }
 
     // Navigation properties
-    public AssessmentAttempt Attempt { get; set; } = default!;
-    public AssessmentQuestion Question { get; set; } = default!;
-    public User? GradedByUser { get; set; }
+    public AttemptQuestion AttemptQuestion { get; set; } = default!;
+    public User? Grader { get; set; }
 }

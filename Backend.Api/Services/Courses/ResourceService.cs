@@ -146,10 +146,11 @@ public class ResourceService(
         return new CourseProgress(Completed: completed, Total: resourceIds.Count);
     }
 
-    static public async Task<CourseResource> CreateResourceAsync(AppDbContext db, ResourceRequestInfo info, ResourceType type)
+    static public async Task<CourseResource> CreateResourceAsync(AppDbContext db, long moduleId, ResourceRequestInfo info, ResourceType type, CancellationToken ct = default)
     {
         var resource = new CourseResource
         {
+            ModuleId = moduleId,
             Type = type,
             Title = info.Title,
             OrderIndex = info.OrderIndex,
@@ -158,7 +159,7 @@ public class ResourceService(
         };
 
         db.CourseResources.Add(resource);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return resource;
     }
 

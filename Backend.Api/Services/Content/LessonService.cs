@@ -28,10 +28,10 @@ public class LessonService(
             ).FirstOrDefaultAsync();
     }
 
-    public async Task<LessonResponse> CreateLessonAsync(LessonRequest request)
+    public async Task<LessonResponse> CreateAsync(long moduleId, LessonRequest request, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var resource = await ResourceService.CreateResourceAsync(db, request.ResourceInfo, ResourceType.Lesson);
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var resource = await ResourceService.CreateResourceAsync(db, moduleId, request.ResourceInfo, ResourceType.Lesson, ct);
         var lesson = new Lesson
         {
             ResourceId = resource.Id,
@@ -39,7 +39,7 @@ public class LessonService(
         };
 
         db.Lessons.Add(lesson);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         return new LessonResponse(
             _mapper.Map<ResourceDetailResponse>(resource),

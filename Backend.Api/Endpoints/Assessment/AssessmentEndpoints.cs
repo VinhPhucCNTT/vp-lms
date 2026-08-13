@@ -53,6 +53,54 @@ public static class AssessmentEndpoints
             : TypedResults.NotFound("Assessment not found.");
     }
 
+    private static async
+        Task<Results<Ok<AssessmentResponse>, BadRequest, NotFound<string>>>
+        HandleCreate(
+            string moduleId,
+            AssessmentRequest request,
+            SqidsEncoder<long> sqidsEncoder,
+            CourseService courseService,
+            CourseAuthorization auth,
+            AssessmentService assessmentService,
+            CancellationToken ct)
+    {
+        var decoded = sqidsEncoder.Decode(moduleId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        var course = await courseService.GetFromModuleAsync(decoded[0]);
+        if (course is null || !await auth.IsCourseOwnerAsync(course))
+            return TypedResults.NotFound("Course not found.");
+
+        var result = await assessmentService.CreateAsync(decoded[0], request, ct);
+        return TypedResults.Ok(result);
+    }
+
+    private static async
+        Task<Results<Ok<AssessmentResponse>, BadRequest, NotFound<string>>>
+        HandleUpdate(
+            string resourceId,
+            AssessmentRequest request,
+            SqidsEncoder<long> sqidsEncoder,
+            CourseService courseService,
+            CourseAuthorization auth,
+            AssessmentService assessmentService,
+            CancellationToken ct)
+    {
+        var decoded = sqidsEncoder.Decode(resourceId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        var course = await courseService.GetFromModuleAsync(decoded[0]);
+        if (course is null || !await auth.IsCourseOwnerAsync(course))
+            return TypedResults.NotFound("Course not found.");
+
+        var result = await assessmentService.UpdateAsync(decoded[0], request);
+        return result is not null
+            ? TypedResults.Ok(result)
+            : TypedResults.NotFound("Assessment not found.");
+    }
+
 
     private static async
         Task<Results<Ok<bool>, BadRequest, NotFound<string>>>

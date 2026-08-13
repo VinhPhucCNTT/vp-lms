@@ -8,26 +8,14 @@ public class AttemptAnswerConfiguration : IEntityTypeConfiguration<AttemptAnswer
 {
     public void Configure(EntityTypeBuilder<AttemptAnswer> builder)
     {
-        builder.ToTable("assessment_responses");
+        builder.ToTable("attempt_answers");
 
         builder.HasKey(x => x.Id);
-
-        // Store as JSONB in PostgreSQL
-        builder.Property(x => x.ResponseDataJson)
-            .IsRequired()
-            .HasColumnType("jsonb")
-            .HasColumnName("response_data");
 
         builder.Property(x => x.Score)
             .HasColumnType("decimal(5,2)");
 
-        builder.Property(x => x.FeedbackText)
-            .HasColumnType("text");
-
-        builder.HasIndex(x => x.ResponseDataJson)
-            .HasMethod("GIN");
-
-        builder.HasIndex(x => new { x.AttemptId, x.QuestionId })
+        builder.HasIndex(x => new { x.GraderId, x.AttemptQuestionId })
             .IsUnique();
     }
 }

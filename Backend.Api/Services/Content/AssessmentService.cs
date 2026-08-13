@@ -36,11 +36,15 @@ public class AssessmentService(
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<AssessmentResponse> CreateAssessmentAsync(AssessmentRequest request)
+    public async Task<PaginatedResponse<AssessmentResponse>> QueryAsync()
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+    }
 
-        var resource = await ResourceService.CreateResourceAsync(db, request.ResourceInfo, ResourceType.Assessment);
+    public async Task<AssessmentResponse> CreateAsync(long moduleId, AssessmentRequest request, CancellationToken ct = default)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        var resource = await ResourceService.CreateResourceAsync(db, moduleId, request.ResourceInfo, ResourceType.Assessment, ct);
         var assessment = new Assessment
         {
             ResourceId = resource.Id,
@@ -53,17 +57,17 @@ public class AssessmentService(
         };
 
         db.Assessments.Add(assessment);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return new AssessmentResponse(
             _mapper.Map<ResourceDetailResponse>(resource),
             _mapper.Map<AssessmentInfo>(assessment)
         );
     }
 
-    public async Task<AssessmentResponse?> UpdateAssessmentAsync(long assessmentId, AssessmentRequest request)
+    public async Task<AssessmentResponse?> UpdateAsync(long assessmentId, AssessmentRequest request, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var assessment = await db.Assessments.FirstOrDefaultAsync(a => a.Id == assessmentId);
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var assessment = await db.Assessments.FirstOrDefaultAsync(a => a.Id == assessmentId, ct);
         if (assessment is null)
             return null;
 
@@ -77,7 +81,7 @@ public class AssessmentService(
         assessment.GradingSchemaJson = request.Info.GradingSchemaJson;
 
         db.Assessments.Update(assessment);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return new AssessmentResponse(
             _mapper.Map<ResourceDetailResponse>(resource),
             _mapper.Map<AssessmentInfo>(assessment)
@@ -177,7 +181,7 @@ public class AssessmentService(
     }
 
     // PLACEHOLDER
-    public async Task<AssessmentAttemptResponse?> StartAttemptAsync(long assessmentId, AssessmentAttemptRequest request)
+    public async Task<AssessmentAttemptResponse?> StartAttemptAsync(long assessmentId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var assessment = await db.Assessments.FirstOrDefaultAsync(a => a.Id == assessmentId);

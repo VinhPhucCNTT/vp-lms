@@ -19,6 +19,11 @@ public record AssessmentResponse(
     AssessmentInfo Info
 );
 
+public record AssessmentListResponse(
+    ResourceResponse ResourceInfo,
+    AssessmentInfo Info
+);
+
 public record QuestionRequest(
     string? QuestionSqid,
     string QuestionType,
@@ -35,14 +40,6 @@ public record QuestionResponse(
     decimal Points,
     int OrderIndex,
     string QuestionDataJson
-);
-
-public record AssessmentAttemptRequest(
-    DateTime StartedAt,
-    DateTime? SubmittedAt,
-    decimal? TotalScore,
-    bool? IsPassed,
-    int AttemptNumber
 );
 
 public record AssessmentAttemptResponse(

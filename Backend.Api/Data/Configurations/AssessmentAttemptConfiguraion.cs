@@ -19,7 +19,7 @@ public class AssessmentAttemptConfiguration : IEntityTypeConfiguration<Assessmen
         builder.Property(x => x.TotalScore)
             .HasColumnType("decimal(5,2)");
 
-        builder.HasIndex(x => new { x.AssessmentId, x.UserId, x.AttemptNumber }).IsUnique();
+        builder.HasIndex(x => new { x.AssessmentId, x.StudentId, x.AttemptNumber }).IsUnique();
 
         builder.HasOne(x => x.Assessment)
             .WithMany(a => a.Attempts)
@@ -27,13 +27,13 @@ public class AssessmentAttemptConfiguration : IEntityTypeConfiguration<Assessmen
             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
 
-        builder.HasOne(x => x.User)
+        builder.HasOne(x => x.Student)
             .WithMany()
-            .HasForeignKey(x => x.UserId)
+            .HasForeignKey(x => x.StudentId)
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
 
-        builder.HasMany(x => x.Answers)
+        builder.HasMany(x => x.Questions)
             .WithOne(r => r.Attempt)
             .HasForeignKey(r => r.AttemptId)
             .OnDelete(DeleteBehavior.Cascade)

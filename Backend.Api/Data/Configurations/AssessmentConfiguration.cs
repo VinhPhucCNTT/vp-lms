@@ -12,7 +12,7 @@ public class AssessmentConfiguration : IEntityTypeConfiguration<Assessment>
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.InstructionsMarkdown)
+        builder.Property(x => x.Description)
             .HasColumnType("text");
 
         builder.HasOne(x => x.Resource)

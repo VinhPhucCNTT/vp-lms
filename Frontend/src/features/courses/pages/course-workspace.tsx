@@ -45,7 +45,7 @@ import { problems } from "@/shared/data/problems";
 import type { CourseActivity, ActivityType } from "@/types";
 // import { useAuth } from "@/features/auth/auth-context";
 
-// ── Icon + colour helpers ────────────────────────────────────────────────────
+// Icon + color helpers
 
 function activityIcon(type: ActivityType, className?: string) {
   const cls = cn("size-4 shrink-0", className);
@@ -76,12 +76,13 @@ function activityTypeBadgeVariant(type: ActivityType) {
 }
 
 // Deterministic "completed" state based on activity id
+// TODO: Replace with API
 function isActivityCompleted(activityId: string) {
   const seed = activityId.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
   return (seed % 10) > 4;
 }
 
-// ── Utility: get rich metadata from a CourseActivity's refId ─────────────────
+// Utility: get rich metadata from a CourseActivity's refId
 
 function getActivityMeta(activity: CourseActivity) {
   switch (activity.type) {
@@ -104,7 +105,7 @@ function getActivityMeta(activity: CourseActivity) {
   }
 }
 
-// ── Activity Content renderers ────────────────────────────────────────────────
+// Activity Content renderers
 
 function LessonContent({ refId }: { refId: string }) {
   const lesson = lessons.find((l) => l.id === refId);
@@ -208,7 +209,7 @@ function CodingProblemContent({ refId, courseId }: { refId: string; courseId: st
   );
 }
 
-// ── People tab ────────────────────────────────────────────────────────────────
+// People tab
 
 function PeopleTab({ courseId }: { courseId: string }) {
   const course = courses.find((c) => c.id === courseId)!;
@@ -538,7 +539,7 @@ function ActivityPane({
   );
 }
 
-// ── Sidebar ───────────────────────────────────────────────────────────────────
+// Sidebar
 
 function CourseSidebar({
   courseId,

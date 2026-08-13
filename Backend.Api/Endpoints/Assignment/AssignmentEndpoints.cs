@@ -16,6 +16,7 @@ public static class AssignmentEndpoints
     {
         var assignment = route.MapGroup("/api/assignment");
 
+        assignment.MapGet("/", HandleQuery).RequireAuthorization();
         assignment.MapGet("{resourceId}", HandleGetById).RequireAuthorization();
         assignment.MapPost("{moduleId}", HandleCreate).RequireAuthorization();
         assignment.MapPut("{resourceId}", HandleUpdate).RequireAuthorization();
@@ -53,14 +54,15 @@ public static class AssignmentEndpoints
     }
 
     private static async
-        Task<Results<Ok<AssignmentResponse>, BadRequest, NotFound>>
+        Task<Results<Ok<AssignmentResponse>, BadRequest, NotFound<string>>>
         HandleCreate(
             string moduleId,
             AssignmentRequest request,
             SqidsEncoder<long> sqidsEncoder,
             CourseService courseService,
             CourseAuthorization auth,
-            AssignmentService assignmentService)
+            AssignmentService assignmentService,
+            CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(moduleId);
         if (decoded.Count != 1)
@@ -68,12 +70,12 @@ public static class AssignmentEndpoints
 
         var course = await courseService.GetFromModuleAsync(decoded[0]);
         if (course is null || !await auth.IsCourseOwnerAsync(course))
-            return TypedResults.NotFound();
+            return TypedResults.NotFound("Course not found.");
 
-        var result = await assignmentService.CreateAsync(request);
+        var result = await assignmentService.CreateAsync(decoded[0], request, ct);
         return result is not null
             ? TypedResults.Ok(result)
-            : TypedResults.NotFound();
+            : TypedResults.NotFound("Assignment not found.");
     }
 
     private static async

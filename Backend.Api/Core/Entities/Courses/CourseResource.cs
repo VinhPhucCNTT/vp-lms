@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Backend.Api.Core.Common.Models;
 using Backend.Api.Core.Entities.Content;
 using Backend.Api.Core.Entities.Learning;
@@ -21,7 +20,6 @@ public class CourseResource : BaseEntity, ISoftDeletable
     public string Title { get; set; } = default!;
     public int OrderIndex { get; set; }
     public bool IsPublished { get; set; } = false;
-    public string? AccessPassword { get; set; }
 
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }

@@ -29,16 +29,16 @@ public class AssignmentService(
             .FirstOrDefaultAsync();
     }
 
-    public async Task<AssignmentResponse?> CreateAsync(AssignmentRequest request)
+    public async Task<AssignmentResponse?> CreateAsync(long moduleId, AssignmentRequest request, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         if (request.Info.OpenDate is not null &&
             request.Info.CloseDate is not null &&
             request.Info.OpenDate > request.Info.CloseDate)
             return null;
 
-        var resource = await ResourceService.CreateResourceAsync(db, request.ResourceInfo, ResourceType.Assignment);
+        var resource = await ResourceService.CreateResourceAsync(db, moduleId, request.ResourceInfo, ResourceType.Assignment, ct);
         var assignment = new Assignment
         {
             ResourceId = resource.Id,
@@ -55,7 +55,7 @@ public class AssignmentService(
         };
 
         db.Assignments.Add(assignment);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return new AssignmentResponse(
             _mapper.Map<ResourceDetailResponse>(resource),
             _mapper.Map<AssignmentInfo>(assignment));

@@ -7,12 +7,16 @@ namespace Backend.Api.Core.Entities.Content;
 public class Assessment : BaseEntity, ISoftDeletable
 {
     public long ResourceId { get; set; }
-    public string? InstructionsMarkdown { get; set; }
+
+    public string? Description { get; set; }
     public int? TimeLimitMinutes { get; set; }
     public int MaxAttempts { get; set; } = 1;
-    public bool ShuffleQuestions { get; set; } = false;
+
+    public DateTime? AvailableFrom { get; set; }
+    public DateTime? AvailableUntil { get; set; }
+
     public bool ShowResults { get; set; } = true;
-    public string? GradingSchemaJson { get; set; }
+    public string? AccessPassword { get; set; }
 
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }

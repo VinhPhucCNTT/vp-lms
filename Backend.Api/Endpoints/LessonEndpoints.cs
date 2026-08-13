@@ -39,14 +39,15 @@ public static class LessonEndpoints
     }
 
     private static async
-        Task<Results<Ok<LessonResponse>, BadRequest, NotFound>>
+        Task<Results<Ok<LessonResponse>, BadRequest, NotFound<string>>>
         HandleCreate(
             string moduleId,
             LessonRequest request,
             SqidsEncoder<long> sqidsEncoder,
             CourseService courseService,
             CourseAuthorization auth,
-            LessonService lessonService)
+            LessonService lessonService,
+            CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(moduleId);
         if (decoded.Count != 1)
@@ -54,12 +55,10 @@ public static class LessonEndpoints
 
         var course = await courseService.GetFromModuleAsync(decoded[0]);
         if (course is null || !await auth.IsCourseOwnerAsync(course))
-            return TypedResults.NotFound();
+            return TypedResults.NotFound("Course not found.");
 
-        var result = await lessonService.CreateLessonAsync(request);
-        return result is not null
-            ? TypedResults.Ok(result)
-            : TypedResults.NotFound();
+        var result = await lessonService.CreateAsync(decoded[0], request, ct);
+        return TypedResults.Ok(result);
     }
 
     private static async
