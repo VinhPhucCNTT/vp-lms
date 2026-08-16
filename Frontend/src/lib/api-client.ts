@@ -60,10 +60,11 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, headers = {}, signal, skipAuth = false } = opts;
 
   const url = `${getBaseUrl()}${path}`;
-  const finalHeaders: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...headers,
-  };
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const finalHeaders: Record<string, string> = { ...headers };
+
+  if (!isFormData)
+    finalHeaders["Content-Type"] = "application/json";
 
   if (!skipAuth) {
     const token = getToken();
@@ -77,7 +78,11 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
     res = await fetch(url, {
       method,
       headers: finalHeaders,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body !== undefined
+        ? isFormData
+          ? body as FormData
+          : JSON.stringify(body)
+        : undefined,
       signal,
     });
   } catch {

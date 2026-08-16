@@ -6,27 +6,76 @@ using Backend.Persistence.Entities.Content;
 using AutoMapper;
 using Backend.Api.Services.Courses;
 using Backend.Api.Core.Common;
+using Backend.Api.Services.Common;
 
 namespace Backend.Api.Services.Content;
 
 public class AssignmentService(
     IDbContextFactory<AppDbContext> dbFactory,
-    IMapper mapper)
+    IMapper mapper,
+    CurrentUserService currentUserService)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly IMapper _mapper = mapper;
+    private readonly CurrentUserService _currentUserService = currentUserService;
 
-    public async Task<AssignmentResponse?> GetDtoByIdAsync(long resourceId)
+    public async Task<AssignmentResponse?> GetDtoByIdAsync(long resourceId, CancellationToken ct = default)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
+        var userId = _currentUserService.UserId;
         return await db.Assignments
             .AsNoTracking()
             .Where(a => a.ResourceId == resourceId)
+            .Where(a => a.Resource.IsPublished)
+            .Where(a => db.Enrollments.Any(e =>
+                e.CourseId == a.Resource.Module.CourseId &&
+                e.UserId == userId))
             .Select(a => new AssignmentResponse(
                 _mapper.Map<ResourceDetailResponse>(a.Resource),
                 _mapper.Map<AssignmentInfo>(a)
             ))
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
+    }
+
+    public async Task<List<StudentAssignmentSummaryResponse>> QueryStudentAsync(CancellationToken ct = default)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var userId = _currentUserService.UserId;
+
+        var assignments = await db.Assignments
+            .AsNoTracking()
+            .Where(a => a.Resource.IsPublished)
+            .Where(a => db.Enrollments.Any(e =>
+                e.CourseId == a.Resource.Module.CourseId &&
+                e.UserId == userId))
+            .Include(a => a.Resource)
+                .ThenInclude(r => r.Module)
+                    .ThenInclude(m => m.Course)
+            .Include(a => a.Submissions.Where(s => s.UserId == userId))
+                .ThenInclude(s => s.Grade)
+            .Include(a => a.Submissions.Where(s => s.UserId == userId))
+                .ThenInclude(s => s.Files)
+            .OrderBy(a => a.Resource.Module.Course.Code)
+            .ThenBy(a => a.Resource.OrderIndex)
+            .ToListAsync(ct);
+
+        return assignments.Select(assignment =>
+        {
+            var submission = assignment.Submissions.SingleOrDefault();
+            var status = GetStudentStatus(assignment, submission);
+            var assignmentResponse = new AssignmentResponse(
+                _mapper.Map<ResourceDetailResponse>(assignment.Resource),
+                _mapper.Map<AssignmentInfo>(assignment));
+
+            return new StudentAssignmentSummaryResponse(
+                assignmentResponse,
+                _mapper.Map<CourseResponse>(assignment.Resource.Module.Course),
+                status,
+                submission?.SubmittedOn,
+                submission?.Grade?.Score,
+                submission?.Grade?.FeedbackText,
+                submission?.Files.Count ?? 0);
+        }).ToList();
     }
 
     public async Task<List<AssignmentResponse>> QueryAsync(CancellationToken ct = default)
@@ -117,6 +166,22 @@ public class AssignmentService(
         await db.SaveChangesAsync(ct);
 
         return Result<bool>.Success(resource.IsPublished);
+    }
+
+    private static string GetStudentStatus(
+        Assignment assignment,
+        Backend.Persistence.Entities.Assignments.AssignmentSubmission? submission)
+    {
+        if (submission?.Grade is not null)
+            return "graded";
+
+        if (submission?.SubmittedOn is not null)
+            return "submitted";
+
+        if (assignment.CloseDate is not null && DateTime.UtcNow >= assignment.CloseDate)
+            return "overdue";
+
+        return "pending";
     }
 
     // TODO: Implement

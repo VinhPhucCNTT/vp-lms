@@ -96,32 +96,35 @@ export function StudentAssignments() {
           ) : (
             <div className="space-y-3">
               {filteredAssignments.map((item) => {
-                const assignment = item.assignment;
+                const assignment = assignmentApi.mapAssignment(item.assignment);
+                const dueDate = item.assignment.info.closeDate
+                  ? new Date(item.assignment.info.closeDate).toLocaleDateString()
+                  : "No due date";
                 return (
                   <Card key={assignment.id}>
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            {item.course && <Badge variant="outline">{item.course.code}</Badge>}
+                            <Badge variant="outline">{item.course.code}</Badge>
                             <Badge className={cn(statusColors[item.status as AssignmentStatus] ?? statusColors.pending)}>{item.status}</Badge>
                           </div>
                           <h3 className="font-semibold">{assignment.title}</h3>
                           <p className="text-sm text-muted-foreground line-clamp-1">{assignment.description}</p>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1"><ClockIcon className="size-3" />Due: {assignment.dueDate}</span>
-                            <span>Max Score: {assignment.maxScore}</span>
-                            {assignment.weight != null && <span>Weight: {assignment.weight}%</span>}
+                            <span className="flex items-center gap-1"><ClockIcon className="size-3" />Due: {dueDate}</span>
+                            <span>{item.assignment.info.submissionType === 0 || item.assignment.info.submissionType === "File" ? "File submission" : "Text submission"}</span>
+                            {item.submittedFileCount > 0 && <span>{item.submittedFileCount} file{item.submittedFileCount === 1 ? "" : "s"}</span>}
                           </div>
                         </div>
                         <div className="text-right">
                           {item.status === "graded" && item.score != null && (
                             <div className="mb-2">
-                              <p className="text-2xl font-bold">{item.score}%</p>
+                              <p className="text-2xl font-bold">{item.score}</p>
                               <p className="text-xs text-muted-foreground">Grade</p>
                             </div>
                           )}
-                          <Link to={item.course ? `/student/courses/${item.course.id}` : "/student/courses"}>
+                          <Link to={`/student/assignments/${assignment.id}`}>
                             <Button size="sm" variant={item.status === "pending" ? "default" : "outline"}>
                               {item.status === "pending" ? "Start" : item.status === "submitted" ? "View" : "Review"}
                             </Button>

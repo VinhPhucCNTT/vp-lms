@@ -34,6 +34,7 @@ import {
 } from "@/features/assessments/assessment-api";
 import { QuestionAnswerRenderer } from "../components/question-answer-renderer";
 import { QuestionNavigator, type NavigatorQuestionState } from "../components/question-navigator";
+import { CountdownTimer } from "../components/countdown-timer";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/types";
 
@@ -68,8 +69,14 @@ export function AssessmentAttemptWorkspace() {
   const [savingQuestionId, setSavingQuestionId] = React.useState<string | null>(null);
   const [saveError, setSaveError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
+  const [autoSubmitting, setAutoSubmitting] = React.useState(false);
+  const [timeExpired, setTimeExpired] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const initializedAttempt = React.useRef<string | null>(null);
+  const attemptIsEditable = (() => {
+    const status = attemptState.data?.status.toLowerCase();
+    return status === "inprogress" || status === "in-progress";
+  })();
 
   const questions = React.useMemo(
     () => attemptState.data?.questions.map(assessmentApi.mapAttemptQuestion) ?? [],
@@ -92,6 +99,28 @@ export function AssessmentAttemptWorkspace() {
     setFlags(restoredFlags);
     initializedAttempt.current = attempt.assessmentAttemptSqid;
   }, [attemptState.data]);
+
+  const handleSubmit = React.useCallback(async (automatic = false) => {
+    if (!assessmentId || !attemptId || (!attemptIsEditable && !automatic)) return;
+
+    setSubmitting(true);
+    setAutoSubmitting(automatic);
+    setSubmitError(null);
+    try {
+      await assessmentApi.submitAttempt(assessmentId, attemptId);
+      navigate(`/student/assessments/${assessmentId}/results/${attemptId}`);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Unable to submit this assessment.");
+    } finally {
+      setSubmitting(false);
+      setAutoSubmitting(false);
+    }
+  }, [assessmentId, attemptId, attemptIsEditable, navigate]);
+
+  const handleExpire = React.useCallback(() => {
+    setTimeExpired(true);
+    void handleSubmit(true);
+  }, [handleSubmit]);
 
   if (assessmentState.loading || attemptState.loading) {
     return <LoadingState label="Loading assessment attempt..." />;
@@ -123,7 +152,7 @@ export function AssessmentAttemptWorkspace() {
   const attempt = attemptState.data;
   const currentQuestion = questions[currentIndex];
   const currentDto = attempt.questions[currentIndex];
-  const isEditable = attempt.status.toLowerCase() === "inprogress" || attempt.status.toLowerCase() === "in-progress";
+  const isEditable = attemptIsEditable && !timeExpired;
 
   const isAnswered = (question: Question): boolean => {
     const value = answers[question.id];
@@ -160,21 +189,6 @@ export function AssessmentAttemptWorkspace() {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!assessmentId || !attemptId || !isEditable) return;
-
-    setSubmitting(true);
-    setSubmitError(null);
-    try {
-      await assessmentApi.submitAttempt(assessmentId, attemptId);
-      navigate(`/student/assessments/${assessmentId}/results/${attemptId}`);
-    } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Unable to submit this assessment.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const toggleFlag = (questionId: string) => {
     setFlags((previous) => {
       const next = new Set(previous);
@@ -199,6 +213,13 @@ export function AssessmentAttemptWorkspace() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {attemptIsEditable && assessment.duration > 0 && (
+              <CountdownTimer
+                startTime={attempt.startedAt}
+                durationMinutes={assessment.duration}
+                onExpire={handleExpire}
+              />
+            )}
             <Badge variant={isEditable ? "warning" : "outline"}>
               {isEditable ? "In Progress" : attempt.status}
             </Badge>
@@ -219,15 +240,25 @@ export function AssessmentAttemptWorkspace() {
                   {submitError && <p className="text-sm text-destructive px-4">{submitError}</p>}
                   <AlertDialogFooter>
                     <AlertDialogCancel>Keep Working</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleSubmit} disabled={submitting}>
+                    <AlertDialogAction onClick={() => void handleSubmit()} disabled={submitting}>
                       {submitting ? "Submitting..." : "Submit Now"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             )}
+            {timeExpired && submitError && (
+              <Button size="sm" variant="outline" onClick={() => void handleSubmit(true)} disabled={submitting}>
+                {submitting ? "Retrying..." : "Retry submission"}
+              </Button>
+            )}
           </div>
         </div>
+        {(autoSubmitting || submitError) && (
+          <div className={cn("mt-2 text-right text-xs", submitError ? "text-destructive" : "text-muted-foreground")}>
+            {submitError ?? "Time expired. Submitting your assessment..."}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 flex overflow-hidden">
@@ -244,6 +275,7 @@ export function AssessmentAttemptWorkspace() {
                 variant="ghost"
                 size="sm"
                 onClick={() => toggleFlag(currentQuestion.id)}
+                disabled={!isEditable}
                 className={cn(flags.has(currentQuestion.id) && "text-warning-foreground")}
               >
                 <FlagIcon className={cn("size-3.5 mr-1", flags.has(currentQuestion.id) && "fill-current")} />

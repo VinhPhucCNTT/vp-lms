@@ -25,6 +25,16 @@ public record AssignmentResponse(
     AssignmentInfo Info
 );
 
+public record StudentAssignmentSummaryResponse(
+    AssignmentResponse Assignment,
+    CourseResponse Course,
+    string Status,
+    DateTime? SubmittedAt,
+    decimal? Score,
+    string? FeedbackText,
+    int SubmittedFileCount
+);
+
 public record AssignmentFileResponse(
     string ResourceId,
     FileResponse FileInfo
@@ -38,6 +48,10 @@ public record SubmissionDetailResponse(
     string AssignmentId,
     string UserId,
     string? SubmissionText,
+    DateTime? SubmittedOn,
+    string Status,
+    decimal? Score,
+    string? FeedbackText,
     FileResponse[] Files
 );
 

@@ -123,6 +123,46 @@ public static class DevelopmentDataSeeder
             });
         }
 
+        var assignmentResource = await db.CourseResources
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(x =>
+                x.ModuleId == module.Id &&
+                x.Type == ResourceType.Assignment &&
+                x.OrderIndex == 2);
+
+        if (assignmentResource is null)
+        {
+            assignmentResource = new CourseResource
+            {
+                ModuleId = module.Id,
+                Type = ResourceType.Assignment,
+                Title = "Welcome Assignment",
+                OrderIndex = 2,
+                IsPublished = true
+            };
+            db.CourseResources.Add(assignmentResource);
+            await db.SaveChangesAsync();
+        }
+
+        var assignment = await db.Assignments
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(x => x.ResourceId == assignmentResource.Id);
+
+        if (assignment is null)
+        {
+            db.Assignments.Add(new Assignment
+            {
+                ResourceId = assignmentResource.Id,
+                InstructionsMD = "# Welcome Assignment\n\nUpload a short text or PDF file describing what you learned in the welcome lesson.",
+                SubmissionType = SubmissionType.File,
+                AllowedExtensions = [".txt", ".md", ".pdf"],
+                MaxFileSizeKb = 1024,
+                MaxFileCount = 2,
+                OpenDate = null,
+                CloseDate = DateTime.UtcNow.AddMonths(6)
+            });
+        }
+
         var assessmentResource = await db.CourseResources
             .IgnoreQueryFilters()
             .SingleOrDefaultAsync(x =>

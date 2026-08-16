@@ -17,6 +17,7 @@ using Backend.Api.Core.Automapper;
 using Backend.Api.Core.Helpers;
 using System.IdentityModel.Tokens.Jwt;
 using Backend.Api.Services.Content;
+using Backend.Api.Services.Submissions;
 using Backend.Api.Core.Authorization;
 using Backend.Persistence.Entities.Users;
 using Backend.Api.Services.Assessments.Graders;
@@ -24,6 +25,7 @@ using Backend.Api.Services.Assessments.Validators;
 using Backend.Api.Services.Assessments;
 using Backend.Api.Endpoints.Course;
 using Backend.Api.Endpoints.Assessment;
+using Backend.Api.Endpoints.Assignment;
 using Backend.Api.Services.Development;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -72,6 +74,9 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
         .UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
         .UseSnakeCaseNamingConvention();
 });
+
+builder.Services.Configure<Backend.Api.Core.Common.FileOptions>(
+    builder.Configuration.GetSection("FileStorage"));
 
 var sqidsSettings = builder.Configuration.GetSection("Sqids").Get<Backend.Api.Core.Common.SqidsOptions>();
 builder.Services.AddSingleton(provider =>
@@ -125,7 +130,9 @@ builder.Services.AddAutoMapper(cfg => { },
         typeof(EnrollmentProfile),
         typeof(ModuleProfile),
         typeof(ResourceProfile),
-        typeof(UserProfile));
+        typeof(UserProfile),
+        typeof(AssignmentProfile),
+        typeof(FileProfile));
 
 // Inject services
 builder.Services.AddScoped<CurrentUserService>();
@@ -141,6 +148,9 @@ builder.Services.AddScoped<CourseService>();
 builder.Services.AddScoped<ModuleService>();
 builder.Services.AddScoped<ResourceService>();
 builder.Services.AddScoped<LessonService>();
+builder.Services.AddScoped<AssignmentService>();
+builder.Services.AddScoped<SubmissionService>();
+builder.Services.AddScoped<AssignmentGradeService>();
 
 /////
 builder.Services.AddScoped<MultipleChoiceGrader>();
@@ -193,6 +203,8 @@ app.AddEnrollmentEndpoints();
 app.AddModuleEndpoints();
 app.AddResourceEndpoints();
 app.AddLessonEndpoints();
+app.AddAssignmentEndpoints();
+app.AddFileEndpoints();
 app.AddAssessmentEndpoints();
 app.AddUserEndpoints();
 

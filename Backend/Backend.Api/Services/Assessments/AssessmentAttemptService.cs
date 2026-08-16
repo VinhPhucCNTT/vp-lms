@@ -101,6 +101,7 @@ public sealed class AssessmentAttemptService(
         //             "The student is not enrolled in this course."));
 
         var existingAttempt = await db.AssessmentAttempts
+            .Include(x => x.Assessment)
             .FirstOrDefaultAsync(
                 x => x.AssessmentId == assessmentId &&
                      x.StudentId == studentId &&
@@ -109,8 +110,12 @@ public sealed class AssessmentAttemptService(
 
         if (existingAttempt is not null)
         {
-            return Result<AssessmentAttempt>.Success(
-                existingAttempt);
+            var expiration = await ExpireIfNeededAsync(db, existingAttempt, ct);
+            if (!expiration.IsSuccess)
+                return Result<AssessmentAttempt>.Failure(expiration.Errors.ToArray());
+
+            if (!expiration.Value)
+                return Result<AssessmentAttempt>.Success(existingAttempt);
         }
 
         var attemptCount = await db.AssessmentAttempts
@@ -171,22 +176,28 @@ public sealed class AssessmentAttemptService(
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         var attempt = await db.AssessmentAttempts
-            .AsNoTracking()
             .Include(x => x.Questions)
                 .ThenInclude(x => x.AssessmentQuestion)
             .Include(x => x.Questions)
                 .ThenInclude(x => x.Answer)
+            .Include(x => x.Assessment)
             .FirstOrDefaultAsync(
                 x => x.Id == attemptId &&
                      x.StudentId == studentId,
                 ct);
 
-        return attempt is null
-            ? Result<AssessmentAttempt>.Failure(
+        if (attempt is null)
+        {
+            return Result<AssessmentAttempt>.Failure(
                 new Error(
                     "attempt.not_found",
-                    "Assessment attempt was not found."))
-            : Result<AssessmentAttempt>.Success(attempt);
+                    "Assessment attempt was not found."));
+        }
+
+        var expiration = await ExpireIfNeededAsync(db, attempt, ct);
+        return expiration.IsSuccess
+            ? Result<AssessmentAttempt>.Success(attempt)
+            : Result<AssessmentAttempt>.Failure(expiration.Errors.ToArray());
     }
 
     public async Task<Result> SaveAnswerAsync(
@@ -201,6 +212,7 @@ public sealed class AssessmentAttemptService(
 
         var attemptQuestion = await db.AttemptQuestions
             .Include(x => x.Attempt)
+                .ThenInclude(x => x.Assessment)
             .Include(x => x.Answer)
             .FirstOrDefaultAsync(
                 x => x.Id == attemptQuestionId &&
@@ -215,6 +227,18 @@ public sealed class AssessmentAttemptService(
                 new Error(
                     "attempt_question.not_found",
                     "Attempt question was not found."));
+        }
+
+        var expiration = await ExpireIfNeededAsync(db, attemptQuestion.Attempt, ct);
+        if (!expiration.IsSuccess)
+            return Result.Failure(expiration.Errors.ToArray());
+
+        if (expiration.Value)
+        {
+            return Result.Failure(
+                new Error(
+                    "attempt.expired",
+                    "The assessment time limit has expired and the attempt was submitted automatically."));
         }
 
         if (!IsAttemptActive(
@@ -254,6 +278,7 @@ public sealed class AssessmentAttemptService(
 
         var question = await db.AttemptQuestions
             .Include(x => x.Attempt)
+                .ThenInclude(x => x.Assessment)
             .FirstOrDefaultAsync(
                 x => x.Id == attemptQuestionId &&
                      x.AttemptId == attemptId &&
@@ -268,9 +293,21 @@ public sealed class AssessmentAttemptService(
                     "Attempt question was not found."));
         }
 
+        var expiration = await ExpireIfNeededAsync(db, question.Attempt, ct);
+        if (!expiration.IsSuccess)
+            return Result.Failure(expiration.Errors.ToArray());
+
+        if (expiration.Value)
+        {
+            return Result.Failure(
+                new Error(
+                    "attempt.expired",
+                    "The assessment time limit has expired and the attempt was submitted automatically."));
+        }
+
         if (!IsAttemptActive(
-            question.Attempt,
-            out var expirationError))
+                question.Attempt,
+                out var expirationError))
         {
             return Result.Failure(expirationError!);
         }
@@ -290,6 +327,7 @@ public sealed class AssessmentAttemptService(
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         var attempt = await db.AssessmentAttempts
+            .Include(x => x.Assessment)
             .FirstOrDefaultAsync(
                 x => x.Id == attemptId &&
                      x.AssessmentId == assessmentId &&
@@ -304,6 +342,20 @@ public sealed class AssessmentAttemptService(
                     "Assessment attempt was not found."));
         }
 
+        var expiration = await ExpireIfNeededAsync(db, attempt, ct);
+        if (!expiration.IsSuccess)
+            return Result.Failure(expiration.Errors.ToArray());
+
+        if (expiration.Value)
+        {
+            return Result.Success();
+        }
+
+        if (attempt.Status == AssessmentAttemptStatus.Expired)
+        {
+            return Result.Success();
+        }
+
         if (attempt.Status != AssessmentAttemptStatus.InProgress)
         {
             return Result.Failure(
@@ -311,15 +363,6 @@ public sealed class AssessmentAttemptService(
                     "attempt.not_active",
                     "The assessment attempt is no longer active."));
         }
-
-        var deadline = await db.Assessments
-            .Where(x => x.Id == attempt.AssessmentId)
-            .Select(x => x.TimeLimitMinutes)
-            .FirstAsync(ct);
-
-        var expired =
-            DateTime.UtcNow >=
-            attempt.StartedAt.AddMinutes(deadline);
 
         var gradeResult = await grading.GradeAsync(
             attemptId,
@@ -329,9 +372,7 @@ public sealed class AssessmentAttemptService(
             return Result.Failure(gradeResult.Errors.ToArray());
 
         attempt.SubmittedAt = DateTime.UtcNow;
-        attempt.Status = expired
-            ? AssessmentAttemptStatus.Expired
-            : AssessmentAttemptStatus.Submitted;
+        attempt.Status = AssessmentAttemptStatus.Submitted;
 
         await db.SaveChangesAsync(ct);
 
@@ -354,6 +395,30 @@ public sealed class AssessmentAttemptService(
 
         error = null;
         return true;
+    }
+
+    private async Task<Result<bool>> ExpireIfNeededAsync(
+        AppDbContext db,
+        AssessmentAttempt attempt,
+        CancellationToken ct)
+    {
+        if (attempt.Status != AssessmentAttemptStatus.InProgress ||
+            attempt.Assessment.TimeLimitMinutes <= 0 ||
+            DateTime.UtcNow < attempt.StartedAt.AddMinutes(attempt.Assessment.TimeLimitMinutes))
+        {
+            return Result<bool>.Success(false);
+        }
+
+        var gradeResult = await grading.GradeAsync(attempt.Id, ct);
+        if (!gradeResult.IsSuccess)
+            return Result<bool>.Failure(gradeResult.Errors.ToArray());
+
+        await db.Entry(attempt).ReloadAsync(ct);
+        attempt.SubmittedAt ??= DateTime.UtcNow;
+        attempt.Status = AssessmentAttemptStatus.Expired;
+        await db.SaveChangesAsync(ct);
+
+        return Result<bool>.Success(true);
     }
 
     private static JsonDocument CloneJson(JsonDocument json) =>

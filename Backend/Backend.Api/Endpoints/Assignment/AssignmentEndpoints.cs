@@ -16,14 +16,16 @@ public static class AssignmentEndpoints
     {
         var assignment = route.MapGroup("/api/assignment");
 
-        assignment.MapGet("/", HandleQuery).RequireAuthorization();
-        assignment.MapGet("{resourceId}", HandleGetById).RequireAuthorization();
-        assignment.MapPost("{moduleId}", HandleCreate).RequireAuthorization();
-        assignment.MapPut("{resourceId}", HandleUpdate).RequireAuthorization();
+        assignment.MapGet("/", HandleQuery).RequireAuthorization("IsStudent");
+        assignment.MapGet("{resourceId}", HandleGetById).RequireAuthorization("IsStudent");
+        assignment.MapPost("{moduleId}", HandleCreate).RequireAuthorization("IsInstructor");
+        assignment.MapPut("{resourceId}", HandleUpdate).RequireAuthorization("IsInstructor");
 
-        assignment.MapPost("{resourceId}/upload", HandleUpload).RequireAuthorization();
-        assignment.MapPost("{resourceId}/submit", HandleSubmit).RequireAuthorization();
-        assignment.MapDelete("{resourceId}/submit", HandleRemoveSelfSubmit).RequireAuthorization();
+        assignment.MapPost("{resourceId}/upload", HandleUpload)
+            .RequireAuthorization("IsStudent")
+            .DisableAntiforgery();
+        assignment.MapPost("{resourceId}/submit", HandleSubmit).RequireAuthorization("IsStudent");
+        assignment.MapDelete("{resourceId}/submit", HandleRemoveSelfSubmit).RequireAuthorization("IsStudent");
 
         assignment.MapGet("{resourceId}/grades/instructor", HandleGetGrades).RequireAuthorization();
         assignment.MapGet("{resourceId}/grades/", HandleGetGrades).RequireAuthorization();
@@ -33,14 +35,14 @@ public static class AssignmentEndpoints
         assignment.MapGet("{resourceId}/submission/instructor-graded", HandleGetGraded).RequireAuthorization("IsInstructor");
         assignment.MapGet("{resourceId}/submission/instructor-ungraded", HandleGetUngraded).RequireAuthorization();
 
-        assignment.MapPost("{resourceId}/set-publish", HandleSetPublish);
+        assignment.MapPost("{resourceId}/set-publish", HandleSetPublish).RequireAuthorization("IsInstructor");
     }
 
-    private static async Task<Ok<List<AssignmentResponse>>> HandleQuery(
+    private static async Task<Ok<List<StudentAssignmentSummaryResponse>>> HandleQuery(
         AssignmentService assignmentService,
         CancellationToken ct)
     {
-        return TypedResults.Ok(await assignmentService.QueryAsync(ct));
+        return TypedResults.Ok(await assignmentService.QueryStudentAsync(ct));
     }
 
     private static async
@@ -48,13 +50,14 @@ public static class AssignmentEndpoints
         HandleGetById(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            AssignmentService assignmentService)
+            AssignmentService assignmentService,
+            CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var result = await assignmentService.GetDtoByIdAsync(decoded[0]);
+        var result = await assignmentService.GetDtoByIdAsync(decoded[0], ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();
@@ -115,18 +118,12 @@ public static class AssignmentEndpoints
             string resourceId,
             IFormFile file,
             SqidsEncoder<long> sqidsEncoder,
-        CourseService courseService,
-        CourseAuthorization auth,
             SubmissionService submissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest("");
-
-        var course = await courseService.GetFromModuleAsync(decoded[0]);
-        if (course is null || !await auth.IsParticipantAsync(course.Id))
-            return TypedResults.NotFound();
 
         var validationResult = await submissionService.ValidateFileAsync(decoded[0], file, ct);
         if (!validationResult.IsSuccess)
@@ -137,28 +134,25 @@ public static class AssignmentEndpoints
     }
 
         private static async
-        Task<Results<Ok<SubmissionDetailResponse>, BadRequest, NotFound<string>>>
+        Task<Results<Ok<SubmissionDetailResponse>, BadRequest<string>, NotFound<string>>>
         HandleSubmit(
             string resourceId,
             SubmissionRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
             SubmissionService submissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)
-            return TypedResults.BadRequest();
-
-        var course = await courseService.GetFromModuleAsync(decoded[0]);
-        if (course is null || !await auth.IsParticipantAsync(course.Id))
-            return TypedResults.NotFound("Course not found.");
+            return TypedResults.BadRequest("Invalid assignment id.");
 
         var result = await submissionService.SubmitAsync(decoded[0], request, ct);
-        return result.IsSuccess
-            ? TypedResults.Ok(result.Value)
-            : TypedResults.NotFound(result.Error!.Message);
+        if (result.IsSuccess)
+            return TypedResults.Ok(result.Value!);
+
+        return result.Error!.Code == "notfound"
+            ? TypedResults.NotFound(result.Error.Message)
+            : TypedResults.BadRequest(result.Error.Message);
     }
 
     private static async
@@ -166,18 +160,12 @@ public static class AssignmentEndpoints
         HandleRemoveSelfSubmit(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
             SubmissionService submissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest("");
-
-        var course = await courseService.GetFromModuleAsync(decoded[0]);
-        if (course is null || !await auth.IsParticipantAsync(course.Id))
-            return TypedResults.NotFound("Course not found.");
 
         var result = await submissionService.RemoveAsync(decoded[0], ct);
         return result
@@ -215,18 +203,12 @@ public static class AssignmentEndpoints
         HandleGetOwnSubmit(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
             SubmissionService submissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
-
-        var course = await courseService.GetFromModuleAsync(decoded[0]);
-        if (course is null || !await auth.IsParticipantAsync(course.Id))
-            return TypedResults.NotFound("Course not found.");
 
         var result = await submissionService.GetOwnDetailAsync(decoded[0], ct);
         return result.IsSuccess

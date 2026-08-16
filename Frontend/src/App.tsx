@@ -26,6 +26,7 @@ import { InstructorSubmissions } from "@/features/courses/pages/instructor-submi
 import { InstructorCodingProblems } from "@/features/courses/pages/instructor-coding-problems";
 
 import { StudentAssignments } from "@/features/assignments/pages/student-assignments";
+import { StudentAssignmentDetailPage } from "@/features/assignments/pages/student-assignment-detail";
 import { StudentAssessments } from "@/features/assessments/pages/student-assessments";
 import { AssessmentDetailPage } from "@/features/assessments/pages/assessment-detail";
 import { AssessmentAttemptWorkspace } from "@/features/assessments/pages/assessment-attempt-workspace";
@@ -69,6 +70,8 @@ function App() {
                   <Route path="courses/:courseId" element={<CourseWorkspace />} />
                   <Route path="courses/:courseId/problems" element={<ProblemList />} />
                   <Route path="courses/:courseId/problems/:problemId" element={<ProblemSolution />} />
+                  <Route path="assignments" element={<StudentAssignments />} />
+                  <Route path="assignments/:assignmentId" element={<StudentAssignmentDetailPage />} />
                   <Route path="assessments" element={<StudentAssessments />} />
                   <Route path="assessments/:assessmentId" element={<AssessmentDetailPage />} />
                   <Route path="assessments/:assessmentId/attempts/:attemptId" element={<AssessmentAttemptWorkspace />} />
