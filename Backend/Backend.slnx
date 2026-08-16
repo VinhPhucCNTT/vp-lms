@@ -1,2 +1,5 @@
 <Solution>
+  <Project Path="Backend.Api/Backend.Api.csproj" />
+  <Project Path="Backend.JudgeWorker/Backend.JudgeWorker.csproj" />
+  <Project Path="Backend.Persistence/Backend.Persistence.csproj" />
 </Solution>

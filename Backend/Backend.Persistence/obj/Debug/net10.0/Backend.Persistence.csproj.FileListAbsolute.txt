@@ -1,0 +1,15 @@
+D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\Backend.Persistence.GeneratedMSBuildEditorConfig.editorconfig
+D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\Backend.Persistence.AssemblyInfoInputs.cache
+D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\Backend.Persistence.AssemblyInfo.cs
+D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\Backend.Persistence.csproj.CoreCompileInputs.cache
+D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\Backend.Persistence.sourcelink.json
+D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\Backend.Persistence.csproj.AssemblyReference.cache
+D:\vp-lms\Backend\Backend.Persistence\bin\Debug\net10.0\Backend.Persistence.deps.json
+D:\vp-lms\Backend\Backend.Persistence\bin\Debug\net10.0\Backend.Persistence.runtimeconfig.json
+D:\vp-lms\Backend\Backend.Persistence\bin\Debug\net10.0\Backend.Persistence.dll
+D:\vp-lms\Backend\Backend.Persistence\bin\Debug\net10.0\Backend.Persistence.pdb
+D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\Backend.Persistence.dll
+D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\refint\Backend.Persistence.dll
+D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\Backend.Persistence.pdb
+D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\Backend.Persistence.genruntimeconfig.cache
+D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\ref\Backend.Persistence.dll

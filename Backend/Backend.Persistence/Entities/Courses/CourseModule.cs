@@ -1,0 +1,19 @@
+using Backend.Persistence.Common;
+
+namespace Backend.Persistence.Entities.Courses;
+
+public class CourseModule : BaseEntity, ISoftDeletable
+{
+    public long CourseId { get; set; }
+    public string Title { get; set; } = default!;
+    public string? Description { get; set; }
+    public int OrderIndex { get; set; }
+    public bool IsPublished { get; set; } = false;
+
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
+
+    // Navigation properties
+    public Course Course { get; set; } = default!;
+    public ICollection<CourseResource> Resources { get; set; } = [];
+}

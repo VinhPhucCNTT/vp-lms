@@ -1,0 +1,22 @@
+using Backend.Persistence.Common;
+using Backend.Persistence.Entities.Content;
+using Backend.Persistence.Entities.Users;
+
+namespace Backend.Persistence.Entities.Judge;
+
+public class CodeExecutionLog : BaseEntity
+{
+    public long UserId { get; set; }
+    public long? ProblemId { get; set; }
+    public string Language { get; set; } = default!;
+    public string? CodeSnippet { get; set; }
+    public int? ExecutionTimeMs { get; set; }
+    public int? MemoryUsedKb { get; set; }
+    public string? Status { get; set; }
+    public string? ErrorMessage { get; set; }
+    public DateTime ExecutedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation properties
+    public User User { get; set; } = default!;
+    public CodingProblem? Problem { get; set; }
+}

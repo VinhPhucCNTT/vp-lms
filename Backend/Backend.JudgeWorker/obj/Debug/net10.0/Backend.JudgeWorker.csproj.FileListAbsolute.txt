@@ -1,0 +1,6 @@
+D:\vp-lms\Backend\Backend.JudgeWorker\obj\Debug\net10.0\Backend.JudgeWorker.csproj.AssemblyReference.cache
+D:\vp-lms\Backend\Backend.JudgeWorker\obj\Debug\net10.0\Backend.JudgeWorker.GeneratedMSBuildEditorConfig.editorconfig
+D:\vp-lms\Backend\Backend.JudgeWorker\obj\Debug\net10.0\Backend.JudgeWorker.AssemblyInfoInputs.cache
+D:\vp-lms\Backend\Backend.JudgeWorker\obj\Debug\net10.0\Backend.JudgeWorker.AssemblyInfo.cs
+D:\vp-lms\Backend\Backend.JudgeWorker\obj\Debug\net10.0\Backend.JudgeWorker.csproj.CoreCompileInputs.cache
+D:\vp-lms\Backend\Backend.JudgeWorker\obj\Debug\net10.0\Backend.JudgeWorker.sourcelink.json
