@@ -30,5 +30,6 @@ public enum AssessmentAttemptStatus
 {
     InProgress,
     Submitted,
+    Expired,
     Graded
 }

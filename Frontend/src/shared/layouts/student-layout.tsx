@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboardIcon, BookOpenIcon, ListTodoIcon, CompassIcon, BellIcon, LogOutIcon, ChevronDownIcon } from "lucide-react";
+import { LayoutDashboardIcon, BookOpenIcon, ListTodoIcon, CompassIcon, BellIcon, LogOutIcon, ChevronDownIcon, ClipboardListIcon } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-context";
 import { ModeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -13,6 +13,7 @@ const navigation = [
   { title: "Dashboard", url: "/student", icon: LayoutDashboardIcon },
   { title: "Activity", url: "/student/activity", icon: ListTodoIcon },
   { title: "My Courses", url: "/student/courses", icon: BookOpenIcon },
+  { title: "Assessments", url: "/student/assessments", icon: ClipboardListIcon },
   { title: "Explore", url: "/student/explore", icon: CompassIcon },
 ];
 

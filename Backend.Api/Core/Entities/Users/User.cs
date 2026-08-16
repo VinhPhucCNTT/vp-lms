@@ -1,5 +1,5 @@
 using Backend.Api.Core.Common.Models;
-using Backend.Api.Core.Entities.Assignments;
+using Backend.Api.Core.Entities.Assessments;
 using Backend.Api.Core.Entities.Content;
 using Backend.Api.Core.Entities.Courses;
 
@@ -24,6 +24,7 @@ public class User : BaseEntity
     public ICollection<Enrollment> Enrollments { get; set; } = [];
     public ICollection<Comment> Comments { get; set; } = [];
     public ICollection<FileAsset> FileAssets { get; set; } = [];
+    public ICollection<QuestionBank> QuestionBanks { get; set; } = [];
 }
 
 public enum UserRoles {

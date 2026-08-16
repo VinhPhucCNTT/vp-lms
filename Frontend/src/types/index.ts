@@ -95,11 +95,99 @@ export interface Assessment {
   id: string;
   moduleId: string;
   title: string;
-  description: string;
+  description?: string;
   duration: number;
   passingScore: number;
   maxAttempts: number;
   dueDate: string;
+  availableFrom?: string;
+  availableTo?: string;
+  shuffleQuestions?: boolean;
+  shuffleAnswers?: boolean;
+  resultVisibility?: "immediate" | "after-deadline" | "manual";
+  status?: "draft" | "published";
+  totalPoints?: number;
+}
+
+// ── Question Bank types ──────────────────────────────────────────────────────
+
+export type QuestionType =
+  | "multiple-choice"
+  | "multiple-select"
+  | "true-false"
+  | "short-answer"
+  | "essay"
+  | "programming";
+
+export type QuestionDifficulty = "easy" | "medium" | "hard";
+
+export interface QuestionOption {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface Question {
+  id: string;
+  bankId: string;
+  type: QuestionType;
+  title: string;
+  text: string;
+  points: number;
+  difficulty: QuestionDifficulty;
+  options?: QuestionOption[];
+  correctAnswer?: string;
+  acceptedAnswers?: string[];
+  explanation?: string;
+  problemId?: string;
+  language?: JudgeLanguage;
+  tags?: string[];
+}
+
+export interface QuestionBank {
+  id: string;
+  name: string;
+  description?: string;
+  ownerId: string;
+  sharedWithInstructorIds: string[];
+  sharedWithCourseIds: string[];
+  questionIds: string[];
+  createdAt: string;
+}
+
+// ── Assessment linking & attempts ────────────────────────────────────────────
+
+export interface AssessmentQuestion {
+  id: string;
+  assessmentId: string;
+  questionId: string;
+  order: number;
+  points: number;
+}
+
+export type AttemptStatus = "in-progress" | "submitted" | "graded" | "expired";
+
+export interface AttemptAnswer {
+  questionId: string;
+  value: string | string[];
+  flagged?: boolean;
+  score?: number;
+  feedback?: string;
+  graded?: boolean;
+}
+
+export interface AssessmentAttempt {
+  id: string;
+  assessmentId: string;
+  studentId: string;
+  attemptNumber: number;
+  status: AttemptStatus;
+  answers: AttemptAnswer[];
+  score: number | null;
+  maxScore: number;
+  startedAt: string;
+  submittedAt: string | null;
+  timeSpent?: number;
 }
 
 export type ProblemDifficulty = "easy" | "medium" | "hard";

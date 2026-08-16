@@ -29,7 +29,7 @@ export function StudentDashboard() {
         <StatCard title="Active Courses" value={enrolledCourses.length} icon={<BookOpenIcon className="size-5" />} variant="info" />
         <StatCard title="Pending Assignments" value={pendingAssignments} icon={<FileTextIcon className="size-5" />} variant="warning" />
         <StatCard title="Pending Assessments" value={pendingAssessments} icon={<ClipboardCheckIcon className="size-5" />} variant="warning" />
-        <StatCard title="Coding Problems" value={pendingCodingProblems} icon={<CodeIcon className="size-5" />} variant="success" />
+        <StatCard title="Coding Problems" value={pendingCodingProblems} icon={<CodeIcon className="size-5" />} variant="success" trend={{ value: 12, label: "vs last week" }} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

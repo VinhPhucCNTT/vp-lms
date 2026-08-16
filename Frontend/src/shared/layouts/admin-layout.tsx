@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { LayoutDashboardIcon, UsersIcon, BookOpenIcon, SettingsIcon, BarChart3Icon, ShieldCheckIcon, LogOutIcon, ChevronDownIcon } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-context";
@@ -37,7 +38,7 @@ export function AdminLayout() {
         <Separator />
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+            <SidebarGroupLabel>Administration</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {navigation.map((item) => (

@@ -12,7 +12,7 @@ public class AttemptAnswerConfiguration : IEntityTypeConfiguration<AttemptAnswer
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Score)
+        builder.Property(x => x.EarnedPoints)
             .HasColumnType("decimal(5,2)");
 
         builder.HasIndex(x => new { x.GraderId, x.AttemptQuestionId })

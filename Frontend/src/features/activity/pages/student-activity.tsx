@@ -7,6 +7,7 @@ import {
   getPaginationRowModel,
   useReactTable,
   type ColumnDef,
+  type ColumnFiltersState,
 } from "@tanstack/react-table";
 import { SearchIcon, ClockIcon, CheckCircleIcon, AlertCircleIcon, ListTodoIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -87,6 +88,7 @@ export function StudentActivity() {
 
       const matchesType = typeFilter === "all" || activity.type === typeFilter;
       const matchesStatus = statusFilter === "all" || activity.status === statusFilter;
+
       let matchesDue = true;
       const dueDate = new Date(activity.dueDate);
       if (dueFilter === "this-week") {
@@ -157,8 +159,6 @@ export function StudentActivity() {
       accessorKey: "dueDate",
       header: "Due Date",
       cell: ({ row }) => {
-        if (row.original.type === "lesson")
-          return;
         const dueDate = new Date(row.original.dueDate);
         const isOverdue = row.original.status === "overdue";
         return (

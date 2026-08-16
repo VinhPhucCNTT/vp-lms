@@ -83,7 +83,7 @@ export function LoginPage() {
             </Button>
           </form>
           <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-            {/* <p className="text-xs text-muted-foreground text-center">Demo Mode: Click "Sign In" to access the platform with sample data</p> */}
+            <p className="text-xs text-muted-foreground text-center">Demo Mode: Click "Sign In" to access the platform with sample data</p>
           </div>
         </CardContent>
       </Card>

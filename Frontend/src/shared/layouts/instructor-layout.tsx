@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboardIcon, BookOpenIcon, FileTextIcon, CalendarIcon, BellIcon, LogOutIcon, ChevronDownIcon, CodeIcon } from "lucide-react";
+import { LayoutDashboardIcon, BookOpenIcon, FileTextIcon, CalendarIcon, BellIcon, LogOutIcon, ChevronDownIcon, CodeIcon, ClipboardListIcon, LibraryIcon } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-context";
 import { ModeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -13,6 +13,9 @@ const navigation = [
   { title: "My Courses", url: "/instructor/courses", icon: BookOpenIcon, exact: true },
   { title: "Calendar", url: "/instructor/calendar", icon: CalendarIcon, exact: false },
   { title: "Submissions", url: "/instructor/submissions", icon: FileTextIcon, exact: false },
+  { title: "Announcements", url: "/instructor/announcements", icon: BellIcon, exact: false },
+  { title: "Assessments", url: "/instructor/assessments", icon: ClipboardListIcon, exact: false },
+  { title: "Question Banks", url: "/instructor/question-banks", icon: LibraryIcon, exact: false },
   { title: "Coding Problems", url: "/instructor/coding-problems", icon: CodeIcon, exact: false },
   { title: "Notifications", url: "/instructor/notifications", icon: BellIcon, exact: false },
 ];
@@ -43,7 +46,7 @@ export function InstructorLayout() {
         <Separator />
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+            <SidebarGroupLabel>Teaching</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {navigation.map((item) => (

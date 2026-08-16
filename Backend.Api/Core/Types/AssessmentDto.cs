@@ -1,12 +1,15 @@
+using System.Text.Json;
+using Backend.Api.Core.Entities.Assessments;
+
 namespace Backend.Api.Core.Types;
 
 public record AssessmentInfo(
-    string? InstructionsMarkdown,
+    string? Description,
     int? TimeLimitMinutes,
     int MaxAttempts,
-    bool ShuffleQuestions,
-    bool ShowResults,
-    string? GradingSchemaJson
+    DateTime? AvailableFrom,
+    DateTime? AvailableUntil,
+    bool ShowResults
 );
 
 public record AssessmentRequest(
@@ -24,23 +27,27 @@ public record AssessmentListResponse(
     AssessmentInfo Info
 );
 
-public record QuestionRequest(
-    string? QuestionSqid,
-    string QuestionType,
-    string QuestionTextMarkdown,
-    decimal Points,
+public record AssessmentQuestionInfo(
+    QuestionType QuestionType,
+    string Text,
+    JsonDocument QuestionData,
     int OrderIndex,
-    string QuestionDataJson
+    decimal Points
+);
+
+public record QuestionRequest(
+    string QuestionType,
+    string Text,
+    JsonDocument QuestionData
 );
 
 public record QuestionResponse(
-    string QuestionSqid,
+    string Id,
+    string BankId,
     string QuestionType,
-    string QuestionTextMarkdown,
-    decimal Points,
-    int OrderIndex,
-    string QuestionDataJson
-);
+    string Text,
+    JsonDocument QuestionData
+) : IEntityResponse;
 
 public record AssessmentAttemptResponse(
     string AssessmentAttemptSqid,
@@ -49,4 +56,9 @@ public record AssessmentAttemptResponse(
     decimal? TotalScore,
     bool? IsPassed,
     int AttemptNumber
+);
+
+public record QuestionBankInfo(
+    string Name,
+    string? Description
 );

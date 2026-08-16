@@ -19,6 +19,9 @@ using System.IdentityModel.Tokens.Jwt;
 using Backend.Api.Services.Content;
 using Backend.Api.Core.Authorization;
 using Backend.Api.Core.Entities.Users;
+using Backend.Api.Services.Assessments.Graders;
+using Backend.Api.Services.Assessments.Validators;
+using Backend.Api.Services.Assessments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -131,6 +134,25 @@ builder.Services.AddScoped<EnrollmentService>();
 builder.Services.AddScoped<CourseService>();
 builder.Services.AddScoped<ModuleService>();
 builder.Services.AddScoped<ResourceService>();
+
+/////
+builder.Services.AddScoped<MultipleChoiceGrader>();
+builder.Services.AddScoped<MultipleSelectGrader>();
+builder.Services.AddScoped<TrueFalseGrader>();
+builder.Services.AddScoped<ShortAnswerGrader>();
+builder.Services.AddScoped<DragAndDropGrader>();
+builder.Services.AddScoped<CodingGrader>();
+builder.Services.AddScoped<QuestionContentValidator>();
+
+builder.Services.AddScoped<QuestionSelectionService>();
+
+builder.Services.AddScoped<AssessmentService>();
+builder.Services.AddScoped<AssessmentQuestionService>();
+builder.Services.AddScoped<AssessmentAttemptService>();
+builder.Services.AddScoped<QuestionBankService>();
+builder.Services.AddScoped<QuestionService>();
+builder.Services.AddScoped<AssessmentGradingService>();
+/////
 
 var app = builder.Build();
 app.UseHttpsRedirection();

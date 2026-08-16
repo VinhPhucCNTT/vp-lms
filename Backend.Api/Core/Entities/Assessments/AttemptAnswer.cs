@@ -9,8 +9,8 @@ public class AttemptAnswer : BaseEntity
     public long? GraderId { get; set; }
     public long AttemptQuestionId { get; set; }
 
-    public JsonDocument? AnswerData { get; set; }
-    public decimal? Score { get; set; }
+    required public JsonDocument AnswerData { get; set; }
+    public decimal? EarnedPoints { get; set; }
     public bool? IsCorrect { get; set; }
     public DateTime? AnsweredAt { get; set; }
     public DateTime? GradedAt { get; set; }

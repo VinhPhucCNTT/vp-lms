@@ -1,3 +1,4 @@
+import * as React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,8 +25,17 @@ import { InstructorNotifications } from "@/features/courses/pages/instructor-not
 import { InstructorSubmissions } from "@/features/courses/pages/instructor-submissions";
 import { InstructorCodingProblems } from "@/features/courses/pages/instructor-coding-problems";
 
+import { StudentAssignments } from "@/features/assignments/pages/student-assignments";
+import { StudentAssessments } from "@/features/assessments/pages/student-assessments";
+import { ActiveAssessment } from "@/features/assessments/pages/active-assessment";
 import { StudentActivity } from "@/features/activity/pages/student-activity";
 import { StudentExplore } from "@/features/explore/pages/student-explore";
+
+import { InstructorAssessments } from "@/features/assessments/pages/instructor-assessments";
+import { InstructorAssessmentManage } from "@/features/assessments/pages/instructor-assessment-manage";
+import { InstructorAttemptReview } from "@/features/assessments/pages/instructor-attempt-review";
+import { QuestionBankList } from "@/features/assessments/pages/question-bank-list";
+import { QuestionBankDetail } from "@/features/assessments/pages/question-bank-detail";
 
 import { UserManagement } from "@/features/admin/pages/user-management";
 import { AdminReports } from "@/features/admin/pages/admin-reports";
@@ -57,6 +67,8 @@ function App() {
                   <Route path="courses/:courseId" element={<CourseWorkspace />} />
                   <Route path="courses/:courseId/problems" element={<ProblemList />} />
                   <Route path="courses/:courseId/problems/:problemId" element={<ProblemSolution />} />
+                  <Route path="assessments" element={<StudentAssessments />} />
+                  <Route path="assessments/:assessmentId" element={<ActiveAssessment />} />
                   <Route path="explore" element={<StudentExplore />} />
                 </Route>
               </Route>
@@ -66,6 +78,11 @@ function App() {
                   <Route path="courses" element={<InstructorCourses />} />
                   <Route path="calendar" element={<InstructorCalendar />} />
                   <Route path="submissions" element={<InstructorSubmissions />} />
+                  <Route path="assessments" element={<InstructorAssessments />} />
+                  <Route path="assessments/:assessmentId" element={<InstructorAssessmentManage />} />
+                  <Route path="assessments/:assessmentId/attempts/:attemptId" element={<InstructorAttemptReview />} />
+                  <Route path="question-banks" element={<QuestionBankList />} />
+                  <Route path="question-banks/:bankId" element={<QuestionBankDetail />} />
                   <Route path="coding-problems" element={<InstructorCodingProblems />} />
                   <Route path="notifications" element={<InstructorNotifications />} />
                 </Route>

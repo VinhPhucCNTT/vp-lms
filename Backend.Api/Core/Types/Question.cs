@@ -1,17 +1,5 @@
 namespace Backend.Api.Core.Types;
 
-public enum QuestionType
-{
-    MultipleChoice,
-    MultipleSelect,
-    TrueFalse,
-    ShortAnswer,
-    DragAndDrop,
-    Matching,
-    Ordering,
-    Coding
-}
-
 public class MultipleChoiceQuestion
 {
     public List<QuestionOption> Options { get; set; } = [];
@@ -24,7 +12,7 @@ public class MultipleSelectQuestion
 
 public class TrueFalseQuestion
 {
-    public bool IsCorrect { get; set; }
+    public bool CorrectAnswer { get; set; }
 }
 
 public class ShortAnswerQuestion

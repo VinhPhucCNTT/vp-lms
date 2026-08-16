@@ -9,7 +9,7 @@ public class Assessment : BaseEntity, ISoftDeletable
     public long ResourceId { get; set; }
 
     public string? Description { get; set; }
-    public int? TimeLimitMinutes { get; set; }
+    public double TimeLimitMinutes { get; set; }
     public int MaxAttempts { get; set; } = 1;
 
     public DateTime? AvailableFrom { get; set; }

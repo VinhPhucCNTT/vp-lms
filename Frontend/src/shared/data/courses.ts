@@ -32,8 +32,9 @@ export const assignments: Assignment[] = [
 ];
 
 export const assessments: Assessment[] = [
-  { id: "asm-001", moduleId: "mod-001", title: "Algorithm Analysis Quiz", description: "Test your understanding of basic algorithm analysis concepts.", duration: 30, passingScore: 70, maxAttempts: 3, dueDate: "2026-01-18" },
-  { id: "asm-002", moduleId: "mod-002", title: "Sorting Algorithms Midterm", description: "Comprehensive test on sorting algorithms.", duration: 60, passingScore: 60, maxAttempts: 1, dueDate: "2026-02-15" },
+  { id: "asm-001", moduleId: "mod-001", title: "Algorithm Analysis Quiz", description: "Test your understanding of basic algorithm analysis concepts.", duration: 30, passingScore: 70, maxAttempts: 3, dueDate: "2026-01-18", availableFrom: "2026-01-10", availableTo: "2026-01-20", shuffleQuestions: false, shuffleAnswers: true, resultVisibility: "immediate", status: "published", totalPoints: 16 },
+  { id: "asm-002", moduleId: "mod-002", title: "Sorting Algorithms Midterm", description: "Comprehensive test on sorting algorithms including QuickSort, MergeSort, and their complexity analysis.", duration: 60, passingScore: 60, maxAttempts: 1, dueDate: "2026-02-15", availableFrom: "2026-02-10", availableTo: "2026-02-17", shuffleQuestions: true, shuffleAnswers: true, resultVisibility: "after-deadline", status: "published", totalPoints: 60 },
+  { id: "asm-003", moduleId: "mod-001", title: "Complexity Theory Practice", description: "Practice quiz on asymptotic notation and complexity classes.", duration: 20, passingScore: 75, maxAttempts: 5, dueDate: "2026-01-25", availableFrom: "2026-01-12", availableTo: "2026-01-26", shuffleQuestions: true, shuffleAnswers: false, resultVisibility: "immediate", status: "draft", totalPoints: 30 },
 ];
 
 export const courseActivities: CourseActivity[] = [

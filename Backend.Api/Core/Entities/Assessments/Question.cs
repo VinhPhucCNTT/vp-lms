@@ -5,9 +5,9 @@ namespace Backend.Api.Core.Entities.Assessments;
 
 public class Question : BaseEntity, ISoftDeletable
 {
-    public long CategoryId { get; set; }
+    public long QuestionBankId { get; set; }
 
-    public string QuestionType { get; set; } = default!;
+    public QuestionType QuestionType { get; set; }
     public string Text { get; set; } = default!;
     public JsonDocument QuestionData { get; set; } = default!;
 
@@ -15,6 +15,19 @@ public class Question : BaseEntity, ISoftDeletable
     public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
-    public QuestionCategory Category { get; set; } = default!;
+    public QuestionBank QuestionBank { get; set; } = default!;
     public ICollection<AssessmentQuestion> AssessmentQuestions { get; set; } = [];
 }
+
+public enum QuestionType
+{
+    MultipleChoice,
+    MultipleSelect,
+    TrueFalse,
+    ShortAnswer,
+    DragAndDrop,
+    Matching,
+    Ordering,
+    Coding
+}
+
