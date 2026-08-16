@@ -5,22 +5,26 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/shared/components/stat-card";
 import { PageHeader } from "@/shared/components/page-header";
-import { courses } from "@/shared/data/courses";
-import { students, instructors, admins } from "@/shared/data/users";
+import { LoadingState, ErrorState } from "@/shared/components/api-states";
+import { useApi } from "@/lib/use-api";
+import { adminApi, type AdminStatsDto, type AuditLogDto } from "@/features/admin/admin-api";
 
 export function AdminDashboard() {
-  const totalUsers = students.length + instructors.length + admins.length;
-  const publishedCourses = courses.filter((c) => c.status === "published").length;
-  const totalEnrollment = courses.reduce((sum, c) => sum + c.enrolledCount, 0);
+  const { data: stats, loading, error, reload } = useApi<AdminStatsDto>(() => adminApi.getStats());
+  const { data: auditLogs } = useApi<AuditLogDto[]>(() => adminApi.getRecentAudit());
+
+  if (loading) return <LoadingState label="Loading dashboard..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (!stats) return null;
 
   return (
     <div className="space-y-6">
       <PageHeader title="Admin Dashboard" description="Platform overview and administrative controls" />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Users" value={totalUsers} icon={<UsersIcon className="size-5" />} variant="info" trend={{ value: 12, label: "vs last month" }} />
-        <StatCard title="Published Courses" value={publishedCourses} icon={<BookOpenIcon className="size-5" />} variant="success" />
-        <StatCard title="Total Enrollments" value={totalEnrollment} icon={<FileTextIcon className="size-5" />} />
+        <StatCard title="Total Users" value={stats.totalUsers} icon={<UsersIcon className="size-5" />} variant="info" />
+        <StatCard title="Published Courses" value={stats.publishedCourses} icon={<BookOpenIcon className="size-5" />} variant="success" />
+        <StatCard title="Total Enrollments" value={stats.totalEnrollments} icon={<FileTextIcon className="size-5" />} />
         <StatCard title="System Health" value="99.9%" icon={<ActivityIcon className="size-5" />} variant="success" />
       </div>
 
@@ -33,9 +37,9 @@ export function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-3">
-                <div className="text-center p-4 bg-muted rounded-lg"><p className="text-2xl font-bold">{students.length}</p><p className="text-sm text-muted-foreground">Students</p></div>
-                <div className="text-center p-4 bg-muted rounded-lg"><p className="text-2xl font-bold">{instructors.length}</p><p className="text-sm text-muted-foreground">Instructors</p></div>
-                <div className="text-center p-4 bg-muted rounded-lg"><p className="text-2xl font-bold">{admins.length}</p><p className="text-sm text-muted-foreground">Admins</p></div>
+                <div className="text-center p-4 bg-muted rounded-lg"><p className="text-2xl font-bold">{stats.studentCount}</p><p className="text-sm text-muted-foreground">Students</p></div>
+                <div className="text-center p-4 bg-muted rounded-lg"><p className="text-2xl font-bold">{stats.instructorCount}</p><p className="text-sm text-muted-foreground">Instructors</p></div>
+                <div className="text-center p-4 bg-muted rounded-lg"><p className="text-2xl font-bold">{stats.adminCount}</p><p className="text-sm text-muted-foreground">Admins</p></div>
               </div>
             </CardContent>
           </Card>
@@ -51,13 +55,11 @@ export function AdminDashboard() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {[
-                { user: "Dr. Smith", action: "Updated course CS 101", time: "10 minutes ago" },
-                { user: "Admin", action: "Created user account", time: "1 hour ago" },
-                { user: "Prof. Johnson", action: "Published announcement", time: "2 hours ago" },
-                { user: "System", action: "Automated backup completed", time: "3 hours ago" },
-              ].map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+              {(!auditLogs || auditLogs.length === 0) && (
+                <p className="text-sm text-muted-foreground text-center py-4">No recent activity.</p>
+              )}
+              {auditLogs?.map((item) => (
+                <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                   <div className="space-y-1">
                     <p className="text-sm font-medium">{item.action}</p>
                     <p className="text-xs text-muted-foreground">by {item.user}</p>

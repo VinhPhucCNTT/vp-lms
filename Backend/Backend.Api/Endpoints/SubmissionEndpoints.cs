@@ -47,14 +47,14 @@ public static class SubmissionEndpoints
         HandleGetGrade(
             string submissionId,
             SqidsEncoder<long> sqidsEncoder,
-            SubmissionService submissionService,
+            AssignmentGradeService assignmentGradeService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(submissionId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var result = await submissionService.GetGradeAsync(decoded[0], ct);
+        var result = await assignmentGradeService.GetGradeAsync(decoded[0], ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound("Submission not found.");
@@ -82,5 +82,59 @@ public static class SubmissionEndpoints
         return result.IsSuccess
             ? TypedResults.Ok(result.Value)
             : TypedResults.NotFound(result.Error!.Message);
+    }
+
+    private static async Task<Ok<PaginatedResponse<AssignmentGradeResponse>>> HandleGetOwnGrades(
+        [AsParameters] PageRequest page,
+        AssignmentGradeService gradeService,
+        CancellationToken ct)
+    {
+        return TypedResults.Ok((await gradeService.GetStudentSelfGradesAsync(page, ct))!);
+    }
+
+    private static async Task<Results<Ok<AssignmentGradeResponse>, BadRequest, NotFound<string>>> HandleAddGrade(
+        string submissionId,
+        AssignmentGradeRequest request,
+        SqidsEncoder<long> sqidsEncoder,
+        AssignmentGradeService gradeService)
+    {
+        var decoded = sqidsEncoder.Decode(submissionId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        var result = await gradeService.GradeAsync(decoded[0], request);
+        return result is not null
+            ? TypedResults.Ok(result)
+            : TypedResults.NotFound("Submission not found.");
+    }
+
+    private static async Task<Results<Ok<AssignmentGradeResponse>, BadRequest, NotFound<string>>> HandleUpdateGrade(
+        string submissionId,
+        AssignmentGradeRequest request,
+        SqidsEncoder<long> sqidsEncoder,
+        AssignmentGradeService gradeService)
+    {
+        var decoded = sqidsEncoder.Decode(submissionId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        var result = await gradeService.UpdateAsync(decoded[0], request);
+        return result is not null
+            ? TypedResults.Ok(result)
+            : TypedResults.NotFound("Grade not found.");
+    }
+
+    private static async Task<Results<Ok, BadRequest, NotFound<string>>> HandleRemoveGrade(
+        string submissionId,
+        SqidsEncoder<long> sqidsEncoder,
+        AssignmentGradeService gradeService)
+    {
+        var decoded = sqidsEncoder.Decode(submissionId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        return await gradeService.RemoveAsync(decoded[0])
+            ? TypedResults.Ok()
+            : TypedResults.NotFound("Grade not found.");
     }
 }

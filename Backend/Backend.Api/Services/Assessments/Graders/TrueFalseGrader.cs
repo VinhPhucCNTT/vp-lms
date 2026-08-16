@@ -8,6 +8,9 @@ namespace Backend.Api.Services.Assessments.Graders;
 public sealed class TrueFalseGrader
     : IQuestionGrader
 {
+    private static readonly JsonSerializerOptions JsonOptions =
+        new(JsonSerializerDefaults.Web);
+
     public QuestionType Type =>
         QuestionType.TrueFalse;
 
@@ -16,7 +19,7 @@ public sealed class TrueFalseGrader
         AttemptAnswer? answer)
     {
         var content =
-            question.QuestionData.Deserialize<TrueFalseQuestion>();
+            question.QuestionData.Deserialize<TrueFalseQuestion>(JsonOptions);
 
         if (content is null)
             return Result<GradeResult>.Failure(
@@ -29,7 +32,7 @@ public sealed class TrueFalseGrader
         }
 
         var model =
-            answer.AnswerData.Deserialize<TrueFalseAnswer>();
+            answer.AnswerData.Deserialize<TrueFalseAnswer>(JsonOptions);
 
         if (model is null)
         {

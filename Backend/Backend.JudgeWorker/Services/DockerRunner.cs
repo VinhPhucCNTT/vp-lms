@@ -1,53 +1,74 @@
 using System.Diagnostics;
 using Backend.JudgeWorker.Contracts;
 using Backend.JudgeWorker.Interfaces;
+using Backend.JudgeWorker.Languages;
 
 namespace Backend.JudgeWorker.Services;
 
 public sealed class DockerRunner(
-    ILogger<DockerRunner> logger) : IDockerRunner
+    ILogger<DockerRunner> logger)
+    : IDockerRunner
 {
-    private const string ImageName = "judge-cpp";
-
     public async Task<DockerExecutionResult> CompileAsync(
+        LanguageDefinition language,
         string workspace,
         CancellationToken cancellationToken)
     {
-        var arguments = new List<string>
+        if (!language.RequiresCompilation)
         {
-            "run",
-            "--rm",
+            return new DockerExecutionResult(
+                ExitCode: 0,
+                StandardOutput: "",
+                StandardError: "",
+                ExecutionTimeMs: 0,
+                TimedOut: false);
+        }
 
-            "--network", "none",
-
-            "--mount",
-            $"type=bind,source={workspace},target=/workspace",
-
-            "--workdir", "/workspace",
-
-            ImageName,
-
-            "g++",
-            "Main.cpp",
-            "-O2",
-            "-o",
-            "Main"
-        };
+        var arguments = BuildDockerArguments(
+            language,
+            workspace,
+            language.CompileCommand);
 
         return await RunDockerAsync(
             arguments,
-            workspace,
-            null,
             timeoutMs: 30_000,
+            input: null,
             cancellationToken);
     }
 
     public async Task<DockerExecutionResult> ExecuteAsync(
+        LanguageDefinition language,
         string workspace,
         string input,
         int timeLimitMs,
         int memoryLimitMb,
         CancellationToken cancellationToken)
+    {
+        var arguments = BuildDockerArguments(
+            language,
+            workspace,
+            language.RunCommand,
+            memoryLimitMb);
+
+        try
+        {
+            return await RunDockerAsync(
+                arguments,
+                timeoutMs: timeLimitMs,
+                input,
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+    }
+
+    private static List<string> BuildDockerArguments(
+        LanguageDefinition language,
+        string workspace,
+        string command,
+        int? memoryLimitMb = null)
     {
         var containerName =
             $"judge-{Guid.NewGuid():N}";
@@ -57,84 +78,76 @@ public sealed class DockerRunner(
             "run",
             "--rm",
 
-            "--name", containerName,
+            "--name",
+            containerName,
 
-            "--network", "none",
+            "--network",
+            "none",
 
-            "--memory", $"{memoryLimitMb}m",
+            "--cpus",
+            "1",
 
-            "--cpus", "1",
+            "--pids-limit",
+            "64",
 
-            "--pids-limit", "64",
+            "--cap-drop",
+            "ALL",
 
-            "--cap-drop", "ALL",
-
-            "--security-opt", "no-new-privileges",
+            "--security-opt",
+            "no-new-privileges",
 
             "--mount",
             $"type=bind,source={workspace},target=/workspace",
 
-            "--workdir", "/workspace",
-
-            ImageName,
-
-            "./Main"
+            "--workdir",
+            "/workspace"
         };
 
-        try
+        if (memoryLimitMb.HasValue)
         {
-            return await RunDockerAsync(
-                arguments,
-                workspace,
-                input,
-                timeLimitMs,
-                cancellationToken);
+            arguments.Add("--memory");
+            arguments.Add($"{memoryLimitMb.Value}m");
         }
-        catch (OperationCanceledException)
-        {
-            logger.LogWarning(
-                "Execution timed out for container {ContainerName}",
-                containerName);
 
-            await KillContainerAsync(containerName);
+        arguments.Add(language.ImageName);
 
-            return new DockerExecutionResult(
-                ExitCode: -1,
-                StandardOutput: "",
-                StandardError: "Time limit exceeded.",
-                ExecutionTimeMs: timeLimitMs,
-                TimedOut: true);
-        }
+        arguments.Add("sh");
+        arguments.Add("-c");
+        arguments.Add(command);
+
+        return arguments;
     }
 
     private async Task<DockerExecutionResult> RunDockerAsync(
         List<string> arguments,
-        string workspace,
-        string? input,
         int timeoutMs,
+        string? input,
         CancellationToken cancellationToken)
     {
-        var startTime = Stopwatch.GetTimestamp();
+        var stopwatch =
+            Stopwatch.StartNew();
 
-        var processStartInfo = new ProcessStartInfo
-        {
-            FileName = "docker",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            RedirectStandardInput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+        var startInfo =
+            new ProcessStartInfo
+            {
+                FileName = "docker",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                RedirectStandardInput = true,
+                CreateNoWindow = true
+            };
 
         foreach (var argument in arguments)
         {
-            processStartInfo.ArgumentList.Add(argument);
+            startInfo.ArgumentList.Add(argument);
         }
 
-        using var process = new Process
-        {
-            StartInfo = processStartInfo
-        };
+        using var process =
+            new Process
+            {
+                StartInfo = startInfo
+            };
 
         process.Start();
 
@@ -162,12 +175,13 @@ public sealed class DockerRunner(
             {
                 if (!process.HasExited)
                 {
-                    process.Kill(entireProcessTree: true);
+                    process.Kill(
+                        entireProcessTree: true);
                 }
             }
             catch
             {
-                // Process may already have exited.
+                // Process may have already exited.
             }
 
             throw;
@@ -179,53 +193,13 @@ public sealed class DockerRunner(
         var stderr =
             await process.StandardError.ReadToEndAsync();
 
-        var elapsed =
-            Stopwatch.GetElapsedTime(startTime);
+        stopwatch.Stop();
 
         return new DockerExecutionResult(
-            ExitCode: process.ExitCode,
-            StandardOutput: stdout,
-            StandardError: stderr,
-            ExecutionTimeMs: elapsed.Milliseconds,
-            TimedOut: false);
-    }
-
-    private async Task KillContainerAsync(
-        string containerName)
-    {
-        try
-        {
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "docker",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
-            };
-
-            startInfo.ArgumentList.Add(
-                "kill");
-
-            startInfo.ArgumentList.Add(
-                containerName);
-
-            using var process =
-                Process.Start(startInfo);
-
-            if (process is null)
-            {
-                return;
-            }
-
-            await process.WaitForExitAsync();
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(
-                ex,
-                "Failed to kill Docker container {ContainerName}",
-                containerName);
-        }
+            process.ExitCode,
+            stdout,
+            stderr,
+            (long)stopwatch.Elapsed.TotalMilliseconds,
+            false);
     }
 }

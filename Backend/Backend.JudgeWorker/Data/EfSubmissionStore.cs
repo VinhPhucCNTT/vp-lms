@@ -1,8 +1,10 @@
 using Backend.JudgeWorker.Contracts;
 using Backend.JudgeWorker.Interfaces;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Judge;
 using Microsoft.EntityFrameworkCore;
 
-namespace Backend.JudgeWorker;
+namespace Backend.JudgeWorker.Data;
 
 public sealed class EfSubmissionStore(
     IDbContextFactory<AppDbContext> dbContextFactory)
@@ -17,19 +19,17 @@ public sealed class EfSubmissionStore(
                 cancellationToken);
 
         var submission =
-            await db.Submissions
+            await db.ProblemSubmissions
                 .Where(x => x.Id == submissionId)
                 .Select(x => new
                 {
                     x.Id,
-                    x.SourceCode,
+                    x.SubmittedCode,
                     x.Language,
                     x.ProblemId,
 
-                    TimeLimitMs = x.Problem.TimeLimitMs,
-
-                    MemoryLimitMb =
-                        x.Problem.MemoryLimitMb,
+                    x.Problem.TimeLimitMs,
+                    x.Problem.MemoryLimitMb,
 
                     TestCases =
                         x.Problem.TestCases
@@ -44,15 +44,12 @@ public sealed class EfSubmissionStore(
                     cancellationToken);
 
         if (submission is null)
-        {
             return null;
-        }
 
         return new SubmissionToJudge(
             submission.Id,
-            submission.SourceCode,
-            submission.Language,
-            "Main.cpp",
+            submission.SubmittedCode,
+            (ProgrammingLanguage)(int)submission.Language,
             submission.TimeLimitMs,
             submission.MemoryLimitMb,
             submission.TestCases);
@@ -67,16 +64,14 @@ public sealed class EfSubmissionStore(
                 cancellationToken);
 
         var submission =
-            await db.Submissions
+            await db.ProblemSubmissions
                 .SingleAsync(
                     x => x.Id == submissionId,
                     cancellationToken);
 
-        submission.Status =
-            SubmissionStatus.Running;
-
-        await db.SaveChangesAsync(
-            cancellationToken);
+        // The persistence model has no separate Running state. Keep the
+        // pending state until the judge produces a terminal result.
+        await Task.CompletedTask;
     }
 
     public async Task CompleteAsync(
@@ -89,25 +84,15 @@ public sealed class EfSubmissionStore(
                 cancellationToken);
 
         var submission =
-            await db.Submissions
+            await db.ProblemSubmissions
                 .SingleAsync(
                     x => x.Id == submissionId,
                     cancellationToken);
 
-        submission.Status =
-            SubmissionStatus.Finished;
-
-        submission.Verdict =
-            result.Verdict.ToString();
+        submission.Status = MapStatus(result.Verdict);
 
         submission.ExecutionTimeMs =
-            result.ExecutionTimeMs;
-
-        submission.CompilerOutput =
-            result.CompilerOutput;
-
-        submission.RuntimeError =
-            result.RuntimeError;
+            (int)Math.Min(result.ExecutionTimeMs, int.MaxValue);
 
         await db.SaveChangesAsync(
             cancellationToken);
@@ -123,21 +108,26 @@ public sealed class EfSubmissionStore(
                 cancellationToken);
 
         var submission =
-            await db.Submissions
+            await db.ProblemSubmissions
                 .SingleAsync(
                     x => x.Id == submissionId,
                     cancellationToken);
 
-        submission.Status =
-            SubmissionStatus.Finished;
-
-        submission.Verdict =
-            JudgeVerdict.SystemError.ToString();
-
-        submission.RuntimeError =
-            error;
+        submission.Status = SubmissionStatus.RuntimeError;
 
         await db.SaveChangesAsync(
             cancellationToken);
     }
+
+    private static SubmissionStatus MapStatus(JudgeVerdict verdict) =>
+        verdict switch
+        {
+            JudgeVerdict.Accepted => SubmissionStatus.Accepted,
+            JudgeVerdict.WrongAnswer => SubmissionStatus.WrongAnswer,
+            JudgeVerdict.CompilationError => SubmissionStatus.CompilationError,
+            JudgeVerdict.RuntimeError => SubmissionStatus.RuntimeError,
+            JudgeVerdict.TimeLimitExceeded => SubmissionStatus.TimeLimitExceeded,
+            JudgeVerdict.MemoryLimitExceeded => SubmissionStatus.MemoryLimitExceeded,
+            _ => SubmissionStatus.RuntimeError
+        };
 }

@@ -1,5 +1,6 @@
 using AutoMapper;
 using Backend.Persistence.Entities.Courses;
+using Backend.Persistence.Entities.Learning;
 using Backend.Api.Core.Types;
 using Backend.Persistence.Data;
 using Backend.Api.Services.Common;
@@ -48,6 +49,71 @@ public class ResourceService(
             .Where(r => r.ModuleId == moduleId && !r.IsPublished && r.Module.Course.CreatorId == currentUserId)
             .Select(r => _mapper.Map<ResourceResponse>(r))
             .ToListAsync();
+    }
+
+    public async Task<ResourceProgressResponse?> GetResourceProgressAsync(long resourceId)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var userId = _currentUserService.UserId;
+
+        var resourceExists = await db.CourseResources
+            .AsNoTracking()
+            .AnyAsync(r => r.Id == resourceId && r.IsPublished);
+        if (!resourceExists)
+            return null;
+
+        var progress = await db.ResourceProgress
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.ResourceId == resourceId && p.UserId == userId);
+
+        return progress is null
+            ? new ResourceProgressResponse(false, null, null)
+            : new ResourceProgressResponse(
+                progress.IsCompleted,
+                progress.CompletedAt,
+                progress.LastAccessedAt);
+    }
+
+    public async Task<ResourceProgressResponse?> MarkResourceCompletedAsync(long resourceId)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var userId = _currentUserService.UserId;
+
+        var resourceExists = await db.CourseResources
+            .AsNoTracking()
+            .AnyAsync(r => r.Id == resourceId && r.IsPublished);
+        if (!resourceExists)
+            return null;
+
+        var progress = await db.ResourceProgress
+            .FirstOrDefaultAsync(p => p.ResourceId == resourceId && p.UserId == userId);
+        var now = DateTime.UtcNow;
+
+        if (progress is null)
+        {
+            progress = new ResourceProgress
+            {
+                UserId = userId,
+                ResourceId = resourceId,
+                IsCompleted = true,
+                CompletedAt = now,
+                LastAccessedAt = now
+            };
+            db.ResourceProgress.Add(progress);
+        }
+        else
+        {
+            progress.IsCompleted = true;
+            progress.CompletedAt ??= now;
+            progress.LastAccessedAt = now;
+        }
+
+        await db.SaveChangesAsync();
+
+        return new ResourceProgressResponse(
+            progress.IsCompleted,
+            progress.CompletedAt,
+            progress.LastAccessedAt);
     }
 
     public async Task<bool> DeleteResourceAsync(long resourceId)
@@ -155,7 +221,6 @@ public class ResourceService(
             Title = info.Title,
             OrderIndex = info.OrderIndex,
             IsPublished = info.IsPublished,
-            AccessPassword = info.AccessPassword
         };
 
         db.CourseResources.Add(resource);
@@ -171,7 +236,6 @@ public class ResourceService(
             resource.Title = info.Title;
             resource.OrderIndex = info.OrderIndex;
             resource.IsPublished = info.IsPublished;
-            resource.AccessPassword = info.AccessPassword;
 
             db.CourseResources.Update(resource);
             await db.SaveChangesAsync();

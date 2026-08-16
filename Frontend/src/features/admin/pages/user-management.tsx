@@ -12,11 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { PageHeader } from "@/shared/components/page-header";
-import { students, instructors, admins } from "@/shared/data/users";
+import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
+import { useApi } from "@/lib/use-api";
+import { userApi } from "@/features/admin/user-api";
 import type { User, UserRole, UserStatus } from "@/types";
 import { cn } from "@/lib/utils";
-
-const allUsers: User[] = [...students, ...instructors, ...admins];
 
 const roleColors: Record<UserRole, string> = {
   student: "bg-info text-info-foreground",
@@ -31,18 +31,25 @@ const statusColors: Record<UserStatus, string> = {
 };
 
 export function UserManagement() {
+  const { data: allUsers, loading, error, reload } = useApi<User[]>(() => userApi.getAllUsers());
   const [search, setSearch] = React.useState("");
   const [roleFilter, setRoleFilter] = React.useState<string>("all");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [selectedUsers, setSelectedUsers] = React.useState<string[]>([]);
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+  const [createForm, setCreateForm] = React.useState({ firstName: "", lastName: "", email: "", role: "student" });
+  const [createError, setCreateError] = React.useState<string | null>(null);
+  const [creating, setCreating] = React.useState(false);
 
-  const filteredUsers = allUsers.filter((user) => {
-    const matchesSearch = user.firstName.toLowerCase().includes(search.toLowerCase()) || user.lastName.toLowerCase().includes(search.toLowerCase()) || user.email.toLowerCase().includes(search.toLowerCase());
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter;
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+  const filteredUsers = React.useMemo(() => {
+    if (!allUsers) return [];
+    return allUsers.filter((user) => {
+      const matchesSearch = user.firstName.toLowerCase().includes(search.toLowerCase()) || user.lastName.toLowerCase().includes(search.toLowerCase()) || user.email.toLowerCase().includes(search.toLowerCase());
+      const matchesRole = roleFilter === "all" || user.role === roleFilter;
+      const matchesStatus = statusFilter === "all" || user.status === statusFilter;
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [allUsers, search, roleFilter, statusFilter]);
 
   const toggleSelectAll = () => {
     if (selectedUsers.length === filteredUsers.length) setSelectedUsers([]);
@@ -54,6 +61,43 @@ export function UserManagement() {
     else setSelectedUsers([...selectedUsers, userId]);
   };
 
+  const handleCreate = async () => {
+    setCreating(true);
+    setCreateError(null);
+    try {
+      await userApi.createUser(createForm);
+      setIsCreateOpen(false);
+      setCreateForm({ firstName: "", lastName: "", email: "", role: "student" });
+      reload();
+    } catch (err: unknown) {
+      setCreateError(err instanceof Error ? err.message : "Failed to create user.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleToggleStatus = async (user: User) => {
+    try {
+      if (user.status === "active") await userApi.suspendUser(user.id);
+      else await userApi.activateUser(user.id);
+      reload();
+    } catch (err: unknown) {
+      console.error("Failed to update user status:", err);
+    }
+  };
+
+  const handleDelete = async (userId: string) => {
+    try {
+      await userApi.deleteUser(userId);
+      reload();
+    } catch (err: unknown) {
+      console.error("Failed to delete user:", err);
+    }
+  };
+
+  if (loading) return <LoadingState label="Loading users..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+
   return (
     <div className="space-y-6">
       <PageHeader title="User Management" description="Manage user accounts and permissions" breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Users" }]} actions={
@@ -63,12 +107,12 @@ export function UserManagement() {
             <DialogHeader><DialogTitle>Create New User</DialogTitle><DialogDescription>Add a new user account to the platform.</DialogDescription></DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label htmlFor="firstName">First Name</Label><Input id="firstName" placeholder="John" /></div>
-                <div className="space-y-2"><Label htmlFor="lastName">Last Name</Label><Input id="lastName" placeholder="Doe" /></div>
+                <div className="space-y-2"><Label htmlFor="firstName">First Name</Label><Input id="firstName" placeholder="John" value={createForm.firstName} onChange={(e) => setCreateForm({ ...createForm, firstName: e.target.value })} /></div>
+                <div className="space-y-2"><Label htmlFor="lastName">Last Name</Label><Input id="lastName" placeholder="Doe" value={createForm.lastName} onChange={(e) => setCreateForm({ ...createForm, lastName: e.target.value })} /></div>
               </div>
-              <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" placeholder="john.doe@university.edu" /></div>
+              <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" placeholder="john.doe@university.edu" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} /></div>
               <div className="space-y-2"><Label htmlFor="role">Role</Label>
-                <Select defaultValue="student">
+                <Select value={createForm.role} onValueChange={(v) => setCreateForm({ ...createForm, role: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="student">Student</SelectItem>
@@ -77,10 +121,11 @@ export function UserManagement() {
                   </SelectContent>
                 </Select>
               </div>
+              {createError && <p className="text-sm text-destructive">{createError}</p>}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-              <Button onClick={() => setIsCreateOpen(false)}>Create User</Button>
+              <Button onClick={handleCreate} disabled={creating}>{creating ? "Creating..." : "Create User"}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -119,54 +164,58 @@ export function UserManagement() {
         </div>
       )}
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12"><Checkbox checked={selectedUsers.length === filteredUsers.length} onCheckedChange={toggleSelectAll} /></TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Joined</TableHead>
-              <TableHead className="w-16"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUsers.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell><Checkbox checked={selectedUsers.includes(user.id)} onCheckedChange={() => toggleSelectUser(user.id)} /></TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar size="sm"><AvatarFallback>{user.firstName[0]}{user.lastName[0]}</AvatarFallback></Avatar>
-                    <div>
-                      <p className="font-medium">{user.firstName} {user.lastName}</p>
-                      {user.role === "student" && "studentId" in user && <p className="text-xs text-muted-foreground">{user.studentId}</p>}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                <TableCell><Badge className={cn(roleColors[user.role])}>{user.role}</Badge></TableCell>
-                <TableCell><Badge variant="outline" className={cn(statusColors[user.status])}>{user.status}</Badge></TableCell>
-                <TableCell className="text-muted-foreground">{user.createdAt}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm"><MoreHorizontalIcon className="size-4" /></Button></DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem><PencilIcon className="size-4 mr-2" />Edit Role</DropdownMenuItem>
-                      <DropdownMenuItem>{user.status === "active" ? "Suspend User" : "Activate User"}</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive"><TrashIcon className="size-4 mr-2" />Delete User</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+      {filteredUsers.length === 0 ? (
+        <EmptyState message="No users found." />
+      ) : (
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12"><Checkbox checked={selectedUsers.length === filteredUsers.length} onCheckedChange={toggleSelectAll} /></TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Joined</TableHead>
+                <TableHead className="w-16"></TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell><Checkbox checked={selectedUsers.includes(user.id)} onCheckedChange={() => toggleSelectUser(user.id)} /></TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar size="sm"><AvatarFallback>{user.firstName[0]}{user.lastName[0]}</AvatarFallback></Avatar>
+                      <div>
+                        <p className="font-medium">{user.firstName} {user.lastName}</p>
+                        {user.role === "student" && "studentId" in user && <p className="text-xs text-muted-foreground">{user.studentId}</p>}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                  <TableCell><Badge className={cn(roleColors[user.role])}>{user.role}</Badge></TableCell>
+                  <TableCell><Badge variant="outline" className={cn(statusColors[user.status])}>{user.status}</Badge></TableCell>
+                  <TableCell className="text-muted-foreground">{user.createdAt}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm"><MoreHorizontalIcon className="size-4" /></Button></DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem><PencilIcon className="size-4 mr-2" />Edit Role</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleToggleStatus(user)}>{user.status === "active" ? "Suspend User" : "Activate User"}</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(user.id)}><TrashIcon className="size-4 mr-2" />Delete User</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
     </div>
   );
 }

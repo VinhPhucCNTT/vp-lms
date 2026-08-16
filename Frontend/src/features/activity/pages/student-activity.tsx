@@ -30,9 +30,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/shared/components/page-header";
-import { getStudentActivities } from "@/shared/data/courses";
-import { students } from "@/shared/data/users";
-import { useAuth } from "@/features/auth/auth-context";
+import { LoadingState, ErrorState } from "@/shared/components/api-states";
+import { useApi } from "@/lib/use-api";
+import { assignmentApi } from "@/features/assignments/assignment-api";
 import { cn } from "@/lib/utils";
 import type { StudentActivity, ActivityType, ActivityStatus } from "@/types";
 
@@ -57,13 +57,10 @@ const typeColors: Record<ActivityType, string> = {
 };
 
 export function StudentActivity() {
-  const { user } = useAuth();
-  const currentUser = students.find((s) => s.id === user?.id) ?? students[0];
-  // Stable ref required: a new array on every render triggers infinite TanStack Table re-renders
-  const studentActivities = React.useMemo(
-    () => getStudentActivities(currentUser.enrolledCourses),
-    [currentUser.enrolledCourses]
+  const { data: studentActivitiesData, loading, error, reload } = useApi<StudentActivity[]>(
+    () => assignmentApi.getStudentActivity()
   );
+  const studentActivities = studentActivitiesData ?? [];
 
   const [search, setSearch] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState<string>("all");
@@ -230,6 +227,10 @@ export function StudentActivity() {
         ]}
       />
 
+      {loading && <LoadingState label="Loading activities..." />}
+      {error && <ErrorState message={error} onRetry={reload} />}
+
+      {!loading && !error && (
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
@@ -276,7 +277,9 @@ export function StudentActivity() {
           </CardContent>
         </Card>
       </div>
+      )}
 
+      {!loading && !error && (
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="relative flex-1 max-w-sm">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -327,7 +330,9 @@ export function StudentActivity() {
           </Select>
         </div>
       </div>
+      )}
 
+      {!loading && !error && (
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -373,7 +378,9 @@ export function StudentActivity() {
           </TableBody>
         </Table>
       </div>
+      )}
 
+      {!loading && !error && (
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
           Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{" "}
@@ -402,6 +409,7 @@ export function StudentActivity() {
           </Button>
         </div>
       </div>
+      )}
     </div>
   );
 }

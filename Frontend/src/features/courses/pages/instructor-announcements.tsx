@@ -10,13 +10,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/shared/components/page-header";
-import { announcements } from "@/shared/data/users";
-import { courses } from "@/shared/data/courses";
-import { instructors } from "@/shared/data/users";
+import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
+import { useApi } from "@/lib/use-api";
+import { instructorApi, type AnnouncementDto } from "@/features/courses/instructor-api";
+import { courseApi } from "@/features/courses/course-api";
+import type { Course } from "@/types";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/features/auth/auth-context";
 
 interface AnnouncementFormData {
   title: string;
@@ -26,35 +26,49 @@ interface AnnouncementFormData {
 }
 
 export function InstructorAnnouncements() {
-  const { user } = useAuth();
-  const currentInstructor = instructors.find((i) => i.id === user?.id) ?? instructors[0];
-  const instructorCourses = courses.filter((c) => c.instructorId === currentInstructor.id);
+  const { data: announcements, loading, error, reload } = useApi<AnnouncementDto[]>(() => instructorApi.getAnnouncements());
+  const { data: courses } = useApi<Course[]>(() => courseApi.getInstructorCourses());
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
   const [selectedCourse, setSelectedCourse] = React.useState<string>("all");
+  const [creating, setCreating] = React.useState(false);
+  const [createError, setCreateError] = React.useState<string | null>(null);
+  const [formData, setFormData] = React.useState<AnnouncementFormData>({ title: "", content: "", courseId: "", isPinned: false });
 
-  const [formData, setFormData] = React.useState<AnnouncementFormData>({
-    title: "",
-    content: "",
-    courseId: instructorCourses[0]?.id ?? "",
-    isPinned: false,
-  });
+  React.useEffect(() => {
+    if (courses && courses.length > 0 && !formData.courseId) {
+      setFormData((p) => ({ ...p, courseId: courses[0].id }));
+    }
+  }, [courses, formData.courseId]);
 
-  const instructorAnnouncements = announcements.filter((a) => instructorCourses.some((c) => c.id === a.courseId));
+  const instructorCourses = courses ?? [];
+  const filteredAnnouncements = selectedCourse === "all" ? (announcements ?? []) : (announcements ?? []).filter((a) => a.courseId === selectedCourse);
 
-  const filteredAnnouncements = selectedCourse === "all" ? instructorAnnouncements : instructorAnnouncements.filter((a) => a.courseId === selectedCourse);
-
-  const handleCreate = () => {
-    console.log("Creating announcement:", formData);
-    setIsCreateOpen(false);
-    setFormData({ title: "", content: "", courseId: instructorCourses[0]?.id ?? "", isPinned: false });
+  const handleCreate = async () => {
+    setCreating(true);
+    setCreateError(null);
+    try {
+      await instructorApi.createAnnouncement(formData);
+      setIsCreateOpen(false);
+      setFormData({ title: "", content: "", courseId: instructorCourses[0]?.id ?? "", isPinned: false });
+      reload();
+    } catch (err: unknown) {
+      setCreateError(err instanceof Error ? err.message : "Failed to create announcement.");
+    } finally {
+      setCreating(false);
+    }
   };
 
-  const stats = {
-    total: instructorAnnouncements.length,
-    pinned: instructorAnnouncements.filter((a) => a.isPinned).length,
-    thisWeek: 2,
-    views: 1247,
+  const handleDelete = async (id: string) => {
+    try {
+      await instructorApi.deleteAnnouncement(id);
+      reload();
+    } catch (err: unknown) {
+      console.error("Failed to delete announcement:", err);
+    }
   };
+
+  if (loading) return <LoadingState label="Loading announcements..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
 
   return (
     <div className="space-y-6">
@@ -85,20 +99,21 @@ export function InstructorAnnouncements() {
                 <Checkbox id="pinned" checked={formData.isPinned} onCheckedChange={(c) => setFormData((p) => ({ ...p, isPinned: !!c }))} />
                 <Label htmlFor="pinned" className="text-sm font-normal">Pin this announcement</Label>
               </div>
+              {createError && <p className="text-sm text-destructive">{createError}</p>}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-              <Button onClick={handleCreate} disabled={!formData.title || !formData.content}><SendIcon className="size-4 mr-2" />Publish</Button>
+              <Button onClick={handleCreate} disabled={!formData.title || !formData.content || creating}><SendIcon className="size-4 mr-2" />{creating ? "Publishing..." : "Publish"}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       } />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium flex items-center gap-2"><MegaphoneIcon className="size-4" />Total</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{stats.total}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Pinned</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{stats.pinned}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">This Week</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{stats.thisWeek}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Total Views</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{stats.views}</p></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium flex items-center gap-2"><MegaphoneIcon className="size-4" />Total</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{announcements?.length ?? 0}</p></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Pinned</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{announcements?.filter((a) => a.isPinned).length ?? 0}</p></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">This Week</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">—</p></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Total Views</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">—</p></CardContent></Card>
       </div>
 
       <div className="flex items-center gap-4">
@@ -118,23 +133,24 @@ export function InstructorAnnouncements() {
         </TabsList>
 
         <TabsContent value="active" className="mt-6 space-y-4">
-          {filteredAnnouncements.map((announcement) => {
-            const course = courses.find((c) => c.id === announcement.courseId);
-            return (
+          {filteredAnnouncements.length === 0 ? (
+            <EmptyState message="No announcements yet. Create your first announcement!" />
+          ) : (
+            filteredAnnouncements.map((announcement) => (
               <Card key={announcement.id} className={cn(announcement.isPinned && "border-primary/50 bg-primary/5")}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         {announcement.isPinned && <Badge variant="default">Pinned</Badge>}
-                        <Badge variant="outline">{course?.code}</Badge>
+                        <Badge variant="outline">{announcement.courseCode ?? "—"}</Badge>
                       </div>
                       <CardTitle>{announcement.title}</CardTitle>
                       <CardDescription>Posted on {announcement.createdAt}</CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button size="icon-sm" variant="ghost"><PencilIcon className="size-4" /></Button>
-                      <Button size="icon-sm" variant="ghost" className="text-destructive"><Trash2Icon className="size-4" /></Button>
+                      <Button size="icon-sm" variant="ghost" className="text-destructive" onClick={() => handleDelete(announcement.id)}><Trash2Icon className="size-4" /></Button>
                     </div>
                   </div>
                 </CardHeader>
@@ -142,15 +158,12 @@ export function InstructorAnnouncements() {
                   <p className="text-sm text-muted-foreground">{announcement.content}</p>
                 </CardContent>
               </Card>
-            );
-          })}
-          {filteredAnnouncements.length === 0 && (
-            <Card><CardContent className="py-12 text-center text-muted-foreground">No announcements yet. Create your first announcement!</CardContent></Card>
+            ))
           )}
         </TabsContent>
 
         <TabsContent value="archived" className="mt-6">
-          <Card><CardContent className="py-12 text-center text-muted-foreground">No archived announcements.</CardContent></Card>
+          <EmptyState message="No archived announcements." />
         </TabsContent>
       </Tabs>
     </div>

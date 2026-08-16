@@ -1,60 +1,71 @@
 import * as React from "react";
 import type { User, UserRole } from "@/types";
-import { students, instructors, admins } from "@/shared/data/users";
+import {
+  api,
+  type LoginRequest,
+  type AuthResponse,
+  mapAuthUser,
+  getToken,
+  setToken,
+  clearToken,
+  getStoredUser,
+  setStoredUser,
+  clearStoredUser,
+  ApiError,
+} from "@/lib/api-client";
 
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string, role: UserRole) => Promise<boolean>;
+  login: (email: string, password: string, _role: UserRole) => Promise<boolean>;
   logout: () => void;
   switchRole: (role: UserRole) => void;
+  loginError: string | null;
 };
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
-function getStoredUser(): User | null {
-  const stored = localStorage.getItem("lms-user");
-  if (stored) {
-    try { return JSON.parse(stored); }
-    catch { return null; }
-  }
-  return null;
-}
-
 function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<User | null>(getStoredUser);
+  const [user, setUser] = React.useState<User | null>(() => {
+    return getToken() ? getStoredUser() : null;
+  });
+  const [loginError, setLoginError] = React.useState<string | null>(null);
 
-  const login = React.useCallback(async (_email: string, _password: string, role: UserRole): Promise<boolean> => {
-    let foundUser: User | null = null;
-    if (role === "student") foundUser = students[0];
-    else if (role === "instructor") foundUser = instructors[0];
-    else if (role === "admin") foundUser = admins[0];
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem("lms-user", JSON.stringify(foundUser));
+  const login = React.useCallback(async (email: string, password: string, _role: UserRole): Promise<boolean> => {
+    setLoginError(null);
+    try {
+      const payload: LoginRequest = { email, password };
+      const res = await api.post<AuthResponse>("/api/auth/login", payload, { skipAuth: true });
+      setToken(res.token);
+      const mapped = mapAuthUser(res);
+      setUser(mapped);
+      setStoredUser(mapped);
       return true;
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        setLoginError(err.message);
+      } else if (err instanceof Error) {
+        setLoginError(err.message);
+      } else {
+        setLoginError("Unable to sign in. Please try again.");
+      }
+      return false;
     }
-    return false;
   }, []);
 
   const logout = React.useCallback(() => {
     setUser(null);
-    localStorage.removeItem("lms-user");
+    clearToken();
+    clearStoredUser();
   }, []);
 
-  const switchRole = React.useCallback((role: UserRole) => {
-    let newUser: User | null = null;
-    if (role === "student") newUser = students[0];
-    else if (role === "instructor") newUser = instructors[0];
-    else if (role === "admin") newUser = admins[0];
-    if (newUser) {
-      setUser(newUser);
-      localStorage.setItem("lms-user", JSON.stringify(newUser));
-    }
+  // switchRole is kept for API compatibility but is a no-op in real auth
+  const switchRole = React.useCallback((_role: UserRole) => {
+    // no-op: role is determined by the backend
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, switchRole }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, switchRole, loginError }}>
       {children}
     </AuthContext.Provider>
   );

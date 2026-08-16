@@ -1,28 +1,22 @@
-using System.Text;
 using Backend.JudgeWorker.Contracts;
 using Backend.JudgeWorker.Interfaces;
+using Backend.JudgeWorker.Languages;
 
 namespace Backend.JudgeWorker.Services;
 
 public sealed class JudgeService(
     IDockerRunner dockerRunner,
-    ILogger<JudgeService> logger) : IJudgeService
+    ILanguageDefinitionProvider languageProvider,
+    ILogger<JudgeService> logger)
+    : IJudgeService
 {
     public async Task<JudgeResult> JudgeAsync(
         SubmissionToJudge submission,
         CancellationToken cancellationToken)
     {
-        if (!string.Equals(
-                submission.Language,
-                "cpp",
-                StringComparison.OrdinalIgnoreCase))
-        {
-            return new JudgeResult(
-                JudgeVerdict.SystemError,
-                0,
-                RuntimeError:
-                    $"Unsupported language: {submission.Language}");
-        }
+        var language =
+            languageProvider.Get(
+                submission.Language);
 
         var workspace =
             Path.Combine(
@@ -30,42 +24,41 @@ public sealed class JudgeService(
                 "lms-judge",
                 submission.Id.ToString());
 
-        Directory.CreateDirectory(workspace);
+        Directory.CreateDirectory(
+            workspace);
 
         try
         {
-            var sourcePath =
-                Path.Combine(
-                    workspace,
-                    "Main.cpp");
-
-            await File.WriteAllTextAsync(
-                sourcePath,
-                submission.SourceCode,
-                Encoding.UTF8,
+            await PrepareWorkspaceAsync(
+                submission,
+                language,
+                workspace,
                 cancellationToken);
 
-            logger.LogInformation(
-                "Compiling submission {SubmissionId}",
-                submission.Id);
-
-            var compileResult =
-                await dockerRunner.CompileAsync(
-                    workspace,
-                    cancellationToken);
-
-            if (compileResult.ExitCode != 0)
+            if (language.RequiresCompilation)
             {
-                return new JudgeResult(
-                    JudgeVerdict.CompilationError,
-                    compileResult.ExecutionTimeMs,
-                    CompilerOutput:
-                        compileResult.StandardError);
+                logger.LogInformation(
+                    "Compiling submission {SubmissionId} using {Language}",
+                    submission.Id,
+                    submission.Language);
+
+                var compileResult =
+                    await dockerRunner.CompileAsync(
+                        language,
+                        workspace,
+                        cancellationToken);
+
+                if (compileResult.ExitCode != 0)
+                {
+                    return new JudgeResult(
+                        JudgeVerdict.CompilationError,
+                        compileResult.ExecutionTimeMs,
+                        CompilerOutput:
+                            compileResult.StandardError);
+                }
             }
 
-            logger.LogInformation(
-                "Compilation successful for submission {SubmissionId}",
-                submission.Id);
+            long totalExecutionTime = 0;
 
             foreach (var testCase in submission.TestCases
                          .OrderBy(x => x.OrderIndex))
@@ -73,49 +66,54 @@ public sealed class JudgeService(
                 cancellationToken.ThrowIfCancellationRequested();
 
                 logger.LogInformation(
-                    "Running submission {SubmissionId}, test {Test}",
+                    "Running submission {SubmissionId}, language {Language}, test {Test}",
                     submission.Id,
+                    submission.Language,
                     testCase.OrderIndex);
 
-                var executionResult =
+                var result =
                     await dockerRunner.ExecuteAsync(
+                        language,
                         workspace,
                         testCase.Input,
                         submission.TimeLimitMs,
                         submission.MemoryLimitMb,
                         cancellationToken);
 
-                if (executionResult.TimedOut)
+                totalExecutionTime +=
+                    result.ExecutionTimeMs;
+
+                if (result.TimedOut)
                 {
                     return new JudgeResult(
                         JudgeVerdict.TimeLimitExceeded,
-                        executionResult.ExecutionTimeMs);
+                        result.ExecutionTimeMs);
                 }
 
-                if (executionResult.ExitCode != 0)
+                if (result.ExitCode != 0)
                 {
                     return new JudgeResult(
                         JudgeVerdict.RuntimeError,
-                        executionResult.ExecutionTimeMs,
+                        result.ExecutionTimeMs,
                         RuntimeError:
-                            executionResult.StandardError);
+                            result.StandardError);
                 }
 
                 if (!OutputsEqual(
-                        executionResult.StandardOutput,
+                        result.StandardOutput,
                         testCase.ExpectedOutput))
                 {
                     return new JudgeResult(
                         JudgeVerdict.WrongAnswer,
-                        executionResult.ExecutionTimeMs,
+                        result.ExecutionTimeMs,
                         RuntimeOutput:
-                            executionResult.StandardOutput);
+                            result.StandardOutput);
                 }
             }
 
             return new JudgeResult(
                 JudgeVerdict.Accepted,
-                0);
+                totalExecutionTime);
         }
         catch (OperationCanceledException)
             when (cancellationToken.IsCancellationRequested)
@@ -126,7 +124,7 @@ public sealed class JudgeService(
         {
             logger.LogError(
                 ex,
-                "Unexpected error while judging submission {SubmissionId}",
+                "Judge failed for submission {SubmissionId}",
                 submission.Id);
 
             return new JudgeResult(
@@ -149,9 +147,54 @@ public sealed class JudgeService(
             {
                 logger.LogWarning(
                     ex,
-                    "Failed to clean workspace {Workspace}",
+                    "Could not delete workspace {Workspace}",
                     workspace);
             }
+        }
+    }
+
+    private static async Task PrepareWorkspaceAsync(
+        SubmissionToJudge submission,
+        LanguageDefinition language,
+        string workspace,
+        CancellationToken cancellationToken)
+    {
+        var sourcePath =
+            Path.Combine(
+                workspace,
+                language.SourceFileName);
+
+        await File.WriteAllTextAsync(
+            sourcePath,
+            submission.SourceCode,
+            cancellationToken);
+
+        if (submission.Language ==
+            ProgrammingLanguage.CSharp)
+        {
+            var projectPath =
+                Path.Combine(
+                    workspace,
+                    "Judge.csproj");
+
+            const string project =
+                """
+                <Project Sdk="Microsoft.NET.Sdk">
+
+                  <PropertyGroup>
+                    <OutputType>Exe</OutputType>
+                    <TargetFramework>net10.0</TargetFramework>
+                    <ImplicitUsings>enable</ImplicitUsings>
+                    <Nullable>enable</Nullable>
+                  </PropertyGroup>
+
+                </Project>
+                """;
+
+            await File.WriteAllTextAsync(
+                projectPath,
+                project,
+                cancellationToken);
         }
     }
 
@@ -159,7 +202,8 @@ public sealed class JudgeService(
         string actual,
         string expected)
     {
-        static string Normalize(string value)
+        static string Normalize(
+            string value)
         {
             return value
                 .Replace("\r\n", "\n")

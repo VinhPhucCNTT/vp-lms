@@ -1,5 +1,5 @@
 import * as React from "react";
-import { SearchIcon, DownloadIcon, TrendingUpIcon, TrendingDownIcon } from "lucide-react";
+import { SearchIcon, DownloadIcon, TrendingUpIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,19 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/shared/components/page-header";
-import { courses } from "@/shared/data/courses";
-import { students } from "@/shared/data/users";
+import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
+import { useApi } from "@/lib/use-api";
+import { instructorApi, type GradebookStudentDto } from "@/features/courses/instructor-api";
+import { courseApi } from "@/features/courses/course-api";
+import type { Course } from "@/types";
 import { cn } from "@/lib/utils";
-
-interface StudentGrade {
-  studentId: string;
-  studentName: string;
-  email: string;
-  assignments: { title: string; score: number; maxScore: number }[];
-  assessments: { title: string; score: number; maxScore: number }[];
-  finalGrade: string;
-  percentage: number;
-}
 
 const gradeColors: Record<string, string> = {
   A: "text-success",
@@ -33,28 +26,25 @@ const gradeColors: Record<string, string> = {
 };
 
 export function InstructorGradebook() {
+  const { data: courses } = useApi<Course[]>(() => courseApi.getInstructorCourses());
   const [search, setSearch] = React.useState("");
-  const [selectedCourse, setSelectedCourse] = React.useState("CS 101");
+  const [selectedCourseId, setSelectedCourseId] = React.useState<string>("");
   const [sortBy, setSortBy] = React.useState<string>("name");
 
-  const studentGrades: StudentGrade[] = students.slice(0, 6).map((student, index) => ({
-    studentId: student.studentId,
-    studentName: `${student.firstName} ${student.lastName}`,
-    email: student.email,
-    assignments: [
-      { title: "A1: Algorithm Analysis", score: Math.floor(Math.random() * 20) + 80, maxScore: 100 },
-      { title: "A2: Sorting Implementation", score: Math.floor(Math.random() * 25) + 75, maxScore: 100 },
-      { title: "A3: Binary Trees", score: Math.floor(Math.random() * 30) + 70, maxScore: 100 },
-    ],
-    assessments: [
-      { title: "Quiz 1", score: Math.floor(Math.random() * 15) + 85, maxScore: 100 },
-      { title: "Midterm", score: Math.floor(Math.random() * 20) + 70, maxScore: 100 },
-    ],
-    finalGrade: ["A", "A-", "B+", "B", "B-", "C+"][index],
-    percentage: Math.floor(Math.random() * 15) + 75,
-  }));
+  React.useEffect(() => {
+    if (courses && courses.length > 0 && !selectedCourseId) {
+      setSelectedCourseId(courses[0].id);
+    }
+  }, [courses, selectedCourseId]);
 
-  const filteredGrades = studentGrades
+  const { data: studentGrades, loading, error, reload } = useApi<GradebookStudentDto[]>(
+    () => selectedCourseId ? instructorApi.getGradebook(selectedCourseId) : Promise.resolve([]),
+    [selectedCourseId],
+  );
+
+  const grades = studentGrades ?? [];
+
+  const filteredGrades = grades
     .filter((g) => g.studentName.toLowerCase().includes(search.toLowerCase()) || g.studentId.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       if (sortBy === "name") return a.studentName.localeCompare(b.studentName);
@@ -62,8 +52,11 @@ export function InstructorGradebook() {
       return 0;
     });
 
-  const classAverage = Math.round(studentGrades.reduce((sum, g) => sum + g.percentage, 0) / studentGrades.length);
-  const passingRate = Math.round((studentGrades.filter((g) => g.percentage >= 60).length / studentGrades.length) * 100);
+  const classAverage = grades.length > 0 ? Math.round(grades.reduce((sum, g) => sum + g.percentage, 0) / grades.length) : 0;
+  const passingRate = grades.length > 0 ? Math.round((grades.filter((g) => g.percentage >= 60).length / grades.length) * 100) : 0;
+
+  if (loading && !grades.length) return <LoadingState label="Loading gradebook..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
 
   return (
     <div className="space-y-6">
@@ -74,7 +67,7 @@ export function InstructorGradebook() {
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Class Average</CardTitle></CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{classAverage}%</p>
-            <div className="flex items-center gap-1 text-xs text-success mt-1"><TrendingUpIcon className="size-3" />+3% from last week</div>
+            <div className="flex items-center gap-1 text-xs text-success mt-1"><TrendingUpIcon className="size-3" />—</div>
           </CardContent>
         </Card>
         <Card>
@@ -83,11 +76,11 @@ export function InstructorGradebook() {
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">A/B Students</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{studentGrades.filter((g) => g.percentage >= 80).length}</p></CardContent>
+          <CardContent><p className="text-2xl font-bold">{grades.filter((g) => g.percentage >= 80).length}</p></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Needs Attention</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold text-warning">{studentGrades.filter((g) => g.percentage < 70).length}</p></CardContent>
+          <CardContent><p className="text-2xl font-bold text-warning">{grades.filter((g) => g.percentage < 70).length}</p></CardContent>
         </Card>
       </div>
 
@@ -96,12 +89,10 @@ export function InstructorGradebook() {
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input placeholder="Search students..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+        <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
+          <SelectTrigger className="w-48"><SelectValue placeholder="Select course" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="CS 101">CS 101 - Intro to Algorithms</SelectItem>
-            <SelectItem value="CS 201">CS 201 - Operating Systems</SelectItem>
-            <SelectItem value="CS 301">CS 301 - Database Systems</SelectItem>
+            {(courses ?? []).map((c) => (<SelectItem key={c.id} value={c.id}>{c.code} - {c.title}</SelectItem>))}
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={setSortBy}>
@@ -120,54 +111,51 @@ export function InstructorGradebook() {
         </TabsList>
 
         <TabsContent value="table" className="mt-6">
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead>A1</TableHead>
-                  <TableHead>A2</TableHead>
-                  <TableHead>A3</TableHead>
-                  <TableHead>Quiz 1</TableHead>
-                  <TableHead>Midterm</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Grade</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredGrades.map((student) => (
-                  <TableRow key={student.studentId}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar size="sm"><AvatarFallback>{student.studentName.split(" ").map((n) => n[0]).join("")}</AvatarFallback></Avatar>
-                        <div>
-                          <p className="font-medium">{student.studentName}</p>
-                          <p className="text-xs text-muted-foreground">{student.studentId}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    {student.assignments.map((a, i) => (
-                      <TableCell key={i}>
-                        <span className={cn(a.score < 70 && "text-destructive", a.score >= 90 && "text-success")}>{a.score}%</span>
-                      </TableCell>
-                    ))}
-                    {student.assessments.map((a, i) => (
-                      <TableCell key={i}>
-                        <span className={cn(a.score < 70 && "text-destructive", a.score >= 90 && "text-success")}>{a.score}%</span>
-                      </TableCell>
-                    ))}
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold">{student.percentage}%</span>
-                        <Progress value={student.percentage} className="w-16" />
-                      </div>
-                    </TableCell>
-                    <TableCell><Badge className={cn(gradeColors[student.finalGrade[0]] + " font-bold")}>{student.finalGrade}</Badge></TableCell>
+          {filteredGrades.length === 0 ? (
+            <EmptyState message="No grade data available for this course." />
+          ) : (
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Student</TableHead>
+                    {grades[0]?.assignments.map((a, i) => (<TableHead key={i}>{a.title}</TableHead>))}
+                    {grades[0]?.assessments.map((a, i) => (<TableHead key={i}>{a.title}</TableHead>))}
+                    <TableHead>Total</TableHead>
+                    <TableHead>Grade</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+                </TableHeader>
+                <TableBody>
+                  {filteredGrades.map((student) => (
+                    <TableRow key={student.studentId}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar size="sm"><AvatarFallback>{student.studentName.split(" ").map((n) => n[0]).join("")}</AvatarFallback></Avatar>
+                          <div>
+                            <p className="font-medium">{student.studentName}</p>
+                            <p className="text-xs text-muted-foreground">{student.studentId}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      {student.assignments.map((a, i) => (
+                        <TableCell key={i}><span className={cn(a.score < 70 && "text-destructive", a.score >= 90 && "text-success")}>{a.score}%</span></TableCell>
+                      ))}
+                      {student.assessments.map((a, i) => (
+                        <TableCell key={i}><span className={cn(a.score < 70 && "text-destructive", a.score >= 90 && "text-success")}>{a.score}%</span></TableCell>
+                      ))}
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold">{student.percentage}%</span>
+                          <Progress value={student.percentage} className="w-16" />
+                        </div>
+                      </TableCell>
+                      <TableCell><Badge className={cn((gradeColors[student.finalGrade[0]] ?? "") + " font-bold")}>{student.finalGrade}</Badge></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="overview" className="mt-6">
@@ -179,15 +167,15 @@ export function InstructorGradebook() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {["A", "B", "C", "D", "F"].map((grade) => {
-                  const count = studentGrades.filter((g) => g.finalGrade[0] === grade).length;
-                  const percentage = (count / studentGrades.length) * 100;
+                  const count = grades.filter((g) => g.finalGrade[0] === grade).length;
+                  const pct = grades.length > 0 ? (count / grades.length) * 100 : 0;
                   return (
                     <div key={grade} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-medium">{grade}s</span>
-                        <span className="text-muted-foreground">{count} students ({percentage.toFixed(0)}%)</span>
+                        <span className="text-muted-foreground">{count} students ({pct.toFixed(0)}%)</span>
                       </div>
-                      <Progress value={percentage} className="h-2" />
+                      <Progress value={pct} className="h-2" />
                     </div>
                   );
                 })}
@@ -200,11 +188,11 @@ export function InstructorGradebook() {
                 <CardDescription>Students below 70% average</CardDescription>
               </CardHeader>
               <CardContent>
-                {studentGrades.filter((g) => g.percentage < 70).length === 0 ? (
+                {grades.filter((g) => g.percentage < 70).length === 0 ? (
                   <p className="text-sm text-muted-foreground">All students are performing well!</p>
                 ) : (
                   <div className="space-y-3">
-                    {studentGrades.filter((g) => g.percentage < 70).map((student) => (
+                    {grades.filter((g) => g.percentage < 70).map((student) => (
                       <div key={student.studentId} className="flex items-center justify-between p-3 rounded-lg bg-muted">
                         <div className="flex items-center gap-3">
                           <Avatar size="sm"><AvatarFallback>{student.studentName.split(" ").map((n) => n[0]).join("")}</AvatarFallback></Avatar>

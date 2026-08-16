@@ -17,42 +17,31 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/shared/components/page-header";
-import { assessments, courses } from "@/shared/data/courses";
-import { getAttemptsByAssessment, getQuestionsByAssessment } from "@/shared/data/question-bank";
-import { useAuth } from "@/features/auth/auth-context";
-import { instructors } from "@/shared/data/users";
-import { cn } from "@/lib/utils";
+import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
+import { useApi } from "@/lib/use-api";
+import { assessmentApi, type InstructorAssessmentSummaryDto } from "@/features/assessments/assessment-api";
 
 export function InstructorAssessments() {
-  const { user } = useAuth();
-  const currentInstructor = instructors.find((i) => i.id === user?.id) ?? instructors[0];
-  const instructorCourses = courses.filter((c) => c.instructorId === currentInstructor.id);
+  const { data: summaries, loading, error, reload } = useApi<InstructorAssessmentSummaryDto[]>(
+    () => assessmentApi.getInstructorAssessmentSummaries()
+  );
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
 
-  const enrichedAssessments = assessments.map((a) => {
-    const questions = getQuestionsByAssessment(a.id);
-    const attempts = getAttemptsByAssessment(a.id);
-    const needsGrading = attempts.filter((at) => at.status === "submitted").length;
-    const totalPoints = a.totalPoints ?? questions.reduce((s, q) => s + q.points, 0);
-    return {
-      ...a,
-      questionCount: questions.length,
-      totalPoints,
-      attemptCount: attempts.length,
-      needsGrading,
-    };
-  });
+  const enriched = summaries ?? [];
 
-  const filtered = enrichedAssessments.filter((a) => {
-    const matchesSearch = a.title.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || a.status === statusFilter;
+  const filtered = enriched.filter((s) => {
+    const matchesSearch = s.assessment.title.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "all" || s.assessment.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const totalQuestions = enrichedAssessments.reduce((s, a) => s + a.questionCount, 0);
-  const totalNeedsGrading = enrichedAssessments.reduce((s, a) => s + a.needsGrading, 0);
-  const totalAttempts = enrichedAssessments.reduce((s, a) => s + a.attemptCount, 0);
+  const totalQuestions = enriched.reduce((s, a) => s + a.questionCount, 0);
+  const totalNeedsGrading = enriched.reduce((s, a) => s + a.needsGrading, 0);
+  const totalAttempts = enriched.reduce((s, a) => s + a.attemptCount, 0);
+
+  if (loading) return <LoadingState label="Loading assessments..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
 
   return (
     <div className="space-y-6">
@@ -71,35 +60,19 @@ export function InstructorAssessments() {
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <ClipboardListIcon className="size-4" />Assessments
-            </CardTitle>
-          </CardHeader>
-          <CardContent><p className="text-2xl font-bold">{enrichedAssessments.length}</p></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium flex items-center gap-2"><ClipboardListIcon className="size-4" />Assessments</CardTitle></CardHeader>
+          <CardContent><p className="text-2xl font-bold">{enriched.length}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrophyIcon className="size-4" />Total Questions
-            </CardTitle>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium flex items-center gap-2"><TrophyIcon className="size-4" />Total Questions</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold">{totalQuestions}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <UsersIcon className="size-4" />Total Attempts
-            </CardTitle>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium flex items-center gap-2"><UsersIcon className="size-4" />Total Attempts</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold">{totalAttempts}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertCircleIcon className="size-4 text-warning" />Needs Grading
-            </CardTitle>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium flex items-center gap-2"><AlertCircleIcon className="size-4 text-warning" />Needs Grading</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold">{totalNeedsGrading}</p></CardContent>
         </Card>
       </div>
@@ -119,62 +92,64 @@ export function InstructorAssessments() {
         </Select>
       </div>
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Questions</TableHead>
-              <TableHead>Points</TableHead>
-              <TableHead>Duration</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Attempts</TableHead>
-              <TableHead>Needs Grading</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((a) => (
-              <TableRow key={a.id}>
-                <TableCell className="font-medium">
-                  <Link to={`/instructor/assessments/${a.id}`} className="hover:underline">
-                    {a.title}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={a.status === "published" ? "success" : "secondary"}>
-                    {a.status ?? "draft"}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{a.questionCount}</TableCell>
-                <TableCell className="text-muted-foreground">{a.totalPoints}</TableCell>
-                <TableCell className="text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <ClockIcon className="size-3" />{a.duration} min
-                  </span>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{a.dueDate}</TableCell>
-                <TableCell className="text-muted-foreground">{a.attemptCount}</TableCell>
-                <TableCell>
-                  {a.needsGrading > 0 ? (
-                    <Badge variant="warning">{a.needsGrading}</Badge>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link to={`/instructor/assessments/${a.id}`}>
-                      <EyeIcon className="size-3.5 mr-1" />Manage
-                    </Link>
-                  </Button>
-                </TableCell>
+      {filtered.length === 0 ? (
+        <EmptyState message="No assessments found." />
+      ) : (
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Questions</TableHead>
+                <TableHead>Points</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Due Date</TableHead>
+                <TableHead>Attempts</TableHead>
+                <TableHead>Needs Grading</TableHead>
+                <TableHead></TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((s) => (
+                <TableRow key={s.assessment.id}>
+                  <TableCell className="font-medium">
+                    <Link to={`/instructor/assessments/${s.assessment.id}`} className="hover:underline">
+                      {s.assessment.title}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={s.assessment.status === "published" ? "success" : "secondary"}>
+                      {s.assessment.status ?? "draft"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{s.questionCount}</TableCell>
+                  <TableCell className="text-muted-foreground">{s.totalPoints}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <span className="flex items-center gap-1"><ClockIcon className="size-3" />{s.assessment.duration} min</span>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{s.assessment.dueDate}</TableCell>
+                  <TableCell className="text-muted-foreground">{s.attemptCount}</TableCell>
+                  <TableCell>
+                    {s.needsGrading > 0 ? (
+                      <Badge variant="warning">{s.needsGrading}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to={`/instructor/assessments/${s.assessment.id}`}>
+                        <EyeIcon className="size-3.5 mr-1" />Manage
+                      </Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
     </div>
   );
 }

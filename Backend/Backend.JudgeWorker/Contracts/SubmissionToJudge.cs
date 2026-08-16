@@ -3,8 +3,7 @@ namespace Backend.JudgeWorker.Contracts;
 public sealed record SubmissionToJudge(
     long Id,
     string SourceCode,
-    string Language,
-    string SourceFileName,
+    ProgrammingLanguage Language,
     int TimeLimitMs,
     int MemoryLimitMb,
     IReadOnlyList<JudgeTestCase> TestCases

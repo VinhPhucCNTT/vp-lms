@@ -33,6 +33,7 @@ public sealed class AssessmentAttemptService(
         var assessment = await db.Assessments
             .AsNoTracking()
             .Include(x => x.Resource)
+                .ThenInclude(x => x.Module)
             .FirstOrDefaultAsync(x => x.Id == assessmentId, ct);
 
         if (assessment is null)
@@ -45,6 +46,27 @@ public sealed class AssessmentAttemptService(
                 new Error(
                     "assessment.unavailable",
                     "The assessment is not available."));
+        }
+
+        var enrolled = await db.Enrollments
+            .AnyAsync(
+                x => x.CourseId == assessment.Resource.Module.CourseId &&
+                     x.UserId == studentId,
+                ct);
+        if (!enrolled)
+        {
+            return Result<AssessmentAttempt>.Failure(
+                new Error(
+                    "assessment.not_enrolled",
+                    "The student is not enrolled in this course."));
+        }
+
+        if (!string.IsNullOrWhiteSpace(assessment.AccessPassword))
+        {
+            return Result<AssessmentAttempt>.Failure(
+                new Error(
+                    "assessment.password_required",
+                    "This assessment requires a password and is not available through the current start flow."));
         }
 
         var now = DateTime.UtcNow;
@@ -78,6 +100,19 @@ public sealed class AssessmentAttemptService(
         //             "assessment.not_enrolled",
         //             "The student is not enrolled in this course."));
 
+        var existingAttempt = await db.AssessmentAttempts
+            .FirstOrDefaultAsync(
+                x => x.AssessmentId == assessmentId &&
+                     x.StudentId == studentId &&
+                     x.Status == AssessmentAttemptStatus.InProgress,
+                ct);
+
+        if (existingAttempt is not null)
+        {
+            return Result<AssessmentAttempt>.Success(
+                existingAttempt);
+        }
+
         var attemptCount = await db.AssessmentAttempts
             .CountAsync(
                 x => x.AssessmentId == assessmentId &&
@@ -92,18 +127,14 @@ public sealed class AssessmentAttemptService(
                     "The maximum number of attempts has been reached."));
         }
 
-        var existingAttempt = await db.AssessmentAttempts
-            .FirstOrDefaultAsync(
-                x => x.AssessmentId == assessmentId &&
-                     x.StudentId == studentId &&
-                     x.Status == AssessmentAttemptStatus.InProgress,
+        var selected = await questionSelection
+            .SelectForAttemptAsync(
+                assessmentId,
                 ct);
 
-        if (existingAttempt is not null)
-        {
-            return Result<AssessmentAttempt>.Success(
-                existingAttempt);
-        }
+        if (!selected.IsSuccess)
+            return Result<AssessmentAttempt>.Failure(
+                selected.Errors.ToArray());
 
         var attempt = new AssessmentAttempt
         {
@@ -115,17 +146,6 @@ public sealed class AssessmentAttemptService(
         };
 
         db.AssessmentAttempts.Add(attempt);
-
-        await db.SaveChangesAsync(ct);
-
-        var selected = await questionSelection
-            .SelectForAttemptAsync(
-                assessmentId,
-                ct);
-
-        if (!selected.IsSuccess)
-            return Result<AssessmentAttempt>.Failure(
-                selected.Errors.ToArray());
 
         foreach (var selectedQuestion in selected.Value!)
         {
@@ -153,6 +173,8 @@ public sealed class AssessmentAttemptService(
         var attempt = await db.AssessmentAttempts
             .AsNoTracking()
             .Include(x => x.Questions)
+                .ThenInclude(x => x.AssessmentQuestion)
+            .Include(x => x.Questions)
                 .ThenInclude(x => x.Answer)
             .FirstOrDefaultAsync(
                 x => x.Id == attemptId &&
@@ -168,6 +190,7 @@ public sealed class AssessmentAttemptService(
     }
 
     public async Task<Result> SaveAnswerAsync(
+        long assessmentId,
         long attemptId,
         long attemptQuestionId,
         JsonDocument answer,
@@ -182,6 +205,7 @@ public sealed class AssessmentAttemptService(
             .FirstOrDefaultAsync(
                 x => x.Id == attemptQuestionId &&
                      x.AttemptId == attemptId &&
+                     x.Attempt.AssessmentId == assessmentId &&
                      x.Attempt.StudentId == studentId,
                 ct);
 
@@ -258,6 +282,7 @@ public sealed class AssessmentAttemptService(
     }
 
     public async Task<Result> SubmitAsync(
+        long assessmentId,
         long attemptId,
         CancellationToken ct = default)
     {
@@ -267,6 +292,7 @@ public sealed class AssessmentAttemptService(
         var attempt = await db.AssessmentAttempts
             .FirstOrDefaultAsync(
                 x => x.Id == attemptId &&
+                     x.AssessmentId == assessmentId &&
                      x.StudentId == studentId,
                 ct);
 
@@ -295,19 +321,19 @@ public sealed class AssessmentAttemptService(
             DateTime.UtcNow >=
             attempt.StartedAt.AddMinutes(deadline);
 
-        attempt.SubmittedAt = DateTime.UtcNow;
-        attempt.Status = expired
-            ? AssessmentAttemptStatus.Expired
-            : AssessmentAttemptStatus.Submitted;
-
-        await db.SaveChangesAsync(ct);
-
         var gradeResult = await grading.GradeAsync(
             attemptId,
             ct);
 
         if (!gradeResult.IsSuccess)
             return Result.Failure(gradeResult.Errors.ToArray());
+
+        attempt.SubmittedAt = DateTime.UtcNow;
+        attempt.Status = expired
+            ? AssessmentAttemptStatus.Expired
+            : AssessmentAttemptStatus.Submitted;
+
+        await db.SaveChangesAsync(ct);
 
         return Result.Success();
     }

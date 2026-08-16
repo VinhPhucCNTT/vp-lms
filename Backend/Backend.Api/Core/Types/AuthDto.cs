@@ -4,8 +4,7 @@ namespace Backend.Api.Core.Types;
 
 public record LoginRequest(
     string Email,
-    string Password,
-    UserRoles Role
+    string Password
 );
 
 public record LoginResponse(

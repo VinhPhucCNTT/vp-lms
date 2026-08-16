@@ -1,5 +1,5 @@
 import * as React from "react";
-import { SearchIcon, ClockIcon, CheckCircleIcon, FilterIcon } from "lucide-react";
+import { SearchIcon, ClockIcon, CheckCircleIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,19 +11,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/shared/components/page-header";
-import { assignments, courses } from "@/shared/data/courses";
-import { students } from "@/shared/data/users";
-import { submissions } from "@/shared/data/problems";
+import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
+import { useApi } from "@/lib/use-api";
+import { instructorApi, type SubmissionDetailDto } from "@/features/courses/instructor-api";
 import { cn } from "@/lib/utils";
-import type { Submission, SubmissionVerdict } from "@/types";
+import type { SubmissionVerdict } from "@/types";
 
-interface SubmissionWithDetails extends Submission {
-  student: { id: string; name: string; email: string };
-  course: { code: string; title: string };
-  assignmentTitle: string;
-}
-
-const verdictColors: Record<SubmissionVerdict, string> = {
+const verdictColors: Record<string, string> = {
   accepted: "bg-success/20 text-success",
   "wrong-answer": "bg-destructive/20 text-destructive",
   "time-limit-exceeded": "bg-warning/20 text-warning-foreground",
@@ -31,90 +25,47 @@ const verdictColors: Record<SubmissionVerdict, string> = {
   "runtime-error": "bg-destructive/20 text-destructive",
   "compilation-error": "bg-destructive/20 text-destructive",
   pending: "bg-muted text-muted-foreground",
+  graded: "bg-success/20 text-success",
 };
 
 export function InstructorSubmissions() {
+  const { data: allSubmissions, loading, error, reload } = useApi<SubmissionDetailDto[]>(() => instructorApi.getAllSubmissions());
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
-  const [selectedSubmission, setSelectedSubmission] = React.useState<SubmissionWithDetails | null>(null);
+  const [selectedSubmission, setSelectedSubmission] = React.useState<SubmissionDetailDto | null>(null);
   const [grade, setGrade] = React.useState("");
   const [feedback, setFeedback] = React.useState("");
+  const [submitting, setSubmitting] = React.useState(false);
 
-  const allSubmissions: SubmissionWithDetails[] = [
-    ...submissions.map((s) => ({
-      ...s,
-      student: { id: "stu-001", name: "Alex Chen", email: "alex.chen@university.edu" },
-      course: { code: "CS 101", title: "Introduction to Algorithms" },
-      assignmentTitle: "Algorithm Analysis Practice",
-    })),
-    {
-      id: "sub-006",
-      userId: "stu-002",
-      assignmentId: "asg-002",
-      type: "file",
-      content: "Submitted file: sorting_implementation.pdf",
-      verdict: "pending",
-      submittedAt: "2026-01-15T10:30:00",
-      student: { id: "stu-002", name: "Sarah Johnson", email: "sarah.johnson@university.edu" },
-      course: { code: "CS 201", title: "Operating Systems" },
-      assignmentTitle: "Implement Sorting Algorithms",
-    },
-    {
-      id: "sub-007",
-      userId: "stu-003",
-      assignmentId: "asg-001",
-      type: "text",
-      content: "The time complexity of QuickSort is O(n log n) in the average case and O(n^2) in the worst case...",
-      verdict: "pending",
-      submittedAt: "2026-01-14T15:45:00",
-      student: { id: "stu-003", name: "Michael Brown", email: "michael.brown@university.edu" },
-      course: { code: "CS 101", title: "Introduction to Algorithms" },
-      assignmentTitle: "Algorithm Analysis Practice",
-    },
-    {
-      id: "sub-008",
-      userId: "stu-004",
-      assignmentId: "asg-002",
-      type: "code",
-      content: "def merge_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    mid = len(arr) // 2\n    return merge(merge_sort(arr[:mid]), merge_sort(arr[mid:]))",
-      language: "python",
-      verdict: "pending",
-      submittedAt: "2026-01-13T09:00:00",
-      student: { id: "stu-004", name: "Emma Davis", email: "emma.davis@university.edu" },
-      course: { code: "CS 201", title: "Operating Systems" },
-      assignmentTitle: "Implement Sorting Algorithms",
-    },
-    {
-      id: "sub-009",
-      userId: "stu-005",
-      assignmentId: "asg-001",
-      type: "file",
-      content: "Submitted files: analysis.pdf, code.zip",
-      verdict: "pending",
-      submittedAt: "2026-01-12T14:20:00",
-      student: { id: "stu-005", name: "James Wilson", email: "james.wilson@university.edu" },
-      course: { code: "CS 101", title: "Introduction to Algorithms" },
-      assignmentTitle: "Algorithm Analysis Practice",
-    },
-  ];
+  const submissions = allSubmissions ?? [];
 
-  const filteredSubmissions = allSubmissions.filter((s) => {
+  const filteredSubmissions = submissions.filter((s) => {
     const matchesSearch = s.student.name.toLowerCase().includes(search.toLowerCase()) || s.assignmentTitle.toLowerCase().includes(search.toLowerCase()) || s.course.code.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || s.verdict === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const pendingCount = allSubmissions.filter((s) => s.verdict === "pending").length;
-  const gradedThisWeek = allSubmissions.filter((s) => s.verdict !== "pending").length;
+  const pendingCount = submissions.filter((s) => s.verdict === "pending").length;
+  const gradedThisWeek = submissions.filter((s) => s.verdict !== "pending").length;
 
-  const handleGrade = () => {
-    if (selectedSubmission) {
-      console.log("Grading submission:", selectedSubmission.id, "Grade:", grade, "Feedback:", feedback);
+  const handleGrade = async () => {
+    if (!selectedSubmission) return;
+    setSubmitting(true);
+    try {
+      await instructorApi.gradeSubmission(selectedSubmission.id, Number(grade), feedback);
       setSelectedSubmission(null);
       setGrade("");
       setFeedback("");
+      reload();
+    } catch (err: unknown) {
+      console.error("Failed to grade submission:", err);
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  if (loading) return <LoadingState label="Loading submissions..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
 
   return (
     <div className="space-y-6">
@@ -131,7 +82,7 @@ export function InstructorSubmissions() {
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Average Grading Time</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">2.3 days</p></CardContent>
+          <CardContent><p className="text-2xl font-bold">—</p></CardContent>
         </Card>
       </div>
 
@@ -149,36 +100,40 @@ export function InstructorSubmissions() {
         </Tabs>
       </div>
 
-      <div className="space-y-3">
-        {filteredSubmissions.map((submission) => (
-          <Card key={submission.id} className={cn(submission.verdict === "pending" && "border-warning/50")}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4">
-                  <Avatar><AvatarFallback>{submission.student.name.split(" ").map((n) => n[0]).join("")}</AvatarFallback></Avatar>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{submission.student.name}</p>
-                      <Badge variant="outline" className="text-xs">{submission.course.code}</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{submission.assignmentTitle}</p>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span>{submission.type}</span>
-                      <span className="capitalize">{submission.language || "text"}</span>
-                      <span>{submission.submittedAt}</span>
+      {filteredSubmissions.length === 0 ? (
+        <EmptyState message="No submissions found." />
+      ) : (
+        <div className="space-y-3">
+          {filteredSubmissions.map((submission) => (
+            <Card key={submission.id} className={cn(submission.verdict === "pending" && "border-warning/50")}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-4">
+                    <Avatar><AvatarFallback>{submission.student.name.split(" ").map((n) => n[0]).join("")}</AvatarFallback></Avatar>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{submission.student.name}</p>
+                        <Badge variant="outline" className="text-xs">{submission.course.code}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{submission.assignmentTitle}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{submission.type}</span>
+                        <span className="capitalize">{submission.language || "text"}</span>
+                        <span>{submission.submittedAt}</span>
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-3">
+                    <Badge className={cn(verdictColors[submission.verdict] ?? verdictColors.pending)}>{submission.verdict}</Badge>
+                    {submission.verdict === "pending" && <Button size="sm" onClick={() => setSelectedSubmission(submission)}>Grade</Button>}
+                    {submission.verdict !== "pending" && <Button size="sm" variant="outline" onClick={() => setSelectedSubmission(submission)}>View</Button>}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Badge className={cn(verdictColors[submission.verdict])}>{submission.verdict}</Badge>
-                  {submission.verdict === "pending" && <Button size="sm" onClick={() => setSelectedSubmission(submission)}>Grade</Button>}
-                  {submission.verdict !== "pending" && <Button size="sm" variant="outline" onClick={() => setSelectedSubmission(submission)}>View</Button>}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Dialog open={!!selectedSubmission} onOpenChange={(open) => !open && setSelectedSubmission(null)}>
         <DialogContent className="max-w-2xl">
@@ -205,7 +160,7 @@ export function InstructorSubmissions() {
                 )}
               </div>
             </div>
-            {selectedSubmission?.executionTime && (
+            {selectedSubmission?.executionTime != null && (
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><span className="text-muted-foreground">Execution Time: </span><span className="font-medium">{selectedSubmission.executionTime}ms</span></div>
                 <div><span className="text-muted-foreground">Memory Used: </span><span className="font-medium">{selectedSubmission.memoryUsed}MB</span></div>
@@ -225,7 +180,7 @@ export function InstructorSubmissions() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedSubmission(null)}>Cancel</Button>
-            <Button onClick={handleGrade}>Submit Grade</Button>
+            <Button onClick={handleGrade} disabled={submitting}>{submitting ? "Submitting..." : "Submit Grade"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

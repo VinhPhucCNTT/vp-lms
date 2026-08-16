@@ -79,7 +79,7 @@ public static class LessonEndpoints
         if (course is null || !await auth.IsCourseOwnerAsync(course))
             return TypedResults.NotFound();
 
-        var result = await lessonService.CreateLessonAsync(request);
+        var result = await lessonService.UpdateLessonAsync(decoded[0], request);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();

@@ -1,10 +1,11 @@
 FROM alpine:latest
 
-RUN apk add --no-cache g++ musl-dev
+RUN apk add --no-cache \
+    g++ \
+    musl-dev
 
 WORKDIR /workspace
 
-COPY run.sh /run.sh
-RUN chmod +x /run.sh
+RUN adduser -D -u 10001 judge
 
-ENTRYPOINT ["/run.sh"]
+USER judge

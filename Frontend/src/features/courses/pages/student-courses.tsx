@@ -4,19 +4,24 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/shared/components/page-header";
 import { CourseCard } from "@/shared/components/course-card";
-import { courses } from "@/shared/data/courses";
-import { students } from "@/shared/data/users";
-import { useAuth } from "@/features/auth/auth-context";
+import { useApi } from "@/lib/use-api";
+import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
+import { courseApi } from "@/features/courses/course-api";
+import type { Course } from "@/types";
 
 export function StudentCourses() {
-  const { user } = useAuth();
-  const currentUser = students.find((s) => s.id === user?.id) ?? students[0];
+  const { data: enrolledCourses, loading, error, reload } = useApi<Course[]>(() => courseApi.getEnrolledCourses());
   const [search, setSearch] = React.useState("");
 
-  const enrolledCourses = courses.filter((c) => currentUser.enrolledCourses.includes(c.id) && c.status === "published");
-  const filteredCourses = enrolledCourses.filter((course) =>
-    course.title.toLowerCase().includes(search.toLowerCase()) || course.code.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredCourses = React.useMemo(() => {
+    if (!enrolledCourses) return [];
+    return enrolledCourses.filter((course) =>
+      course.title.toLowerCase().includes(search.toLowerCase()) || course.code.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [enrolledCourses, search]);
+
+  if (loading) return <LoadingState label="Loading your courses..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
 
   return (
     <div className="space-y-6">
@@ -37,23 +42,31 @@ export function StudentCourses() {
         </TabsList>
 
         <TabsContent value="all" className="mt-6">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredCourses.map((course) => (
-              <CourseCard key={course.id} course={course} progress={Math.floor(Math.random() * 100)} showProgress />
-            ))}
-          </div>
+          {filteredCourses.length === 0 ? (
+            <EmptyState message="You are not enrolled in any courses yet." />
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredCourses.map((course) => (
+                <CourseCard key={course.id} course={course} progress={0} showProgress />
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="in-progress" className="mt-6">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredCourses.map((course) => (
-              <CourseCard key={course.id} course={course} progress={Math.floor(Math.random() * 80) + 10} showProgress />
-            ))}
-          </div>
+          {filteredCourses.length === 0 ? (
+            <EmptyState message="No courses in progress." />
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredCourses.map((course) => (
+                <CourseCard key={course.id} course={course} progress={0} showProgress />
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="completed" className="mt-6">
-          <div className="text-center py-12 text-muted-foreground">No completed courses yet.</div>
+          <EmptyState message="No completed courses yet." />
         </TabsContent>
       </Tabs>
     </div>

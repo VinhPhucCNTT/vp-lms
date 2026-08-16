@@ -9,7 +9,7 @@ using Backend.Api.Core.Types;
 namespace Backend.Api.Services.Assessments;
 
 public sealed record SelectedQuestion(
-    long? QuestionId,
+    long QuestionId,
     int OrderIndex,
     decimal Points);
 
@@ -39,7 +39,7 @@ public sealed class QuestionSelectionService(
             .Where(x => x.AssessmentId == assessmentId)
             .OrderBy(x => x.OrderIndex)
             .Select(x => new SelectedQuestion(
-                x.QuestionId,
+                x.Id,
                 x.OrderIndex,
                 x.Points))
             .ToListAsync(ct);

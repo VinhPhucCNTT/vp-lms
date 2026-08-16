@@ -13,7 +13,14 @@ public class ResourceProfile : Profile
             .MapSqidId();
 
         CreateMap<CourseResource, ResourceDetailResponse>()
-            .MapSqidId();
+            .ForCtorParam("Id", o => o.MapFrom(x => x.Id))
+            .ForCtorParam("Type", o => o.MapFrom(x => x.Type))
+            .ForCtorParam("Title", o => o.MapFrom(x => x.Title))
+            .ForCtorParam("OrderIndex", o => o.MapFrom(x => x.OrderIndex))
+            .ForCtorParam("AvailableFrom", o => o.MapFrom(_ => (DateTime?)null))
+            .ForCtorParam("AvailableUntil", o => o.MapFrom(_ => (DateTime?)null))
+            .ForCtorParam("CreatedAt", o => o.MapFrom(x => x.CreatedAt))
+            .ForCtorParam("UpdatedAt", o => o.MapFrom(x => x.UpdatedAt));
 
         CreateMap<Lesson, LessonInfo>();
         CreateMap<Assignment, AssignmentInfo>();

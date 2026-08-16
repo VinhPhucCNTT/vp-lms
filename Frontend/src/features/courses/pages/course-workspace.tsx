@@ -36,6 +36,10 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useApi } from "@/lib/use-api";
+import { LoadingState, ErrorState } from "@/shared/components/api-states";
+import { courseApi } from "@/features/courses/course-api";
+import type { CourseModuleDto, CourseResourceDto, LessonDto, ResourceProgressDto } from "@/features/courses/course-api";
 import {
   courses,
   modules,
@@ -886,7 +890,7 @@ function ActivityContentPage({
 
 type LearnView = "modules" | "activities" | "content";
 
-export function CourseWorkspace() {
+function MockCourseWorkspace() {
   const { courseId } = useParams<{ courseId: string }>();
   const course = courses.find((c) => c.id === courseId) ?? courses[0];
   const instructor = instructors.find((i) => i.id === course.instructorId);
@@ -1042,4 +1046,250 @@ export function CourseWorkspace() {
       </ScrollArea>
     </div>
   );
+}
+
+function resourceTypeLabel(type: CourseResourceDto["type"]): string {
+  if (typeof type === "string") return type;
+  return ["Lesson", "Assignment", "Assessment", "Problem"][type] ?? "Resource";
+}
+
+function resourceIcon(type: CourseResourceDto["type"], className?: string) {
+  const cls = cn("size-4 shrink-0", className);
+  switch (resourceTypeLabel(type).toLowerCase()) {
+    case "lesson": return <PlayCircleIcon className={cls} />;
+    case "assignment": return <FileTextIcon className={cls} />;
+    case "assessment": return <ClipboardCheckIcon className={cls} />;
+    case "problem": return <CodeIcon className={cls} />;
+    default: return <BookOpenIcon className={cls} />;
+  }
+}
+
+function RealCourseWorkspace() {
+  const { courseId } = useParams<{ courseId: string }>();
+  const { data, loading, error, reload } = useApi(
+    () => courseApi.getCourseDetail(courseId ?? ""),
+    [courseId],
+  );
+  const [selectedModuleId, setSelectedModuleId] = React.useState<string | null>(null);
+  const [selectedResourceId, setSelectedResourceId] = React.useState<string | null>(null);
+
+  const selectedModule = data?.modules.find((module) => module.id === selectedModuleId) ?? null;
+  const resourcesState = useApi<CourseResourceDto[]>(
+    () => selectedModuleId ? courseApi.getModuleResources(selectedModuleId) : Promise.resolve([]),
+    [selectedModuleId],
+  );
+  const selectedResource = resourcesState.data?.find((resource) => resource.id === selectedResourceId) ?? null;
+  const lessonState = useApi<LessonDto | null>(
+    () => selectedResourceId && resourceTypeLabel(selectedResource?.type ?? "Lesson").toLowerCase() === "lesson"
+      ? courseApi.getLesson(selectedResourceId)
+      : Promise.resolve(null),
+    [selectedResourceId, selectedResource?.type],
+  );
+  const progressState = useApi<ResourceProgressDto | null>(
+    () => selectedResourceId
+      ? courseApi.getResourceProgress(selectedResourceId)
+      : Promise.resolve(null),
+    [selectedResourceId],
+  );
+  const [completionOverride, setCompletionOverride] = React.useState<boolean | null>(null);
+  const [completing, setCompleting] = React.useState(false);
+  const [completionError, setCompletionError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setCompletionOverride(null);
+    setCompletionError(null);
+  }, [selectedResourceId]);
+
+  if (loading) return <LoadingState label="Loading course..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (!data) return <ErrorState message="Course details are unavailable." onRetry={reload} />;
+
+  const { course, modules } = data;
+  const sortedModules = [...modules].sort((a, b) => a.orderIndex - b.orderIndex);
+  const sortedResources = [...(resourcesState.data ?? [])].sort((a, b) => a.orderIndex - b.orderIndex);
+  const currentResourceIndex = sortedResources.findIndex((resource) => resource.id === selectedResourceId);
+  const previousResource = currentResourceIndex > 0 ? sortedResources[currentResourceIndex - 1] : null;
+  const nextResource = currentResourceIndex >= 0 && currentResourceIndex < sortedResources.length - 1
+    ? sortedResources[currentResourceIndex + 1]
+    : null;
+
+  const openModule = (module: CourseModuleDto) => {
+    setSelectedModuleId(module.id);
+    setSelectedResourceId(null);
+  };
+  const openResource = (resource: CourseResourceDto) => setSelectedResourceId(resource.id);
+  const backToModules = () => {
+    setSelectedModuleId(null);
+    setSelectedResourceId(null);
+  };
+  const backToResources = () => setSelectedResourceId(null);
+  const isCompleted = completionOverride ?? progressState.data?.isCompleted ?? false;
+
+  const markComplete = async () => {
+    if (!selectedResourceId || isCompleted) return;
+
+    setCompleting(true);
+    setCompletionError(null);
+    try {
+      await courseApi.completeResource(selectedResourceId);
+      setCompletionOverride(true);
+      progressState.reload();
+    } catch (err: unknown) {
+      setCompletionError(err instanceof Error ? err.message : "Unable to update resource progress.");
+    } finally {
+      setCompleting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <Link to="/student/courses" className="text-muted-foreground hover:text-foreground">
+          <ArrowLeftIcon className="size-4" />
+        </Link>
+        <div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">{course.code}</Badge>
+            <Badge variant="success">Published</Badge>
+          </div>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight">{course.title}</h1>
+          <p className="text-sm text-muted-foreground">{course.creatorFullname || course.creatorUsername}</p>
+        </div>
+      </div>
+
+      {course.description && (
+        <Card>
+          <CardHeader><CardTitle>About this course</CardTitle></CardHeader>
+          <CardContent><p className="text-sm text-muted-foreground">{course.description}</p></CardContent>
+        </Card>
+      )}
+
+      <div className="space-y-3">
+        <div>
+          {selectedModule && (
+            <Breadcrumb
+              items={[
+                { label: "Modules", onClick: selectedResource ? backToModules : undefined },
+                { label: selectedModule.title, onClick: selectedResource ? backToResources : undefined },
+                ...(selectedResource ? [{ label: selectedResource.title }] : []),
+              ]}
+            />
+          )}
+          {!selectedModule && <h2 className="text-lg font-semibold">Modules</h2>}
+          {!selectedModule && <p className="text-sm text-muted-foreground">Course content from the API.</p>}
+        </div>
+        {!selectedModule && sortedModules.length === 0 ? (
+          <Card><CardContent className="py-8 text-sm text-muted-foreground">No published modules are available yet.</CardContent></Card>
+        ) : !selectedModule ? (
+          <div className="space-y-2">
+            {sortedModules.map((module) => (
+              <button key={module.id} className="block w-full text-left" onClick={() => openModule(module)}>
+                <Card className="transition-all hover:border-primary/40 hover:shadow-sm">
+                  <CardContent className="flex items-center gap-3 py-4">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                    {module.orderIndex + 1}
+                  </div>
+                  <div>
+                    <h3 className="font-medium">{module.title}</h3>
+                    {module.description && <p className="text-sm text-muted-foreground">{module.description}</p>}
+                  </div>
+                  <ChevronRightIcon className="ml-auto size-5 text-muted-foreground" />
+                  </CardContent>
+                </Card>
+              </button>
+            ))}
+          </div>
+        ) : selectedResource ? (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="gap-1.5">
+                {resourceIcon(selectedResource.type, "size-3")}
+                {resourceTypeLabel(selectedResource.type)}
+              </Badge>
+              <h2 className="text-2xl font-bold tracking-tight">{selectedResource.title}</h2>
+            </div>
+            {resourceTypeLabel(selectedResource.type).toLowerCase() !== "lesson" ? (
+              <Card><CardContent className="py-8 text-sm text-muted-foreground">
+                This resource type is available in the course, but its learning screen is not part of this integration.
+              </CardContent></Card>
+            ) : lessonState.loading ? (
+              <LoadingState label="Loading lesson..." />
+            ) : lessonState.error ? (
+              <ErrorState message={lessonState.error} onRetry={lessonState.reload} />
+            ) : lessonState.data ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
+                    {lessonState.data.info.contentMarkdown}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card><CardContent className="py-8 text-sm text-muted-foreground">Lesson content is unavailable.</CardContent></Card>
+            )}
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="text-sm">
+                {progressState.loading ? (
+                  <span className="text-muted-foreground">Checking completion...</span>
+                ) : isCompleted ? (
+                  <span className="inline-flex items-center gap-1.5 text-success font-medium">
+                    <CheckCircle2Icon className="size-4" />
+                    Completed
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Not completed</span>
+                )}
+                {completionError && <p className="text-destructive mt-1">{completionError}</p>}
+              </div>
+              {!isCompleted && (
+                <Button onClick={markComplete} disabled={completing || progressState.loading} className="gap-2">
+                  <CheckCircle2Icon className="size-4" />
+                  {completing ? "Saving..." : "Mark as Complete"}
+                </Button>
+              )}
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between gap-2">
+              <Button variant="outline" disabled={!previousResource} onClick={() => previousResource && openResource(previousResource)} className="gap-2 min-w-0">
+                <ArrowLeftIcon className="size-4 shrink-0" />
+                <span className="truncate">{previousResource?.title ?? "Previous"}</span>
+              </Button>
+              <Button variant={nextResource ? "default" : "outline"} disabled={!nextResource} onClick={() => nextResource && openResource(nextResource)} className="gap-2 min-w-0">
+                <span className="truncate">{nextResource?.title ?? "Next"}</span>
+                <ArrowRightIcon className="size-4 shrink-0" />
+              </Button>
+            </div>
+          </div>
+        ) : resourcesState.loading ? (
+          <LoadingState label="Loading module resources..." />
+        ) : resourcesState.error ? (
+          <ErrorState message={resourcesState.error} onRetry={resourcesState.reload} />
+        ) : sortedResources.length === 0 ? (
+          <Card><CardContent className="py-8 text-sm text-muted-foreground">No published learning resources are available in this module yet.</CardContent></Card>
+        ) : (
+          <div className="space-y-2">
+            {sortedResources.map((resource, index) => (
+              <button key={resource.id} onClick={() => openResource(resource)} className="group w-full text-left flex items-center gap-4 rounded-lg border bg-card p-4 transition-all hover:border-primary/40 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                <div className="size-10 rounded-lg flex items-center justify-center shrink-0 bg-muted text-muted-foreground">
+                  {resourceIcon(resource.type, "size-5")}
+                </div>
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-medium leading-tight">{resource.title}</h3>
+                    <Badge variant="secondary" className="text-xs">{resourceTypeLabel(resource.type)}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Resource {index + 1}</p>
+                </div>
+                <ChevronRightIcon className="size-5 text-muted-foreground shrink-0 group-hover:text-foreground" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function CourseWorkspace() {
+  return <RealCourseWorkspace />;
 }

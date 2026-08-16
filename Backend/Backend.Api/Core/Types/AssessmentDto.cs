@@ -24,7 +24,13 @@ public record AssessmentResponse(
 
 public record AssessmentListResponse(
     ResourceResponse ResourceInfo,
-    AssessmentInfo Info
+    AssessmentInfo Info,
+    int QuestionCount,
+    int AttemptsUsed,
+    decimal? BestScore,
+    decimal BestMaxScore,
+    string? LatestAttemptStatus,
+    string? LatestAttemptSqid
 );
 
 public record AssessmentQuestionInfo(
@@ -57,6 +63,32 @@ public record AssessmentAttemptResponse(
     bool? IsPassed,
     int AttemptNumber
 );
+
+public record AssessmentAttemptQuestionResponse(
+    string AttemptQuestionSqid,
+    string QuestionType,
+    string Text,
+    JsonDocument QuestionData,
+    int OrderIndex,
+    decimal Points,
+    bool IsFlagged,
+    JsonDocument? AnswerData,
+    DateTime? AnsweredAt
+);
+
+public record AssessmentAttemptDetailResponse(
+    string AssessmentAttemptSqid,
+    DateTime StartedAt,
+    DateTime? SubmittedAt,
+    decimal? TotalScore,
+    decimal MaxScore,
+    bool? IsPassed,
+    int AttemptNumber,
+    string Status,
+    IReadOnlyList<AssessmentAttemptQuestionResponse> Questions
+);
+
+public record SaveAttemptAnswerRequest(JsonDocument AnswerData);
 
 public record QuestionBankInfo(
     string Name,

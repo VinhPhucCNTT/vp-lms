@@ -7,36 +7,33 @@ import { GraduationCapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/features/auth/auth-context";
-import type { UserRole } from "@/types";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
-  role: z.enum(["student", "instructor", "admin"]),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginError } = useAuth();
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<LoginFormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "", role: "student" },
+    defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      const success = await login(data.email, data.password, data.role as UserRole);
+      const success = await login(data.email, data.password, "student");
       if (success) {
-        const redirectPath = data.role === "student" ? "/student" : data.role === "instructor" ? "/instructor" : "/admin";
-        navigate(redirectPath, { replace: true });
+        navigate("/", { replace: true });
       }
     } finally {
       setIsLoading(false);
@@ -56,6 +53,11 @@ export function LoginPage() {
           <CardDescription>Sign in to access your courses and assignments</CardDescription>
         </CardHeader>
         <CardContent>
+          {loginError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{loginError}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -67,24 +69,10 @@ export function LoginPage() {
               <Input id="password" type="password" placeholder="Enter your password" {...register("password")} aria-invalid={!!errors.password} />
               {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="role">Login As</Label>
-              <Select defaultValue="student" onValueChange={(value) => setValue("role", value as LoginFormData["role"])}>
-                <SelectTrigger><SelectValue placeholder="Select your role" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="instructor">Instructor</SelectItem>
-                  <SelectItem value="admin">Administrator</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-            <p className="text-xs text-muted-foreground text-center">Demo Mode: Click "Sign In" to access the platform with sample data</p>
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -25,7 +25,6 @@ public class AssessmentQuestionConfiguration : IEntityTypeConfiguration<Assessme
             .HasColumnType("decimal(5,2)");
 
         builder.HasIndex(x => new { x.AssessmentId, x.OrderIndex })
-            .HasFilter("is_deleted = false")
             .IsUnique();
     }
 }

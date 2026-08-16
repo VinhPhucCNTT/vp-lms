@@ -3,6 +3,7 @@ using System.Text.Json;
 using Backend.JudgeWorker.Configuration;
 using Backend.JudgeWorker.Contracts;
 using Backend.JudgeWorker.Interfaces;
+using Backend.JudgeWorker.Services;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;

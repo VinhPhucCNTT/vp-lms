@@ -74,6 +74,31 @@ public class AssignmentGradeService(
         return _mapper.Map<AssignmentGradeResponse>(grade);
     }
 
+    public async Task<AssignmentGradeResponse?> UpdateAsync(long submissionId, AssignmentGradeRequest request)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var grade = await db.AssignmentGrades.FirstOrDefaultAsync(x => x.SubmissionId == submissionId);
+        if (grade is null)
+            return null;
+
+        grade.Score = request.Score;
+        grade.FeedbackText = request.FeedbackText;
+        await db.SaveChangesAsync();
+        return _mapper.Map<AssignmentGradeResponse>(grade);
+    }
+
+    public async Task<bool> RemoveAsync(long submissionId)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var grade = await db.AssignmentGrades.FirstOrDefaultAsync(x => x.SubmissionId == submissionId);
+        if (grade is null)
+            return false;
+
+        db.AssignmentGrades.Remove(grade);
+        await db.SaveChangesAsync();
+        return true;
+    }
+
     private async Task<PaginatedResponse<AssignmentGradeResponse>?> GetGradesAsync(
         AppDbContext db,
         PageRequest page,

@@ -1,17 +1,17 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
 import { SearchIcon, PlusCircleIcon, CodeIcon, CheckCircleIcon, XCircleIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/shared/components/page-header";
-import { problems, submissions } from "@/shared/data/problems";
-import { courses, courseActivities } from "@/shared/data/courses";
-import { instructors } from "@/shared/data/users";
-import { useAuth } from "@/features/auth/auth-context";
+import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
+import { useApi } from "@/lib/use-api";
+import { courseApi, type CourseDetailDto } from "@/features/courses/course-api";
+import { judgeApi } from "@/features/courses/judge-api";
+import type { Course, Problem } from "@/types";
 import { cn } from "@/lib/utils";
 
 const difficultyColors: Record<string, string> = {
@@ -21,29 +21,36 @@ const difficultyColors: Record<string, string> = {
 };
 
 export function InstructorCodingProblems() {
-  const { user } = useAuth();
-  const currentInstructor = instructors.find((i) => i.id === user?.id) ?? instructors[0];
-  const instructorCourses = courses.filter((c) => c.instructorId === currentInstructor.id);
+  const { data: courses } = useApi<Course[]>(() => courseApi.getInstructorCourses());
   const [search, setSearch] = React.useState("");
   const [selectedCourse, setSelectedCourse] = React.useState<string>("all");
 
-  const instructorCourseIds = instructorCourses.map((c) => c.id);
-  const instructorProblemActivities = courseActivities.filter(
-    (a) => a.type === "coding-problem" && instructorCourseIds.includes(a.courseId)
-  );
+  const instructorCourses = courses ?? [];
 
-  const instructorProblemIds = instructorProblemActivities.map((a) => a.refId);
-  const instructorProblems = problems.filter((p) => instructorProblemIds.includes(p.id));
+  const problemsByCourse = React.useRef<Map<string, Problem[]>>(new Map());
+  const [allProblems, setAllProblems] = React.useState<{ problem: Problem; courseCode: string }[]>([]);
 
-  const filteredProblems = instructorProblems.filter((problem) => {
-    const activity = instructorProblemActivities.find((a) => a.refId === problem.id);
+  React.useEffect(() => {
+    if (!courses || courses.length === 0) return;
+    let active = true;
+    Promise.all(courses.map((c) => judgeApi.getCourseProblems(c.id).then((probs) => probs.map((p) => ({ problem: p, courseCode: c.code })))))
+      .then((results) => {
+        if (active) setAllProblems(results.flat());
+      })
+      .catch(() => { if (active) setAllProblems([]); });
+    return () => { active = false; };
+  }, [courses]);
+
+  const filteredProblems = allProblems.filter(({ problem, courseCode }) => {
     const matchesSearch = problem.title.toLowerCase().includes(search.toLowerCase()) || problem.tags.some((tag) => tag.toLowerCase().includes(search.toLowerCase()));
-    const matchesCourse = selectedCourse === "all" || activity?.courseId === selectedCourse;
+    const matchesCourse = selectedCourse === "all" || instructorCourses.find((c) => c.id === selectedCourse)?.code === courseCode;
     return matchesSearch && matchesCourse;
   });
 
-  const totalSubmissions = submissions.filter((s) => instructorProblemIds.includes(s.problemId)).length;
-  const acceptedSubmissions = submissions.filter((s) => instructorProblemIds.includes(s.problemId) && s.verdict === "accepted").length;
+  const totalSubmissions = allProblems.reduce((sum, p) => sum + p.problem.submissionCount, 0);
+  const acceptedSubmissions = allProblems.reduce((sum, p) => sum + p.problem.acceptedCount, 0);
+
+  if (!courses) return <LoadingState label="Loading courses..." />;
 
   return (
     <div className="space-y-6">
@@ -54,7 +61,7 @@ export function InstructorCodingProblems() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium flex items-center gap-2"><CodeIcon className="size-4" />Total Problems</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{instructorProblems.length}</p></CardContent>
+          <CardContent><p className="text-2xl font-bold">{allProblems.length}</p></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium flex items-center gap-2"><CheckCircleIcon className="size-4 text-success" />Accepted</CardTitle></CardHeader>
@@ -84,43 +91,45 @@ export function InstructorCodingProblems() {
         </Select>
       </div>
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Course</TableHead>
-              <TableHead>Difficulty</TableHead>
-              <TableHead>Submissions</TableHead>
-              <TableHead>Acceptance</TableHead>
-              <TableHead>Tags</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredProblems.map((problem) => {
-              const activity = instructorProblemActivities.find((a) => a.refId === problem.id);
-              const course = courses.find((c) => c.id === activity?.courseId);
-              const acceptanceRate = Math.round((problem.acceptedCount / problem.submissionCount) * 100);
-              return (
-                <TableRow key={problem.id}>
-                  <TableCell className="font-medium">{problem.title}</TableCell>
-                  <TableCell><Badge variant="outline">{course?.code ?? "—"}</Badge></TableCell>
-                  <TableCell><Badge className={cn(difficultyColors[problem.difficulty])}>{problem.difficulty}</Badge></TableCell>
-                  <TableCell className="text-muted-foreground">{problem.submissionCount}</TableCell>
-                  <TableCell className="text-muted-foreground">{acceptanceRate}%</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {problem.tags.slice(0, 2).map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </Card>
+      {filteredProblems.length === 0 ? (
+        <EmptyState message="No coding problems found." />
+      ) : (
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Course</TableHead>
+                <TableHead>Difficulty</TableHead>
+                <TableHead>Submissions</TableHead>
+                <TableHead>Acceptance</TableHead>
+                <TableHead>Tags</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredProblems.map(({ problem, courseCode }) => {
+                const acceptanceRate = problem.submissionCount > 0 ? Math.round((problem.acceptedCount / problem.submissionCount) * 100) : 0;
+                return (
+                  <TableRow key={problem.id}>
+                    <TableCell className="font-medium">{problem.title}</TableCell>
+                    <TableCell><Badge variant="outline">{courseCode}</Badge></TableCell>
+                    <TableCell><Badge className={cn(difficultyColors[problem.difficulty])}>{problem.difficulty}</Badge></TableCell>
+                    <TableCell className="text-muted-foreground">{problem.submissionCount}</TableCell>
+                    <TableCell className="text-muted-foreground">{acceptanceRate}%</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {problem.tags.slice(0, 2).map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
     </div>
   );
 }

@@ -12,7 +12,7 @@ public class ProblemTestCaseConfiguration : IEntityTypeConfiguration<ProblemTest
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.InputData)
+        builder.Property(x => x.Input)
             .IsRequired()
             .HasColumnType("text");
 
@@ -24,7 +24,6 @@ public class ProblemTestCaseConfiguration : IEntityTypeConfiguration<ProblemTest
         //     .HasColumnType("text");
 
         builder.HasIndex(x => new { x.ProblemId, x.OrderIndex })
-            .HasFilter("is_deleted = false")
             .IsUnique();
 
         builder.HasOne(x => x.Problem)

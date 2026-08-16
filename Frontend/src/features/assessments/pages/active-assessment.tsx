@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
@@ -24,30 +24,35 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { assessments, courses } from "@/shared/data/courses";
-import { getQuestionsByAssessment } from "@/shared/data/question-bank";
+import { LoadingState, ErrorState } from "@/shared/components/api-states";
+import { useApi } from "@/lib/use-api";
+import { assessmentApi, type AssessmentWithQuestionsDto } from "@/features/assessments/assessment-api";
 import { QuestionAnswerRenderer } from "../components/question-answer-renderer";
 import { QuestionNavigator, type NavigatorQuestionState } from "../components/question-navigator";
 import { CountdownTimer } from "../components/countdown-timer";
 import { cn } from "@/lib/utils";
-import type { AttemptAnswer, Question } from "@/types";
+import type { Question } from "@/types";
 
 export function ActiveAssessment() {
   const { assessmentId } = useParams<{ assessmentId: string }>();
   const navigate = useNavigate();
 
-  const assessment = assessments.find((a) => a.id === assessmentId);
-  const questions = assessment ? getQuestionsByAssessment(assessment.id) : [];
-  const course = assessment ? courses.find((c) => c.id === "cs-101") : null;
+  const { data, loading, error, reload } = useApi<AssessmentWithQuestionsDto>(
+    () => assessmentApi.getAssessmentForTaking(assessmentId!),
+    [assessmentId],
+  );
 
   const startTime = React.useMemo(() => new Date().toISOString(), []);
-
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const [answers, setAnswers] = React.useState<Record<string, string | string[]>>({});
   const [flags, setFlags] = React.useState<Set<string>>(new Set());
   const [submitted, setSubmitted] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
 
-  if (!assessment || questions.length === 0) {
+  if (loading) return <LoadingState label="Loading assessment..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (!data || !data.questions || data.questions.length === 0) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-3">
@@ -60,6 +65,10 @@ export function ActiveAssessment() {
       </div>
     );
   }
+
+  const assessment = assessmentApi.mapAssessment(data.assessment);
+  const questions: Question[] = data.questions.map(assessmentApi.mapQuestion);
+  const course = data.course;
 
   const currentQuestion: Question = questions[currentIndex];
 
@@ -92,9 +101,18 @@ export function ActiveAssessment() {
     });
   };
 
-  const handleSubmit = () => {
-    setSubmitted(true);
-    navigate(`/student/assessments/${assessment.id}/results`);
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await assessmentApi.submitAssessment(assessment.id, answers);
+      setSubmitted(true);
+      navigate(`/student/assessments/${assessment.id}/results`);
+    } catch (err: unknown) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to submit assessment. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const goPrev = () => setCurrentIndex((i) => Math.max(0, i - 1));
@@ -123,7 +141,7 @@ export function ActiveAssessment() {
             <CountdownTimer startTime={startTime} durationMinutes={assessment.duration} onExpire={handleSubmit} />
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button size="sm" disabled={submitted}>
+                <Button size="sm" disabled={submitted || submitting}>
                   <SendIcon className="size-3.5 mr-1" />Submit
                 </Button>
               </AlertDialogTrigger>
@@ -137,9 +155,14 @@ export function ActiveAssessment() {
                     {" "}This action cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
+                {submitError && (
+                  <p className="text-sm text-destructive px-4">{submitError}</p>
+                )}
                 <AlertDialogFooter>
                   <AlertDialogCancel>Keep Working</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleSubmit}>Submit Now</AlertDialogAction>
+                  <AlertDialogAction onClick={handleSubmit} disabled={submitting}>
+                    {submitting ? "Submitting..." : "Submit Now"}
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

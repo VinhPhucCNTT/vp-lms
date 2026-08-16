@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DownloadIcon, UsersIcon, BookOpenIcon, TrendingUpIcon, TrendingDownIcon, BarChart3Icon, PieChartIcon, ActivityIcon } from "lucide-react";
+import { DownloadIcon, UsersIcon, BookOpenIcon, TrendingUpIcon, TrendingDownIcon, BarChart3Icon, ActivityIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,31 +7,22 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/shared/components/page-header";
-import { courses } from "@/shared/data/courses";
-import { students, instructors } from "@/shared/data/users";
+import { LoadingState, ErrorState } from "@/shared/components/api-states";
+import { useApi } from "@/lib/use-api";
+import { adminApi, type AdminStatsDto, type CourseStatDto, type TopPerformerDto } from "@/features/admin/admin-api";
 
 export function AdminReports() {
   const [dateRange, setDateRange] = React.useState("semester");
-  const [reportType, setReportType] = React.useState("overview");
 
-  const stats = {
-    totalUsers: students.length + instructors.length,
-    activeUsers: Math.floor((students.length + instructors.length) * 0.87),
-    totalCourses: courses.length,
-    activeCourses: courses.filter((c) => c.status === "published").length,
-    totalEnrollments: courses.reduce((sum, c) => sum + c.enrolledCount, 0),
-    averageGrade: 78.5,
-    completionRate: 72.3,
-  };
+  const { data: stats, loading, error, reload } = useApi<AdminStatsDto>(() => adminApi.getStats());
+  const { data: courseStats } = useApi<CourseStatDto[]>(() => adminApi.getCourseStats());
+  const { data: topPerformers } = useApi<TopPerformerDto[]>(() => adminApi.getTopPerformers());
 
-  const topPerformers = students.slice(0, 5).sort((a, b) => b.gpa - a.gpa);
-  const courseStats = courses.slice(0, 5).map((c) => ({
-    code: c.code,
-    title: c.title,
-    enrolled: c.enrolledCount,
-    avgGrade: Math.floor(Math.random() * 20) + 65,
-    completion: Math.floor(Math.random() * 30) + 60,
-  }));
+  if (loading) return <LoadingState label="Loading reports..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (!stats) return null;
+
+  const totalUsers = stats.totalUsers || 1;
 
   return (
     <div className="space-y-6">
@@ -53,13 +44,13 @@ export function AdminReports() {
           <CardContent>
             <p className="text-2xl font-bold">{stats.activeUsers}</p>
             <p className="text-xs text-muted-foreground">of {stats.totalUsers} total</p>
-            <Progress value={(stats.activeUsers / stats.totalUsers) * 100} className="mt-2" />
+            <Progress value={(stats.activeUsers / totalUsers) * 100} className="mt-2" />
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium flex items-center gap-2"><BookOpenIcon className="size-4" />Active Courses</CardTitle></CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{stats.activeCourses}</p>
+            <p className="text-2xl font-bold">{stats.publishedCourses}</p>
             <p className="text-xs text-muted-foreground">of {stats.totalCourses} total</p>
           </CardContent>
         </Card>
@@ -95,16 +86,16 @@ export function AdminReports() {
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 {[
-                  { label: "Students", count: students.length, color: "bg-info" },
-                  { label: "Instructors", count: instructors.length, color: "bg-success" },
-                  { label: "Admins", count: 2, color: "bg-primary" },
+                  { label: "Students", count: stats.studentCount, color: "bg-info" },
+                  { label: "Instructors", count: stats.instructorCount, color: "bg-success" },
+                  { label: "Admins", count: stats.adminCount, color: "bg-primary" },
                 ].map((item) => (
                   <div key={item.label} className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium">{item.label}</span>
-                      <span className="text-muted-foreground">{item.count} ({Math.round((item.count / stats.totalUsers) * 100)}%)</span>
+                      <span className="text-muted-foreground">{item.count} ({Math.round((item.count / totalUsers) * 100)}%)</span>
                     </div>
-                    <Progress value={(item.count / stats.totalUsers) * 100} className="h-2" />
+                    <Progress value={(item.count / totalUsers) * 100} className="h-2" />
                   </div>
                 ))}
               </div>
@@ -117,7 +108,10 @@ export function AdminReports() {
               <CardDescription>Students with highest GPA</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {topPerformers.map((student, index) => (
+              {(!topPerformers || topPerformers.length === 0) && (
+                <p className="text-sm text-muted-foreground text-center py-4">No data available.</p>
+              )}
+              {topPerformers?.map((student, index) => (
                 <div key={student.id} className="flex items-center justify-between p-3 rounded-lg bg-muted">
                   <div className="flex items-center gap-3">
                     <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">{index + 1}</div>
@@ -141,8 +135,11 @@ export function AdminReports() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {courseStats.map((course) => (
-                  <div key={course.code} className="p-4 rounded-lg border">
+                {(!courseStats || courseStats.length === 0) && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No course data available.</p>
+                )}
+                {courseStats?.map((course) => (
+                  <div key={course.id} className="p-4 rounded-lg border">
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="flex items-center gap-2">

@@ -27,7 +27,9 @@ import { InstructorCodingProblems } from "@/features/courses/pages/instructor-co
 
 import { StudentAssignments } from "@/features/assignments/pages/student-assignments";
 import { StudentAssessments } from "@/features/assessments/pages/student-assessments";
-import { ActiveAssessment } from "@/features/assessments/pages/active-assessment";
+import { AssessmentDetailPage } from "@/features/assessments/pages/assessment-detail";
+import { AssessmentAttemptWorkspace } from "@/features/assessments/pages/assessment-attempt-workspace";
+import { AssessmentResultPage } from "@/features/assessments/pages/assessment-result";
 import { StudentActivity } from "@/features/activity/pages/student-activity";
 import { StudentExplore } from "@/features/explore/pages/student-explore";
 
@@ -68,7 +70,9 @@ function App() {
                   <Route path="courses/:courseId/problems" element={<ProblemList />} />
                   <Route path="courses/:courseId/problems/:problemId" element={<ProblemSolution />} />
                   <Route path="assessments" element={<StudentAssessments />} />
-                  <Route path="assessments/:assessmentId" element={<ActiveAssessment />} />
+                  <Route path="assessments/:assessmentId" element={<AssessmentDetailPage />} />
+                  <Route path="assessments/:assessmentId/attempts/:attemptId" element={<AssessmentAttemptWorkspace />} />
+                  <Route path="assessments/:assessmentId/results/:attemptId" element={<AssessmentResultPage />} />
                   <Route path="explore" element={<StudentExplore />} />
                 </Route>
               </Route>

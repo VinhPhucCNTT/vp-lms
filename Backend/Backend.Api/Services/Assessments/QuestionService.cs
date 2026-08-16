@@ -7,6 +7,7 @@ using Backend.Api.Core.Types;
 using Backend.Persistence.Entities.Assessments;
 using Backend.Api.Core.Common;
 using System.Text.Json;
+using Backend.Api.Services.Assessments.Validators;
 
 namespace Backend.Api.Services.Assessments;
 
@@ -14,12 +15,14 @@ public sealed class QuestionService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
     IMapper mapper,
-    SqidsEncoder<long> sqidsEncoder)
+    SqidsEncoder<long> sqidsEncoder,
+    QuestionContentValidator contentValidator)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly IMapper _mapper = mapper;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
+    private readonly QuestionContentValidator _contentValidator = contentValidator;
 
     // public async Task<Question?> GetByIdAsync(
     //     long questionId,
@@ -51,26 +54,46 @@ public sealed class QuestionService(
             return Result<QuestionResponse>.Failure(
                 QuestionErrors.Forbidden);
 
-        var validation = contentValidator.Validate(
-            request.QuestionType,
+        if (!Enum.TryParse<QuestionType>(request.QuestionType, true, out var questionType))
+            return Result<QuestionResponse>.Failure(QuestionErrors.InvalidContent);
+
+        var validation = _contentValidator.Validate(
+            questionType,
             request.QuestionData);
 
         if (!validation.IsSuccess)
         {
-            return Result<Question>.Failure(
+            return Result<QuestionResponse>.Failure(
                 validation.Errors.ToArray());
         }
 
         var question = new Question
         {
             QuestionBankId = bankId,
-            QuestionType = request.QuestionType,
+            QuestionType = questionType,
+            Text = request.Text,
             QuestionData = request.QuestionData
         };
 
         db.Questions.Add(question);
         await db.SaveChangesAsync(ct);
         return Result<QuestionResponse>.Success(_mapper.Map<QuestionResponse>(question));
+    }
+
+    public async Task<List<QuestionResponse>> GetForAssessmentAsync(
+        long resourceId,
+        CancellationToken ct = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var questions = await db.AssessmentQuestions
+            .AsNoTracking()
+            .Where(x => x.Assessment.ResourceId == resourceId && x.QuestionId != null)
+            .Include(x => x.Question)
+            .OrderBy(x => x.OrderIndex)
+            .Select(x => x.Question!)
+            .ToListAsync(ct);
+
+        return questions.Select(_mapper.Map<QuestionResponse>).ToList();
     }
 
     public async Task<Result> UpdateAsync(
@@ -97,14 +120,18 @@ public sealed class QuestionService(
         if (usedByAttempt)
             return Result.Failure(QuestionErrors.HasAttempts);
 
-        var validation = contentValidator.Validate(
-            request.QuestionType,
+        if (!Enum.TryParse<QuestionType>(request.QuestionType, true, out var questionType))
+            return Result.Failure(QuestionErrors.InvalidContent);
+
+        var validation = _contentValidator.Validate(
+            questionType,
             request.QuestionData);
 
         if (!validation.IsSuccess)
             return Result.Failure(validation.Errors.ToArray());
 
-        question.QuestionType = request.QuestionType;
+        question.QuestionType = questionType;
+        question.Text = request.Text;
         question.QuestionData = request.QuestionData;
 
         await db.SaveChangesAsync(ct);

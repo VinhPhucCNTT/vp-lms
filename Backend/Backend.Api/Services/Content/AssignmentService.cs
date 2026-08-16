@@ -29,6 +29,19 @@ public class AssignmentService(
             .FirstOrDefaultAsync();
     }
 
+    public async Task<List<AssignmentResponse>> QueryAsync(CancellationToken ct = default)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var assignments = await db.Assignments
+            .AsNoTracking()
+            .Include(x => x.Resource)
+            .ToListAsync(ct);
+
+        return assignments.Select(x => new AssignmentResponse(
+            _mapper.Map<ResourceDetailResponse>(x.Resource),
+            _mapper.Map<AssignmentInfo>(x))).ToList();
+    }
+
     public async Task<AssignmentResponse?> CreateAsync(long moduleId, AssignmentRequest request, CancellationToken ct = default)
     {
         using var db = await _dbFactory.CreateDbContextAsync(ct);

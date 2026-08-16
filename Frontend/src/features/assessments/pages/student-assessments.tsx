@@ -17,32 +17,12 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/shared/components/page-header";
-import { assessments, courses } from "@/shared/data/courses";
-import { students } from "@/shared/data/users";
-import { getAttemptsByStudent, getQuestionsByAssessment } from "@/shared/data/question-bank";
-import { useAuth } from "@/features/auth/auth-context";
+import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
+import { useApi } from "@/lib/use-api";
+import { assessmentApi, type StudentAssessmentSummaryDto } from "@/features/assessments/assessment-api";
 import { cn } from "@/lib/utils";
-import type { Assessment } from "@/types";
 
 type AssessmentStatus = "available" | "in-progress" | "completed" | "overdue" | "upcoming";
-
-function getAssessmentStatus(assessment: Assessment, studentId: string): AssessmentStatus {
-  const now = new Date();
-  const due = new Date(assessment.dueDate);
-  const availableFrom = assessment.availableFrom ? new Date(assessment.availableFrom) : null;
-  const availableTo = assessment.availableTo ? new Date(assessment.availableTo) : null;
-
-  const attempts = getAttemptsByStudent(studentId, assessment.id);
-  const hasCompleted = attempts.some((a) => a.status === "graded" || a.status === "submitted");
-  const hasInProgress = attempts.some((a) => a.status === "in-progress");
-
-  if (hasCompleted) return "completed";
-  if (hasInProgress) return "in-progress";
-  if (availableFrom && now < availableFrom) return "upcoming";
-  if (availableTo && now > availableTo) return "overdue";
-  if (now > due) return "overdue";
-  return "available";
-}
 
 const statusConfig: Record<AssessmentStatus, { label: string; color: string; badge: "default" | "secondary" | "destructive" | "success" | "warning" | "outline" | "info" }> = {
   available: { label: "Available", color: "text-info", badge: "info" },
@@ -53,38 +33,20 @@ const statusConfig: Record<AssessmentStatus, { label: string; color: string; bad
 };
 
 export function StudentAssessments() {
-  const { user } = useAuth();
-  const currentUser = students.find((s) => s.id === user?.id) ?? students[0];
+  const { data: summaries, loading, error, reload } = useApi<StudentAssessmentSummaryDto[]>(
+    () => assessmentApi.getStudentAssessments()
+  );
 
-  const userAssessments = assessments
-    .filter((a) => a.status === "published")
-    .map((a) => {
-      const course = courses.find((c) => c.id === "cs-101")!;
-      const status = getAssessmentStatus(a, currentUser.id);
-      const attempts = getAttemptsByStudent(currentUser.id, a.id);
-      const bestAttempt = attempts.reduce(
-        (best, curr) =>
-          (curr.score ?? 0) > (best?.score ?? 0) ? curr : best,
-        attempts[0] ?? null
-      );
-      const questions = getQuestionsByAssessment(a.id);
-      return {
-        ...a,
-        course: { code: course.code, title: course.title },
-        status,
-        bestScore: bestAttempt?.score ?? null,
-        bestMaxScore: bestAttempt?.maxScore ?? a.totalPoints ?? 0,
-        attemptsUsed: attempts.length,
-        questionCount: questions.length,
-      };
-    });
+  if (loading) return <LoadingState label="Loading assessments..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
 
+  const items = summaries ?? [];
   const stats = {
-    available: userAssessments.filter((a) => a.status === "available").length,
-    completed: userAssessments.filter((a) => a.status === "completed").length,
-    overdue: userAssessments.filter((a) => a.status === "overdue").length,
+    available: items.filter((a) => a.status === "available").length,
+    completed: items.filter((a) => a.status === "completed").length,
+    overdue: items.filter((a) => a.status === "overdue").length,
     avgScore: (() => {
-      const scored = userAssessments.filter((a) => a.bestScore !== null);
+      const scored = items.filter((a) => a.bestScore !== null);
       if (scored.length === 0) return 0;
       const pcts = scored.map((a) => (a.bestScore! / a.bestMaxScore) * 100);
       return pcts.reduce((s, p) => s + p, 0) / pcts.length;
@@ -134,106 +96,110 @@ export function StudentAssessments() {
         </Card>
       </div>
 
-      <div className="grid gap-4">
-        {userAssessments.map((assessment) => {
-          const cfg = statusConfig[assessment.status];
-          const scorePct = assessment.bestScore !== null
-            ? Math.round((assessment.bestScore / assessment.bestMaxScore) * 100)
-            : null;
-          const passed = scorePct !== null && scorePct >= assessment.passingScore;
+      {items.length === 0 ? (
+        <EmptyState message="No assessments available right now." />
+      ) : (
+        <div className="grid gap-4">
+          {items.map((item) => {
+            const cfg = statusConfig[item.status as AssessmentStatus] ?? statusConfig.available;
+            const scorePct = item.bestScore !== null
+              ? Math.round((item.bestScore / item.bestMaxScore) * 100)
+              : null;
+            const passed = item.assessment.passingScore !== undefined && scorePct !== null && scorePct >= item.assessment.passingScore;
 
-          return (
-            <Card key={assessment.id} className={cn(assessment.status === "overdue" && "border-destructive/50")}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-2 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline">{assessment.course.code}</Badge>
-                      <Badge variant={cfg.badge}>{cfg.label}</Badge>
-                      {assessment.status === "completed" && scorePct !== null && (
-                        <Badge variant={passed ? "success" : "destructive"}>
-                          {passed ? "Passed" : "Failed"}
-                        </Badge>
-                      )}
-                    </div>
-                    <h3 className="font-semibold">{assessment.title}</h3>
-                    <CardDescription className="line-clamp-2">{assessment.description}</CardDescription>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <ClipboardCheckIcon className="size-3" />
-                        {assessment.questionCount} questions
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <ClockIcon className="size-3" />
-                        {assessment.duration} min
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <TrophyIcon className="size-3" />
-                        Pass: {assessment.passingScore}%
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <ZapIcon className="size-3" />
-                        {assessment.attemptsUsed}/{assessment.maxAttempts} attempts
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <CalendarIcon className="size-3" />
-                        Due {assessment.dueDate}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="text-right space-y-3 shrink-0">
-                    {assessment.bestScore !== null && (
-                      <div>
-                        <p className={cn("text-2xl font-bold", passed ? "text-success" : "text-destructive")}>
-                          {scorePct}%
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {assessment.bestScore}/{assessment.bestMaxScore} pts
-                        </p>
+            return (
+              <Card key={item.assessment.id} className={cn(item.status === "overdue" && "border-destructive/50")}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-2 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {item.course && <Badge variant="outline">{item.course.code}</Badge>}
+                        <Badge variant={cfg.badge}>{cfg.label}</Badge>
+                        {item.status === "completed" && scorePct !== null && (
+                          <Badge variant={passed ? "success" : "destructive"}>
+                            {passed ? "Passed" : "Failed"}
+                          </Badge>
+                        )}
                       </div>
-                    )}
-                    <Button
-                      size="sm"
-                      variant={assessment.status === "available" ? "default" : "outline"}
-                      disabled={assessment.status === "upcoming" || assessment.status === "overdue"}
-                      asChild={assessment.status === "available" || assessment.status === "in-progress"}
-                    >
-                      {(assessment.status === "available" || assessment.status === "in-progress") ? (
-                        <Link to={`/student/assessments/${assessment.id}`}>
-                          <PlayIcon className="size-3.5 mr-1" />
-                          {assessment.status === "in-progress" ? "Resume" : "Start"}
-                        </Link>
-                      ) : assessment.status === "completed" ? (
-                        <Link to={`/student/assessments/${assessment.id}/results`}>
-                          <EyeIcon className="size-3.5 mr-1" />
-                          Review
-                        </Link>
-                      ) : assessment.status === "upcoming" ? (
-                        <span>Not Available</span>
-                      ) : (
-                        <span>Missed</span>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                {assessment.status === "completed" && scorePct !== null && (
-                  <>
-                    <Separator className="my-3" />
-                    <div className="flex items-center gap-3">
-                      <Progress value={scorePct} className="h-2 flex-1" />
-                      <span className="text-xs text-muted-foreground">
-                        Best of {assessment.attemptsUsed} attempt{assessment.attemptsUsed !== 1 ? "s" : ""}
-                      </span>
+                      <h3 className="font-semibold">{item.assessment.title}</h3>
+                      <CardDescription className="line-clamp-2">{item.assessment.description}</CardDescription>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                        <span className="flex items-center gap-1">
+                          <ClipboardCheckIcon className="size-3" />
+                          {item.questionCount} questions
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <ClockIcon className="size-3" />
+                          {item.assessment.duration} min
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <TrophyIcon className="size-3" />
+                          {item.assessment.passingScore !== undefined ? `Pass: ${item.assessment.passingScore}%` : "Completion tracked"}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <ZapIcon className="size-3" />
+                          {item.attemptsUsed}/{item.assessment.maxAttempts} attempts
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <CalendarIcon className="size-3" />
+                          Due {item.assessment.dueDate}
+                        </span>
+                      </div>
                     </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+
+                    <div className="text-right space-y-3 shrink-0">
+                      {item.bestScore !== null && (
+                        <div>
+                          <p className={cn("text-2xl font-bold", passed ? "text-success" : "text-destructive")}>
+                            {scorePct}%
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.bestScore}/{item.bestMaxScore} pts
+                          </p>
+                        </div>
+                      )}
+                      <Button
+                        size="sm"
+                        variant={item.status === "available" ? "default" : "outline"}
+                        disabled={item.status === "upcoming" || item.status === "overdue"}
+                        asChild={item.status === "available" || item.status === "in-progress"}
+                      >
+                        {(item.status === "available" || item.status === "in-progress") ? (
+                          <Link to={`/student/assessments/${item.assessment.id}`}>
+                            <PlayIcon className="size-3.5 mr-1" />
+                            {item.status === "in-progress" ? "Resume" : "Start"}
+                          </Link>
+                        ) : item.status === "completed" ? (
+                          <Link to={`/student/assessments/${item.assessment.id}/results/${item.latestAttemptSqid}`}>
+                            <EyeIcon className="size-3.5 mr-1" />
+                            Review
+                          </Link>
+                        ) : item.status === "upcoming" ? (
+                          <span>Not Available</span>
+                        ) : (
+                          <span>Missed</span>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {item.status === "completed" && scorePct !== null && (
+                    <>
+                      <Separator className="my-3" />
+                      <div className="flex items-center gap-3">
+                        <Progress value={scorePct} className="h-2 flex-1" />
+                        <span className="text-xs text-muted-foreground">
+                          Best of {item.attemptsUsed} attempt{item.attemptsUsed !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

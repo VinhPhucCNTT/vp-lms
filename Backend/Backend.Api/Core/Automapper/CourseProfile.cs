@@ -8,16 +8,33 @@ public class CourseProfile : Profile
 {
     public CourseProfile()
     {
+        CreateMap<long, string>()
+            .ConvertUsing<SqidTypeConverter>();
+
         CreateMap<Course, CourseResponse>()
-            .MapSqidId()
-            .ForMember(
-                d => d.CreatorUsername,
+            .ForCtorParam(
+                "Id",
+                o => o.MapFrom(x => x.Id))
+            .ForCtorParam(
+                "CreatorId",
+                o => o.MapFrom(x => x.CreatorId))
+            .ForCtorParam(
+                "CreatorUsername",
                 o => o.MapFrom(x => x.Creator != null ? x.Creator.Username : ""))
-            .ForMember(
-                d => d.CreatorFullname,
+            .ForCtorParam(
+                "CreatorFullname",
                 o => o.MapFrom(x => x.Creator != null ? x.Creator.Fullname : ""))
-            .ForMember(
-                d => d.EnrollmentCount,
+            .ForCtorParam(
+                "Code",
+                o => o.MapFrom(x => x.Code))
+            .ForCtorParam(
+                "Title",
+                o => o.MapFrom(x => x.Title))
+            .ForCtorParam(
+                "Description",
+                o => o.MapFrom(x => x.Description))
+            .ForCtorParam(
+                "EnrollmentCount",
                 o => o.MapFrom(x => x.Enrollments.Count));
 
         CreateMap<Course, CourseSetResponse>()

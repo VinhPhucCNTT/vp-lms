@@ -5,78 +5,50 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/shared/components/stat-card";
 import { PageHeader } from "@/shared/components/page-header";
-import { courses, courseActivities } from "@/shared/data/courses";
-import { instructors, announcements } from "@/shared/data/users";
+import { LoadingState, ErrorState } from "@/shared/components/api-states";
+import { useApi } from "@/lib/use-api";
 import { useAuth } from "@/features/auth/auth-context";
+import { instructorApi, type InstructorStatsDto, type PendingSubmissionDto } from "@/features/courses/instructor-api";
+import { courseApi } from "@/features/courses/course-api";
+import type { Course } from "@/types";
 
 export function InstructorDashboard() {
   const { user } = useAuth();
-  const currentInstructor = instructors.find((i) => i.id === user?.id) ?? instructors[0];
-  const instructorCourses = courses.filter((c) => c.instructorId === currentInstructor.id);
-  const totalStudents = instructorCourses.reduce((sum, c) => sum + c.enrolledCount, 0);
-  const publishedCount = instructorCourses.filter((c) => c.status === "published").length;
+  const { data: stats, loading, error, reload } = useApi<InstructorStatsDto>(() => instructorApi.getStats());
+  const { data: pendingSubs } = useApi<PendingSubmissionDto[]>(() => instructorApi.getPendingSubmissions());
+  const { data: recentCourses } = useApi<Course[]>(() => instructorApi.getRecentCourses());
 
-  const instructorCourseIds = new Set(instructorCourses.map((c) => c.id));
-  const allActivities = courseActivities.filter((a) => instructorCourseIds.has(a.courseId));
-  const pendingAssignments = allActivities.filter((a) => a.type === "assignment").length;
-  const pendingAssessments = allActivities.filter((a) => a.type === "assessment").length;
-  const pendingProblems = allActivities.filter((a) => a.type === "coding-problem").length;
-  const totalPending = pendingAssignments + pendingAssessments + pendingProblems;
-
-  const recentCourses = instructorCourses.slice(0, 3);
+  if (loading) return <LoadingState label="Loading dashboard..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (!stats) return null;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Welcome back, ${currentInstructor.firstName}!`}
+        title={`Welcome back, ${user?.firstName ?? "Instructor"}!`}
         description="Here's an overview of your courses and student submissions"
         actions={<Link to="/instructor/courses"><Button>New Course</Button></Link>}
       />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Students"
-          value={totalStudents}
-          icon={<UsersIcon className="size-5" />}
-          variant="info"
-          trend={{ value: 8, label: "vs last semester" }}
-        />
-        <StatCard
-          title="Active Courses"
-          value={`${publishedCount} / ${instructorCourses.length}`}
-          icon={<BookOpenIcon className="size-5" />}
-          variant="success"
-          description="published / total"
-        />
+        <StatCard title="Total Students" value={stats.totalStudents} icon={<UsersIcon className="size-5" />} variant="info" />
+        <StatCard title="Active Courses" value={`${stats.publishedCourses} / ${stats.totalCourses}`} icon={<BookOpenIcon className="size-5" />} variant="success" description="published / total" />
         <Card>
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Pending Review</p>
-                <p className="text-2xl font-bold">{totalPending}</p>
+                <p className="text-2xl font-bold">{stats.pendingSubmissions}</p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline" className="text-xs gap-1">
-                    <FileTextIcon className="size-3" />
-                    {pendingAssignments} assignments
-                  </Badge>
-                  <Badge variant="outline" className="text-xs gap-1">
-                    <ClipboardCheckIcon className="size-3" />
-                    {pendingAssessments} quizzes
-                  </Badge>
+                  <Badge variant="outline" className="text-xs gap-1"><FileTextIcon className="size-3" />{stats.pendingAssignments} assignments</Badge>
+                  <Badge variant="outline" className="text-xs gap-1"><ClipboardCheckIcon className="size-3" />{stats.pendingAssessments} quizzes</Badge>
                 </div>
               </div>
-              <div className="size-10 rounded-lg bg-warning/10 flex items-center justify-center">
-                <FileTextIcon className="size-5 text-warning-foreground" />
-              </div>
+              <div className="size-10 rounded-lg bg-warning/10 flex items-center justify-center"><FileTextIcon className="size-5 text-warning-foreground" /></div>
             </div>
           </CardContent>
         </Card>
-        <StatCard
-          title="Graded This Week"
-          value={35}
-          icon={<BarChart3Icon className="size-5" />}
-          trend={{ value: 3, label: "vs last week" }}
-        />
+        <StatCard title="Graded This Week" value={stats.gradedThisWeek} icon={<BarChart3Icon className="size-5" />} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -92,18 +64,17 @@ export function InstructorDashboard() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {[
-                { student: "Alex Chen", assignment: "Algorithm Analysis Practice", course: "CS 101", submitted: "2 hours ago", urgent: true },
-                { student: "Sarah Johnson", assignment: "Sorting Implementation", course: "CS 201", submitted: "1 day ago", urgent: false },
-                { student: "Michael Brown", assignment: "Database Design Project", course: "CS 301", submitted: "2 days ago", urgent: false },
-              ].map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+              {(!pendingSubs || pendingSubs.length === 0) && (
+                <p className="text-sm text-muted-foreground text-center py-4">No pending submissions.</p>
+              )}
+              {pendingSubs?.map((item) => (
+                <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                   <div className="space-y-1">
-                    <p className="font-medium text-sm">{item.student}</p>
-                    <p className="text-sm text-muted-foreground">{item.assignment}</p>
+                    <p className="font-medium text-sm">{item.studentName}</p>
+                    <p className="text-sm text-muted-foreground">{item.assignmentTitle}</p>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">{item.course}</Badge>
-                      <span className="text-xs text-muted-foreground">{item.submitted}</span>
+                      <Badge variant="outline" className="text-xs">{item.courseCode}</Badge>
+                      <span className="text-xs text-muted-foreground">{item.submittedAt}</span>
                     </div>
                   </div>
                   <Button size="sm" variant={item.urgent ? "default" : "outline"}>Grade</Button>
@@ -116,7 +87,7 @@ export function InstructorDashboard() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Recently Accessed Courses</CardTitle>
+                  <CardTitle>Recent Courses</CardTitle>
                   <CardDescription>Your most recently active courses</CardDescription>
                 </div>
                 <Link to="/instructor/courses"><Button variant="outline" size="sm">All Courses</Button></Link>
@@ -124,30 +95,25 @@ export function InstructorDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {recentCourses.map((course, idx) => {
-                  const lastAccessed = ["Today", "1 day ago", "2 days ago"][idx];
-                  const activitiesForCourse = allActivities.filter((a) => a.courseId === course.id);
-                  return (
-                    <div key={course.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">{course.code}</Badge>
-                          <span className="font-medium">{course.title}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span>{course.enrolledCount} students</span>
-                          <span className="text-border">·</span>
-                          <span>{activitiesForCourse.length} activities</span>
-                          <span className="text-border">·</span>
-                          <span>Accessed {lastAccessed}</span>
-                        </div>
+                {(!recentCourses || recentCourses.length === 0) && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No courses yet.</p>
+                )}
+                {recentCourses?.slice(0, 3).map((course) => (
+                  <div key={course.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{course.code}</Badge>
+                        <span className="font-medium">{course.title}</span>
                       </div>
-                      <Badge variant={course.status === "published" ? "success" : "secondary"} className="shrink-0">
-                        {course.status}
-                      </Badge>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{course.enrolledCount} students</span>
+                        <span className="text-border">·</span>
+                        <span>{course.status}</span>
+                      </div>
                     </div>
-                  );
-                })}
+                    <Badge variant={course.status === "published" ? "success" : "secondary"} className="shrink-0">{course.status}</Badge>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -160,12 +126,7 @@ export function InstructorDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {announcements.slice(0, 3).map((announcement) => (
-                  <div key={announcement.id} className="p-3 rounded-lg bg-muted">
-                    <p className="text-sm font-medium line-clamp-2">{announcement.title}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{announcement.createdAt}</p>
-                  </div>
-                ))}
+                <Link to="/instructor/announcements"><Button variant="outline" size="sm" className="w-full">Manage Announcements</Button></Link>
               </div>
             </CardContent>
           </Card>

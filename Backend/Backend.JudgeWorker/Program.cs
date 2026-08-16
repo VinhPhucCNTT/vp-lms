@@ -1,7 +1,12 @@
+using Backend.JudgeWorker;
 using Backend.JudgeWorker.Configuration;
+using Backend.JudgeWorker.Data;
 using Backend.JudgeWorker.Interfaces;
+using Backend.JudgeWorker.Languages;
 using Backend.JudgeWorker.Messaging;
 using Backend.JudgeWorker.Services;
+using Backend.Persistence.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder =
     Host.CreateApplicationBuilder(args);
@@ -12,13 +17,18 @@ builder.Services
             RabbitMqOptions.SectionName));
 
 // Database
-//
-// Replace this with your existing infrastructure
-// registration.
-builder.Services.AddInfrastructure(
-    builder.Configuration);
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
+{
+    options
+        .UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+        .UseSnakeCaseNamingConvention();
+});
 
 // Application services
+builder.Services.AddSingleton<
+    ILanguageDefinitionProvider,
+    LanguageDefinitionProvider>();
+
 builder.Services.AddScoped<
     ISubmissionProcessor,
     SubmissionProcessor>();

@@ -6,13 +6,6 @@ namespace Backend.Api.Services.Assessments.Graders;
 public sealed class CodingGrader
     : IQuestionGrader
 {
-    private readonly IJudgeService _judge;
-
-    public CodingGrader(IJudgeService judge)
-    {
-        _judge = judge;
-    }
-
     public QuestionType Type =>
         QuestionType.Coding;
 

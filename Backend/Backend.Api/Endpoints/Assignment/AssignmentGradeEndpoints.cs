@@ -18,4 +18,20 @@ public static class AssignmentGradeEndpoints
 
         grading.MapGet("{resourceId}", HandleGetById).RequireAuthorization();
     }
+
+    private static async Task<Results<Ok<AssignmentGradeResponse>, BadRequest, NotFound<string>>> HandleGetById(
+        string resourceId,
+        SqidsEncoder<long> sqidsEncoder,
+        AssignmentGradeService gradeService,
+        CancellationToken ct)
+    {
+        var decoded = sqidsEncoder.Decode(resourceId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        var result = await gradeService.GetGradeAsync(decoded[0], ct);
+        return result is not null
+            ? TypedResults.Ok(result)
+            : TypedResults.NotFound("Grade not found.");
+    }
 }

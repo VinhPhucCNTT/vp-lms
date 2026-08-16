@@ -32,8 +32,9 @@ public sealed class AssessmentGradingService(
 
         var attempt = await db.AssessmentAttempts
             .Include(x => x.Questions)
-                .ThenInclude(x => x.Answer!)
-                .ThenInclude(x => x.AttemptQuestion)
+                .ThenInclude(x => x.AssessmentQuestion)
+            .Include(x => x.Questions)
+                .ThenInclude(x => x.Answer)
             .FirstOrDefaultAsync(
                 x => x.Id == attemptId,
                 ct);
@@ -76,6 +77,8 @@ public sealed class AssessmentGradingService(
 
                 attemptQuestion.Answer.IsCorrect =
                     grade.IsCorrect;
+
+                attemptQuestion.Answer.GradedAt = DateTime.UtcNow;
             }
 
             total += grade.EarnedPoints;

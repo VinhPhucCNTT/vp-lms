@@ -22,8 +22,14 @@ using Backend.Persistence.Entities.Users;
 using Backend.Api.Services.Assessments.Graders;
 using Backend.Api.Services.Assessments.Validators;
 using Backend.Api.Services.Assessments;
+using Backend.Api.Endpoints.Course;
+using Backend.Api.Endpoints.Assessment;
+using Backend.Api.Services.Development;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -134,15 +140,20 @@ builder.Services.AddScoped<EnrollmentService>();
 builder.Services.AddScoped<CourseService>();
 builder.Services.AddScoped<ModuleService>();
 builder.Services.AddScoped<ResourceService>();
+builder.Services.AddScoped<LessonService>();
 
 /////
 builder.Services.AddScoped<MultipleChoiceGrader>();
 builder.Services.AddScoped<MultipleSelectGrader>();
 builder.Services.AddScoped<TrueFalseGrader>();
+builder.Services.AddScoped<IQuestionGrader, TrueFalseGrader>();
 builder.Services.AddScoped<ShortAnswerGrader>();
 builder.Services.AddScoped<DragAndDropGrader>();
 builder.Services.AddScoped<CodingGrader>();
 builder.Services.AddScoped<QuestionContentValidator>();
+builder.Services.AddScoped<IQuestionContentValidator>(sp =>
+    sp.GetRequiredService<QuestionContentValidator>());
+builder.Services.AddScoped<IQuestionTypeValidator, ChoiceQuestionValidator>();
 
 builder.Services.AddScoped<QuestionSelectionService>();
 
@@ -155,7 +166,8 @@ builder.Services.AddScoped<AssessmentGradingService>();
 /////
 
 var app = builder.Build();
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 
 app.UseExceptionHandler();
 
@@ -163,6 +175,8 @@ app.UseCors("allowFrontend");
 
 if (app.Environment.IsDevelopment())
 {
+    await DevelopmentDataSeeder.SeedAsync(app.Services);
+
     app.MapOpenApi();
     app.MapScalarApiReference();
 
@@ -178,6 +192,8 @@ app.AddCourseEndpoints();
 app.AddEnrollmentEndpoints();
 app.AddModuleEndpoints();
 app.AddResourceEndpoints();
+app.AddLessonEndpoints();
+app.AddAssessmentEndpoints();
 app.AddUserEndpoints();
 
 app.Run();

@@ -19,13 +19,17 @@ public class LessonService(
     public async Task<LessonResponse?> GetLessonByIdAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        return await db.Lessons
+        var lesson = await db.Lessons
             .AsNoTracking()
+            .Include(l => l.Resource)
             .Where(l => l.ResourceId == resourceId)
-            .Select(l => new LessonResponse(
-                _mapper.Map<ResourceDetailResponse>(l.Resource),
-                new LessonInfo(l.ContentMarkdown))
-            ).FirstOrDefaultAsync();
+            .FirstOrDefaultAsync();
+
+        return lesson is null
+            ? null
+            : new LessonResponse(
+                _mapper.Map<ResourceDetailResponse>(lesson.Resource),
+                new LessonInfo(lesson.ContentMarkdown));
     }
 
     public async Task<LessonResponse> CreateAsync(long moduleId, LessonRequest request, CancellationToken ct = default)

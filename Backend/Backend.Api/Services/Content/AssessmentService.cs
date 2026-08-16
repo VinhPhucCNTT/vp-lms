@@ -6,15 +6,21 @@ using Backend.Persistence.Entities.Content;
 using AutoMapper;
 using Backend.Api.Services.Courses;
 using Backend.Api.Core.Common;
+using Backend.Api.Services.Common;
+using Sqids;
 
 namespace Backend.Api.Services.Content;
 
 public class AssessmentService(
     IDbContextFactory<AppDbContext> dbFactory,
-    IMapper mapper)
+    IMapper mapper,
+    CurrentUserService currentUserService,
+    SqidsEncoder<long> sqidsEncoder)
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly IMapper _mapper = mapper;
+    private readonly CurrentUserService _currentUserService = currentUserService;
+    private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
 
     public async Task<Assessment?> GetAsync(long resourceId, CancellationToken ct = default)
     {
@@ -27,19 +33,83 @@ public class AssessmentService(
     public async Task<AssessmentResponse?> GetDtoByIdAsync(long resourceId, CancellationToken ct = default)
     {
         using var db = await _dbFactory.CreateDbContextAsync(ct);
-        return await db.Assessments
+        var userId = _currentUserService.UserId;
+        var assessment = await db.Assessments
             .AsNoTracking()
             .Where(a => a.ResourceId == resourceId)
-            .Select(a => new AssessmentResponse(
-                _mapper.Map<ResourceDetailResponse>(a.Resource),
-                _mapper.Map<AssessmentInfo>(a)
-            ))
+            .Where(a => a.Resource.IsPublished)
+            .Where(a => db.Enrollments.Any(e =>
+                e.CourseId == a.Resource.Module.CourseId &&
+                e.UserId == userId))
+            .Include(a => a.Resource)
             .FirstOrDefaultAsync(ct);
+
+        return assessment is null
+            ? null
+            : new AssessmentResponse(
+                _mapper.Map<ResourceDetailResponse>(assessment.Resource),
+                ToInfo(assessment));
     }
 
-    // public async Task<PaginatedResponse<AssessmentResponse>> QueryAsync()
-    // {
-    // }
+    public async Task<List<AssessmentListResponse>> QueryAsync(CancellationToken ct = default)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var userId = _currentUserService.UserId;
+        var assessments = await db.Assessments
+            .AsNoTracking()
+            .Where(a => a.Resource.IsPublished)
+            .Where(a => db.Enrollments.Any(e =>
+                e.CourseId == a.Resource.Module.CourseId &&
+                e.UserId == userId))
+            .Include(x => x.Resource)
+            .ToListAsync(ct);
+
+        var result = new List<AssessmentListResponse>(assessments.Count);
+        foreach (var assessment in assessments)
+        {
+            var questionCount = await db.AssessmentQuestions
+                .CountAsync(x => x.AssessmentId == assessment.Id, ct);
+            var attempts = await db.AssessmentAttempts
+                .Where(x => x.AssessmentId == assessment.Id && x.StudentId == userId)
+                .ToListAsync(ct);
+            var bestScore = attempts
+                .Where(x => x.TotalScore.HasValue)
+                .Select(x => x.TotalScore)
+                .Max();
+            var bestMaxScore = await db.AssessmentQuestions
+                .Where(x => x.AssessmentId == assessment.Id)
+                .SumAsync(x => x.Points, ct);
+
+            var latestAttempt = attempts
+                .OrderByDescending(x => x.AttemptNumber)
+                .FirstOrDefault();
+
+            result.Add(new AssessmentListResponse(
+                _mapper.Map<ResourceResponse>(assessment.Resource),
+                ToInfo(assessment),
+                questionCount,
+                attempts.Count,
+                bestScore,
+                bestMaxScore,
+                attempts
+                    .OrderByDescending(x => x.AttemptNumber)
+                    .Select(x => (string?)x.Status.ToString())
+                    .FirstOrDefault(),
+                latestAttempt is null ? null : _sqidsEncoder.Encode(latestAttempt.Id)));
+        }
+
+        return result;
+    }
+
+    private static AssessmentInfo ToInfo(Assessment assessment) => new(
+        assessment.Description,
+        assessment.TimeLimitMinutes > 0
+            ? (int)Math.Ceiling(assessment.TimeLimitMinutes)
+            : null,
+        assessment.MaxAttempts,
+        assessment.AvailableFrom,
+        assessment.AvailableUntil,
+        assessment.ShowResults);
 
     public async Task<AssessmentResponse> CreateAsync(long moduleId, AssessmentRequest request, CancellationToken ct = default)
     {
@@ -50,7 +120,7 @@ public class AssessmentService(
         {
             ResourceId = resource.Id,
             Description = request.Info.Description,
-            TimeLimitMinutes = request.Info.TimeLimitMinutes,
+            TimeLimitMinutes = request.Info.TimeLimitMinutes ?? 0,
             MaxAttempts = request.Info.MaxAttempts,
             AvailableFrom = request.Info.AvailableFrom,
             AvailableUntil = request.Info.AvailableUntil,
@@ -75,7 +145,7 @@ public class AssessmentService(
         var resource = await ResourceService.UpdateResourceAsync(db, assessment.ResourceId, request.ResourceInfo);
 
         assessment.Description = request.Info.Description;
-        assessment.TimeLimitMinutes = request.Info.TimeLimitMinutes;
+        assessment.TimeLimitMinutes = request.Info.TimeLimitMinutes ?? 0;
         assessment.MaxAttempts = request.Info.MaxAttempts;
         assessment.AvailableFrom = request.Info.AvailableFrom;
         assessment.AvailableUntil = request.Info.AvailableUntil;
@@ -226,7 +296,7 @@ public class AssessmentService(
     public async Task<Result<bool>> SetPublishStatusAsync(long resourceId, bool isPublished, CancellationToken ct = default)
     {
         using var db = await _dbFactory.CreateDbContextAsync(ct);
-        var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Type == ResourceType.Assignment && r.Id == resourceId, ct);
+        var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Type == ResourceType.Assessment && r.Id == resourceId, ct);
         if (resource is null)
             return Result<bool>.Failure(AssessmentErrors.NotFound);
 

@@ -28,6 +28,12 @@ public record ResourceDetailResponse(
     DateTime UpdatedAt
 ) : IEntityResponse;
 
+public record ResourceProgressResponse(
+    bool IsCompleted,
+    DateTime? CompletedAt,
+    DateTime? LastAccessedAt
+);
+
 public record ResourceRequestInfo
 (
     string Title,

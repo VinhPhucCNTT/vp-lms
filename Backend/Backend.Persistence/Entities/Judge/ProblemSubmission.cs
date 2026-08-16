@@ -11,7 +11,7 @@ public class ProblemSubmission : BaseEntity
 
     public int OrderIndex { get; set; }
     public string SubmittedCode { get; set; } = default!;
-    public string Language { get; set; } = default!;
+    public ProgrammingLanguage Language { get; set; }
     public SubmissionStatus Status { get; set; } = SubmissionStatus.Pending;
     public int? ExecutionTimeMs { get; set; }
     public int? MemoryUsedKb { get; set; }

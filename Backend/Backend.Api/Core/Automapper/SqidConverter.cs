@@ -14,3 +14,15 @@ public class SqidConverter(SqidsEncoder<long> sqids) : IValueConverter<long, str
         return _sqids.Encode(sourceMember);
     }
 }
+
+public sealed class SqidTypeConverter(SqidsEncoder<long> sqids)
+    : ITypeConverter<long, string>
+{
+    public string Convert(
+        long source,
+        string destination,
+        ResolutionContext context)
+    {
+        return sqids.Encode(source);
+    }
+}

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "+sJXgSY1H90=",
+  "dgSpecHash": "IN0hnrOkrjc=",
   "success": true,
   "projectFilePath": "D:\\vp-lms\\Backend\\Backend.JudgeWorker\\Backend.JudgeWorker.csproj",
   "expectedPackageFiles": [
@@ -8,7 +8,7 @@
     "C:\\Users\\ACER\\.nuget\\packages\\microsoft.entityframeworkcore\\10.0.5\\microsoft.entityframeworkcore.10.0.5.nupkg.sha512",
     "C:\\Users\\ACER\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\10.0.5\\microsoft.entityframeworkcore.abstractions.10.0.5.nupkg.sha512",
     "C:\\Users\\ACER\\.nuget\\packages\\microsoft.entityframeworkcore.analyzers\\10.0.5\\microsoft.entityframeworkcore.analyzers.10.0.5.nupkg.sha512",
-    "C:\\Users\\ACER\\.nuget\\packages\\microsoft.entityframeworkcore.relational\\10.0.4\\microsoft.entityframeworkcore.relational.10.0.4.nupkg.sha512",
+    "C:\\Users\\ACER\\.nuget\\packages\\microsoft.entityframeworkcore.relational\\10.0.5\\microsoft.entityframeworkcore.relational.10.0.5.nupkg.sha512",
     "C:\\Users\\ACER\\.nuget\\packages\\microsoft.extensions.caching.abstractions\\10.0.5\\microsoft.extensions.caching.abstractions.10.0.5.nupkg.sha512",
     "C:\\Users\\ACER\\.nuget\\packages\\microsoft.extensions.caching.memory\\10.0.5\\microsoft.extensions.caching.memory.10.0.5.nupkg.sha512",
     "C:\\Users\\ACER\\.nuget\\packages\\microsoft.extensions.configuration\\10.0.10\\microsoft.extensions.configuration.10.0.10.nupkg.sha512",
@@ -44,5 +44,15 @@
     "C:\\Users\\ACER\\.nuget\\packages\\system.diagnostics.eventlog\\10.0.10\\system.diagnostics.eventlog.10.0.10.nupkg.sha512",
     "C:\\Users\\ACER\\.nuget\\packages\\system.threading.ratelimiting\\8.0.0\\system.threading.ratelimiting.8.0.0.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1900",
+      "level": "Warning",
+      "message": "Error occurred while getting package vulnerability data: Unable to load the service index for source https://api.nuget.org/v3/index.json.",
+      "projectPath": "D:\\vp-lms\\Backend\\Backend.JudgeWorker\\Backend.JudgeWorker.csproj",
+      "warningLevel": 1,
+      "filePath": "D:\\vp-lms\\Backend\\Backend.JudgeWorker\\Backend.JudgeWorker.csproj",
+      "targetGraphs": []
+    }
+  ]
 }

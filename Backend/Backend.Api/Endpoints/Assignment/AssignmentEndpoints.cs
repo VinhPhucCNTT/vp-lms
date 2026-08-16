@@ -36,6 +36,13 @@ public static class AssignmentEndpoints
         assignment.MapPost("{resourceId}/set-publish", HandleSetPublish);
     }
 
+    private static async Task<Ok<List<AssignmentResponse>>> HandleQuery(
+        AssignmentService assignmentService,
+        CancellationToken ct)
+    {
+        return TypedResults.Ok(await assignmentService.QueryAsync(ct));
+    }
+
     private static async
         Task<Results<Ok<AssignmentResponse>, BadRequest, NotFound>>
         HandleGetById(
@@ -108,8 +115,8 @@ public static class AssignmentEndpoints
             string resourceId,
             IFormFile file,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
+        CourseService courseService,
+        CourseAuthorization auth,
             SubmissionService submissionService,
             CancellationToken ct)
     {
@@ -129,7 +136,7 @@ public static class AssignmentEndpoints
         return TypedResults.Ok(result);
     }
 
-    private static async
+        private static async
         Task<Results<Ok<SubmissionDetailResponse>, BadRequest, NotFound<string>>>
         HandleSubmit(
             string resourceId,
@@ -186,7 +193,7 @@ public static class AssignmentEndpoints
             SqidsEncoder<long> sqidsEncoder,
             CourseService courseService,
             CourseAuthorization auth,
-            SubmissionService submissionService,
+            AssignmentGradeService assignmentGradeService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -197,7 +204,7 @@ public static class AssignmentEndpoints
         if (course is null || !await auth.IsCourseOwnerAsync(course))
             return TypedResults.NotFound("Course not found.");
 
-        var result = await submissionService.GetAssignmentGradesAsync(decoded[0], page, ct);
+        var result = await assignmentGradeService.GetAssignmentGradesAsync(decoded[0], page, ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound("Assignment not found.");

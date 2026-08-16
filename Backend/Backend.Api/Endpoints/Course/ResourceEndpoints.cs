@@ -13,12 +13,66 @@ public static class ResourceEndpoints
     {
         var resource = route.MapGroup("/api/resource").WithTags("Resources");
 
-        // resource.MapGet("{resourceId}", HandleGetById);
+        resource.MapGet("module/{moduleId}", HandleGetByModule)
+            .RequireAuthorization();
+        resource.MapGet("{resourceId}/progress", HandleGetProgress)
+            .RequireAuthorization("IsStudent");
+        resource.MapPost("{resourceId}/complete", HandleComplete)
+            .RequireAuthorization("IsStudent");
 
         resource.MapDelete("{resourceId}", HandleDelete).RequireAuthorization();
         // resource.MapPost("{moduleId}/publish/{resourceId}", HandlePublish).RequireAuthorization();
         // resource.MapPost("{moduleId}/unpublish/{resourceId}", HandleUnpublish).RequireAuthorization();
         resource.MapPost("{resourceId}/reorder", HandleReorder).RequireAuthorization();
+    }
+
+    private static async
+        Task<Results<Ok<List<ResourceResponse>>, BadRequest>>
+        HandleGetByModule(
+            string moduleId,
+            SqidsEncoder<long> sqidsEncoder,
+            ResourceService resourceService)
+    {
+        var decoded = sqidsEncoder.Decode(moduleId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        return TypedResults.Ok(
+            await resourceService.GetPublishedResourcesAsync(decoded[0]));
+    }
+
+    private static async
+        Task<Results<Ok<ResourceProgressResponse>, BadRequest, NotFound>>
+        HandleGetProgress(
+            string resourceId,
+            SqidsEncoder<long> sqidsEncoder,
+            ResourceService resourceService)
+    {
+        var decoded = sqidsEncoder.Decode(resourceId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        var progress = await resourceService.GetResourceProgressAsync(decoded[0]);
+        return progress is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(progress);
+    }
+
+    private static async
+        Task<Results<Ok<ResourceProgressResponse>, BadRequest, NotFound>>
+        HandleComplete(
+            string resourceId,
+            SqidsEncoder<long> sqidsEncoder,
+            ResourceService resourceService)
+    {
+        var decoded = sqidsEncoder.Decode(resourceId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        var progress = await resourceService.MarkResourceCompletedAsync(decoded[0]);
+        return progress is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(progress);
     }
 
     // private static async

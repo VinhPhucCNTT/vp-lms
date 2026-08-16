@@ -12,7 +12,9 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor)
         get
         {
             var userIdClaim = _httpContextAccessor.HttpContext?
-                .User?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+                .User?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                ?? _httpContextAccessor.HttpContext?
+                    .User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             return userIdClaim != null ? long.Parse(userIdClaim) : -1;
         }

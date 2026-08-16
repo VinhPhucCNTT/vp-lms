@@ -46,7 +46,7 @@ public class DashboardService(
         var assessmentIds = await GetCourseResourceIdsAsync(db, ResourceType.Assessment, userId);
         return assessmentIds.Count - await db.AssessmentAttempts
             .AsNoTracking()
-            .Where(s => s.UserId == userId && assessmentIds.Contains(s.AssessmentId))
+            .Where(s => s.StudentId == userId && assessmentIds.Contains(s.AssessmentId))
             .DistinctBy(s => s.AssessmentId)
             .CountAsync();
     }
