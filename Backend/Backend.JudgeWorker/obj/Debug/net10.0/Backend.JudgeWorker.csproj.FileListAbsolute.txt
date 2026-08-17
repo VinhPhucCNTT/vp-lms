@@ -58,3 +58,4 @@ D:\vp-lms\Backend\Backend.JudgeWorker\obj\Debug\net10.0\refint\Backend.JudgeWork
 D:\vp-lms\Backend\Backend.JudgeWorker\obj\Debug\net10.0\Backend.JudgeWorker.pdb
 D:\vp-lms\Backend\Backend.JudgeWorker\obj\Debug\net10.0\Backend.JudgeWorker.genruntimeconfig.cache
 D:\vp-lms\Backend\Backend.JudgeWorker\obj\Debug\net10.0\ref\Backend.JudgeWorker.dll
+D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\Backend.JudgeWorker.exe

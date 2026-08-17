@@ -11,13 +11,10 @@ import { Separator } from "@/components/ui/separator";
 const navigation = [
   { title: "Dashboard", url: "/instructor", icon: LayoutDashboardIcon, exact: true },
   { title: "My Courses", url: "/instructor/courses", icon: BookOpenIcon, exact: true },
-  { title: "Calendar", url: "/instructor/calendar", icon: CalendarIcon, exact: false },
   { title: "Submissions", url: "/instructor/submissions", icon: FileTextIcon, exact: false },
-  { title: "Announcements", url: "/instructor/announcements", icon: BellIcon, exact: false },
   { title: "Assessments", url: "/instructor/assessments", icon: ClipboardListIcon, exact: false },
   { title: "Question Banks", url: "/instructor/question-banks", icon: LibraryIcon, exact: false },
   { title: "Coding Problems", url: "/instructor/coding-problems", icon: CodeIcon, exact: false },
-  { title: "Notifications", url: "/instructor/notifications", icon: BellIcon, exact: false },
 ];
 
 export function InstructorLayout() {

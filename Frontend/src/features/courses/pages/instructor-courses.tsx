@@ -3,6 +3,7 @@ import { PlusIcon, SearchIcon, UsersIcon, LayersIcon, BookOpenIcon } from "lucid
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,10 @@ import type { Course } from "@/types";
 export function InstructorCourses() {
   const { data: courses, loading, error, reload } = useApi<Course[]>(() => courseApi.getInstructorCourses());
   const [search, setSearch] = React.useState("");
+  const [showCreate, setShowCreate] = React.useState(false);
+  const [form, setForm] = React.useState({ code: "", title: "", description: "" });
+  const [createError, setCreateError] = React.useState<string | null>(null);
+  const [creating, setCreating] = React.useState(false);
 
   const filtered = React.useMemo(() => {
     if (!courses) return [];
@@ -28,6 +33,22 @@ export function InstructorCourses() {
 
   const published = filtered.filter((c) => c.status === "published");
   const drafts = filtered.filter((c) => c.status === "draft");
+
+  async function handleCreate(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setCreating(true);
+    setCreateError(null);
+    try {
+      await courseApi.createCourse(form);
+      setForm({ code: "", title: "", description: "" });
+      setShowCreate(false);
+      reload();
+    } catch (err: unknown) {
+      setCreateError(err instanceof Error ? err.message : "Unable to create course.");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   if (loading) return <LoadingState label="Loading your courses..." />;
   if (error) return <ErrorState message={error} onRetry={reload} />;
@@ -85,12 +106,30 @@ export function InstructorCourses() {
         description="Courses you have created and manage"
         breadcrumbs={[{ label: "Dashboard", href: "/instructor" }, { label: "My Courses" }]}
         actions={
-          <Button>
+          <Button onClick={() => setShowCreate((value) => !value)}>
             <PlusIcon className="size-4 mr-2" />
             Create Course
           </Button>
         }
       />
+
+      {showCreate && (
+        <Card>
+          <CardHeader><h2 className="font-semibold">Create Course</h2></CardHeader>
+          <CardContent>
+            <form onSubmit={handleCreate} className="grid gap-4 sm:grid-cols-2">
+              <Input placeholder="Course code" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} required />
+              <Input placeholder="Course title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+              <Textarea className="sm:col-span-2" placeholder="Description (optional)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              {createError && <p className="sm:col-span-2 text-sm text-destructive">{createError}</p>}
+              <div className="sm:col-span-2 flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+                <Button type="submit" disabled={creating}>{creating ? "Creating..." : "Create Course"}</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">

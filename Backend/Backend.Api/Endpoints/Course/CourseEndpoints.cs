@@ -24,7 +24,7 @@ public static class CourseEndpoints
         course.MapGet("{courseId}/modules", HandleGetModules);
         course.MapPost("{courseId}/modules", HandleCreateModule);
 
-        course.MapPost("", HandleCreate);
+        course.MapPost("", HandleCreate).RequireAuthorization("IsInstructor");
         course.MapPut("{courseId}", HandleUpdate);
         course.MapDelete("{courseId}", HandleDelete);
         course.MapPost("{courseId}/upload-background", HandleUploadBackground);

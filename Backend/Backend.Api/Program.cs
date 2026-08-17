@@ -27,6 +27,8 @@ using Backend.Api.Endpoints.Course;
 using Backend.Api.Endpoints.Assessment;
 using Backend.Api.Endpoints.Assignment;
 using Backend.Api.Services.Development;
+using Backend.Api.Services.Judge;
+using Backend.Api.Core.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,6 +88,10 @@ builder.Services.AddSingleton(provider =>
         MinLength = sqidsSettings?.MinLength ?? 0
     })
 );
+
+builder.Services.Configure<RabbitMqOptions>(
+    builder.Configuration.GetSection(
+        RabbitMqOptions.SectionName));
 
 // [[ AUTHENTICATION ]]
 
@@ -152,6 +158,10 @@ builder.Services.AddScoped<AssignmentService>();
 builder.Services.AddScoped<SubmissionService>();
 builder.Services.AddScoped<AssignmentGradeService>();
 
+builder.Services.AddScoped<CodingProblemService>();
+builder.Services.AddScoped<CodingSubmissionService>();
+builder.Services.AddSingleton<RabbitMqJudgePublisher>();
+
 /////
 builder.Services.AddScoped<MultipleChoiceGrader>();
 builder.Services.AddScoped<MultipleSelectGrader>();
@@ -207,5 +217,7 @@ app.AddAssignmentEndpoints();
 app.AddFileEndpoints();
 app.AddAssessmentEndpoints();
 app.AddUserEndpoints();
+app.AddCodingProblemEndpoints();
+app.AddCodingSubmissionEndpoints();
 
 app.Run();

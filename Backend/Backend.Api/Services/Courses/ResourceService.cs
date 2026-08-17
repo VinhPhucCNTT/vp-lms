@@ -160,24 +160,6 @@ public class ResourceService(
         return true;
     }
 
-    // public static async Task<bool> SetResourcePublishStatusAsync(AppDbContext db, long resourceId, bool isPublished, CancellationToken ct = default)
-    // {
-    //     var count = await db.CourseResources
-    //         .Where(r => r.Id == resourceId)
-    //         .ExecuteUpdateAsync(r => r.SetProperty(r => r.IsPublished, isPublished), ct);
-    //
-    //     return count > 0;
-    // }
-
-    public async Task<int> SetResourcesPublishStatusAsync(long moduleId, List<long> resourceIds, bool isPublished)
-    {
-        using var db = await _dbFactory.CreateDbContextAsync();
-        var currentUserId = _currentUserService.UserId;
-        return await db.CourseResources
-            .Where(r => r.ModuleId == moduleId && resourceIds.Contains(r.Id) && r.Module.Course.CreatorId == currentUserId)
-            .ExecuteUpdateAsync(r => r.SetProperty(r => r.IsPublished, isPublished));
-    }
-
     public async Task<bool> CheckOwnerAsync(long resourceId)
     {
         using var db = await _dbFactory.CreateDbContextAsync();

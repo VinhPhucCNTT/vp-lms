@@ -79,15 +79,10 @@ public class CourseService(
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
-        var enrolledCourseIds = await db.Enrollments
-            .AsNoTracking()
-            .Where(e => e.UserId == currentUserId)
-            .Select(e => e.CourseId)
-            .ToListAsync();
 
         return await db.Courses
             .AsNoTracking()
-            .Where(c => enrolledCourseIds.Contains(c.Id))
+            .Where(c => c.CreatorId == currentUserId)
             .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync();
     }
@@ -188,6 +183,7 @@ public class CourseService(
         var course = new Course
         {
             CreatorId = _currentUserService.UserId,
+            Code = request.Code,
             Title = request.Title,
             Description = request.Description,
             IsPublished = request.IsPublished,

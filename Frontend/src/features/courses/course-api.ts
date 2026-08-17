@@ -15,6 +15,16 @@ export interface CourseDto {
   enrollmentCount: number;
 }
 
+export interface CourseSetResponseDto {
+  id: string;
+  creatorId: string;
+  code: string;
+  title: string;
+  description: string | null;
+  isPublished: boolean;
+  enrollmentOpen: boolean;
+}
+
 export interface CourseModuleDto {
   id: string;
   description: string | null;
@@ -145,9 +155,38 @@ export const courseApi = {
   },
 
   // Create a course (instructor)
-  async createCourse(data: Partial<Course>): Promise<Course> {
-    const dto = await api.post<CourseDto>("/api/course", data);
-    return mapCourse(dto);
+  async createCourse(data: {
+    code: string;
+    title: string;
+    description?: string;
+    isPublished?: boolean;
+    enrollmentOpen?: boolean;
+  }): Promise<Course> {
+    const dto = await api.post<CourseSetResponseDto>("/api/course", {
+      code: data.code,
+      title: data.title,
+      description: data.description ?? null,
+      isPublished: data.isPublished ?? false,
+      enrollmentOpen: data.enrollmentOpen ?? true,
+    });
+    return {
+      id: dto.id,
+      code: dto.code,
+      title: dto.title,
+      description: dto.description ?? "",
+      instructorId: dto.creatorId,
+      enrolledCount: 0,
+      startDate: "",
+      endDate: "",
+      createdAt: "",
+      department: undefined,
+      credits: undefined,
+      level: undefined,
+      semester: undefined,
+      tags: undefined,
+      featured: undefined,
+      status: dto.isPublished ? "published" : "draft",
+    };
   },
 
   // Update a course

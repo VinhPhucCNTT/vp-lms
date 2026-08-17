@@ -1,0 +1,153 @@
+using Backend.Api.Core.Common;
+using Backend.Api.Services.Common;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Judge;
+using Backend.Persistence.Common;
+using Microsoft.EntityFrameworkCore;
+
+namespace Backend.Api.Services.Judge;
+
+public sealed class CodingSubmissionService(
+    IDbContextFactory<AppDbContext> dbFactory,
+    CurrentUserService currentUser,
+    RabbitMqJudgePublisher publisher)
+{
+    public async Task<Result<long>> CreateAsync(
+        long resourceId,
+        string sourceCode,
+        Core.Common.ProgrammingLanguage language,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(sourceCode))
+        {
+            return Result<long>.Failure(
+                ErrorType.Validation,
+                "Source code cannot be empty.");
+        }
+
+        var userId = currentUser.UserId;
+
+        if (userId <= 0)
+        {
+            return Result<long>.Failure(
+                ErrorType.Forbidden,
+                "Invalid authenticated user.");
+        }
+
+        await using var db =
+            await dbFactory.CreateDbContextAsync(ct);
+
+        var problem = await db.CodingProblems
+            .Include(x => x.Resource)
+            .SingleOrDefaultAsync(
+                x => x.ResourceId == resourceId &&
+                     !x.IsDeleted &&
+                     x.Resource.IsPublished,
+                ct);
+
+        if (problem is null)
+        {
+            return Result<long>.Failure(
+                ErrorType.NotFound,
+                "Coding problem not found.");
+        }
+
+        if (!Enum.TryParse<Core.Common.ProgrammingLanguage>(
+                problem.Language,
+                true,
+                out var configuredLanguage) ||
+            configuredLanguage != language)
+        {
+            return Result<long>.Failure(
+                ErrorType.Validation,
+                $"Language '{language}' is not allowed.");
+        }
+
+        var nextOrder =
+            (await db.ProblemSubmissions
+                .Where(x =>
+                    x.ProblemId == resourceId &&
+                    x.UserId == userId)
+                .MaxAsync(
+                    x => (int?)x.OrderIndex,
+                    ct) ?? 0) + 1;
+
+        var submission = new ProblemSubmission
+        {
+            ProblemId = resourceId,
+            UserId = userId,
+            OrderIndex = nextOrder,
+            SubmittedCode = sourceCode,
+            Language = (Persistence.Common.ProgrammingLanguage)language,
+            Status = SubmissionStatus.Pending,
+            TotalTestCases = await db.ProblemTestCases
+                .CountAsync(
+                    x => x.ProblemId == resourceId,
+                    ct)
+        };
+
+        db.ProblemSubmissions.Add(submission);
+
+        await db.SaveChangesAsync(ct);
+
+        /*
+         * The worker loads the full submission from the database.
+         * Only the submission ID needs to cross RabbitMQ.
+         */
+        await publisher.PublishAsync(
+            submission.Id,
+            ct);
+
+        return Result<long>.Success(
+            submission.Id);
+    }
+
+    public async Task<
+        Result<CodingSubmissionResult>>
+        GetResultAsync(
+            long submissionId,
+            CancellationToken ct)
+    {
+        if (!currentUser.IsAuthenticated)
+        {
+            return Result<CodingSubmissionResult>.Failure(
+                ErrorType.Forbidden,
+                "Authentication is required.");
+        }
+
+        await using var db =
+            await dbFactory.CreateDbContextAsync(ct);
+
+        var submission =
+            await db.ProblemSubmissions
+                .AsNoTracking()
+                .Where(x =>
+                    x.Id == submissionId &&
+                    x.UserId == currentUser.UserId)
+                .Select(x =>
+                    new CodingSubmissionResult(
+                        x.Status,
+                        x.ExecutionTimeMs,
+                        x.MemoryUsedKb,
+                        x.PassedTestCases,
+                        x.TotalTestCases))
+                .SingleOrDefaultAsync(ct);
+
+        if (submission is null)
+        {
+            return Result<CodingSubmissionResult>.Failure(
+                ErrorType.NotFound,
+                "Submission not found.");
+        }
+
+        return Result<CodingSubmissionResult>.Success(
+            submission);
+    }
+}
+
+public sealed record CodingSubmissionResult(
+    SubmissionStatus Status,
+    int? ExecutionTimeMs,
+    int? MemoryUsedKb,
+    int? PassedTestCases,
+    int? TotalTestCases);

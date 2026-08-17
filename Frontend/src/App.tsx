@@ -20,6 +20,7 @@ import { CourseWorkspace } from "@/features/courses/pages/course-workspace";
 import { ProblemList } from "@/features/courses/pages/problem-list";
 import { ProblemSolution } from "@/features/courses/pages/problem-solution";
 import { InstructorCourses } from "@/features/courses/pages/instructor-courses";
+import { InstructorCourseDetail } from "@/features/courses/pages/instructor-course-detail";
 import { InstructorCalendar } from "@/features/courses/pages/instructor-calendar";
 import { InstructorNotifications } from "@/features/courses/pages/instructor-notifications";
 import { InstructorSubmissions } from "@/features/courses/pages/instructor-submissions";
@@ -83,7 +84,7 @@ function App() {
                 <Route path="/instructor" element={<InstructorLayout />}>
                   <Route index element={<InstructorDashboard />} />
                   <Route path="courses" element={<InstructorCourses />} />
-                  <Route path="calendar" element={<InstructorCalendar />} />
+                  <Route path="courses/:courseId" element={<InstructorCourseDetail />} />
                   <Route path="submissions" element={<InstructorSubmissions />} />
                   <Route path="assessments" element={<InstructorAssessments />} />
                   <Route path="assessments/:assessmentId" element={<InstructorAssessmentManage />} />
@@ -91,7 +92,6 @@ function App() {
                   <Route path="question-banks" element={<QuestionBankList />} />
                   <Route path="question-banks/:bankId" element={<QuestionBankDetail />} />
                   <Route path="coding-problems" element={<InstructorCodingProblems />} />
-                  <Route path="notifications" element={<InstructorNotifications />} />
                 </Route>
               </Route>
               <Route element={<AdminRoute />}>

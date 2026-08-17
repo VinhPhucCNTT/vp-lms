@@ -13,3 +13,7 @@ D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\refint\Backend.Persisten
 D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\Backend.Persistence.pdb
 D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\Backend.Persistence.genruntimeconfig.cache
 D:\vp-lms\Backend\Backend.Persistence\obj\Debug\net10.0\ref\Backend.Persistence.dll
+D:\vp-lms\.buildverify\Backend.Persistence.deps.json
+D:\vp-lms\.buildverify\Backend.Persistence.runtimeconfig.json
+D:\vp-lms\.buildverify\Backend.Persistence.dll
+D:\vp-lms\.buildverify\Backend.Persistence.pdb

@@ -1,4 +1,3 @@
-using Backend.JudgeWorker;
 using Backend.JudgeWorker.Configuration;
 using Backend.JudgeWorker.Data;
 using Backend.JudgeWorker.Interfaces;

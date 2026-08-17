@@ -184,6 +184,21 @@ public sealed class DockerRunner(
                 // Process may have already exited.
             }
 
+            // The judge's time limit expired.
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                stopwatch.Stop();
+
+                return new DockerExecutionResult(
+                    ExitCode: -1,
+                    StandardOutput: "",
+                    StandardError: "",
+                    ExecutionTimeMs:
+                        (long)stopwatch.Elapsed.TotalMilliseconds,
+                    TimedOut: true);
+            }
+
+            // The worker itself is shutting down.
             throw;
         }
 
