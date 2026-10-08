@@ -218,6 +218,65 @@ public static class DevelopmentDataSeeder
             });
         }
 
+        var codingResource = await db.CourseResources
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(x =>
+                x.ModuleId == module.Id &&
+                x.Type == ResourceType.Problem &&
+                x.OrderIndex == 3);
+
+        if (codingResource is null)
+        {
+            codingResource = new CourseResource
+            {
+                ModuleId = module.Id,
+                Type = ResourceType.Problem,
+                Title = "Add Two Numbers",
+                OrderIndex = 3,
+                IsPublished = true
+            };
+            db.CourseResources.Add(codingResource);
+            await db.SaveChangesAsync();
+        }
+
+        var codingProblem = await db.CodingProblems
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(x => x.ResourceId == codingResource.Id);
+
+        if (codingProblem is null)
+        {
+            codingProblem = new CodingProblem
+            {
+                ResourceId = codingResource.Id,
+                ProblemStatementMarkdown = "# Add Two Numbers\n\nRead two integers from standard input and print their sum.",
+                ConstraintsMarkdown = "- The input contains two integers separated by whitespace.\n- The absolute value of each integer is at most 1,000,000.",
+                FunctionSignature = "Read from stdin and write to stdout",
+                Language = "Python",
+                TimeLimitMs = 1000,
+                MemoryLimitMb = 128,
+                IsPractice = true,
+                Difficulty = ProblemDifficulty.Easy
+            };
+            db.CodingProblems.Add(codingProblem);
+            await db.SaveChangesAsync();
+
+            db.ProblemTestCases.AddRange(
+                new ProblemTestCase
+                {
+                    ProblemId = codingProblem.Id,
+                    OrderIndex = 0,
+                    Input = "2 3",
+                    ExpectedOutput = "5"
+                },
+                new ProblemTestCase
+                {
+                    ProblemId = codingProblem.Id,
+                    OrderIndex = 1,
+                    Input = "-10 7",
+                    ExpectedOutput = "-3"
+                });
+        }
+
         await db.SaveChangesAsync();
     }
 

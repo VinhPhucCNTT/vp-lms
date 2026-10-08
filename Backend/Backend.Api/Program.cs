@@ -159,7 +159,7 @@ builder.Services.AddScoped<SubmissionService>();
 builder.Services.AddScoped<AssignmentGradeService>();
 
 builder.Services.AddScoped<CodingProblemService>();
-builder.Services.AddScoped<CodingSubmissionService>();
+builder.Services.AddScoped<Backend.Api.Services.Judge.CodingSubmissionService>();
 builder.Services.AddSingleton<RabbitMqJudgePublisher>();
 
 /////

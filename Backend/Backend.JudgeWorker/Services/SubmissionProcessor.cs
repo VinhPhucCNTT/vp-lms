@@ -1,4 +1,4 @@
-using Backend.JudgeWorker.Contracts;
+using Backend.Judge.Contracts;
 using Backend.JudgeWorker.Interfaces;
 
 namespace Backend.JudgeWorker.Services;

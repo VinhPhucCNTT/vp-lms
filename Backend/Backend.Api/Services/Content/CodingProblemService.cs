@@ -2,12 +2,41 @@ using AutoMapper;
 using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Common;
+using Backend.Judge.Contracts;
 using Backend.Persistence.Data;
 using Backend.Persistence.Entities.Content;
 using Backend.Persistence.Entities.Courses;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Content;
+
+public interface ICodingProblemService
+{
+    public Task<Result<CodingProblemResponse>>
+        CreateAsync(long moduleId, CodingProblemRequest request, CancellationToken ct);
+
+    public Task<Result<CodingProblemResponse>>
+        GetByResourceAsync(long resourceId, CancellationToken ct);
+
+    public Task<Result<ProblemTestCaseResponse>>
+        AddTestCaseAsync(long resourceId, ProblemTestCaseRequest request, CancellationToken ct);
+
+    public Task<Result<IReadOnlyList<ProblemTestCaseResponse>>>
+        GetTestCasesAsync(
+            long resourceId,
+            CancellationToken ct);
+
+    public Task<Result>
+        GetLanguageProfileAsync(
+            long resourceId,
+            CancellationToken ct);
+
+    public Task<Result>
+        SetLanguageProfileAsync(
+            long resourceId,
+            LanguageProfileDto[] request,
+            CancellationToken ct);
+}
 
 public sealed class CodingProblemService(
     IDbContextFactory<AppDbContext> dbFactory,
@@ -19,30 +48,8 @@ public sealed class CodingProblemService(
     public async Task<Result<CodingProblemResponse>> CreateAsync(
         long moduleId,
         CodingProblemRequest request,
-        CancellationToken ct)
+        CancellationToken ct = default)
     {
-        if (!currentUser.IsAuthenticated)
-        {
-            return Result<CodingProblemResponse>.Failure(
-                ErrorType.Forbidden,
-                "Authentication is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(request.ResourceInfo.Title))
-        {
-            return Result<CodingProblemResponse>.Failure(
-                ErrorType.Validation,
-                "Problem title is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(
-                request.Info.ProblemStatementMarkdown))
-        {
-            return Result<CodingProblemResponse>.Failure(
-                ErrorType.Validation,
-                "Problem statement is required.");
-        }
-
         if (!TryParseLanguage(
                 request.Info.Language,
                 out _))
@@ -50,20 +57,6 @@ public sealed class CodingProblemService(
             return Result<CodingProblemResponse>.Failure(
                 ErrorType.Validation,
                 $"Unsupported programming language '{request.Info.Language}'.");
-        }
-
-        if (request.Info.TimeLimitMs <= 0)
-        {
-            return Result<CodingProblemResponse>.Failure(
-                ErrorType.Validation,
-                "Time limit must be greater than zero.");
-        }
-
-        if (request.Info.MemoryLimitMb <= 0)
-        {
-            return Result<CodingProblemResponse>.Failure(
-                ErrorType.Validation,
-                "Memory limit must be greater than zero.");
         }
 
         await using var db =
@@ -114,8 +107,6 @@ public sealed class CodingProblemService(
                     request.Info.ConstraintsMarkdown,
                 FunctionSignature =
                     request.Info.FunctionSignature,
-                Language =
-                    request.Info.Language,
                 TimeLimitMs =
                     request.Info.TimeLimitMs,
                 MemoryLimitMb =
@@ -320,6 +311,19 @@ public sealed class CodingProblemService(
 
         return Result<IReadOnlyList<ProblemTestCaseResponse>>.Success(
             testCases);
+    }
+
+    public Task<Result<LanguageProfileDto[]>> GetLanguageProfileAsync(
+            long resourceId,
+            CancellationToken ct)
+    {
+    }
+
+    public Task<Result<LanguageProfileDto[]>> SetLanguageProfileAsync(
+            long resourceId,
+            LanguageProfileDto[] request,
+            CancellationToken ct)
+    {
     }
 
     private static bool TryParseLanguage(

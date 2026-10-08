@@ -12,8 +12,7 @@ var builder =
 
 builder.Services
     .Configure<RabbitMqOptions>(
-        builder.Configuration.GetSection(
-            RabbitMqOptions.SectionName));
+        builder.Configuration.GetSection("RabbitMq"));
 
 // Database
 builder.Services.AddDbContextFactory<AppDbContext>(options =>

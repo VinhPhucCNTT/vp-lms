@@ -1,7 +1,5 @@
 using Backend.Api.Core.Types;
-using Backend.Api.Services.Judge;
-using Backend.Persistence.Common;
-using Backend.Persistence.Entities.Judge;
+using Backend.Api.Services.Submissions;
 using Sqids;
 
 namespace Backend.Api.Endpoints;
@@ -17,7 +15,7 @@ public static class CodingSubmissionEndpoints
 
         group.MapPost(
                 "/{resourceId}",
-                HandleCreate)
+                HandleSend)
             .RequireAuthorization("IsStudent");
 
         group.MapGet(
@@ -26,11 +24,11 @@ public static class CodingSubmissionEndpoints
             .RequireAuthorization("IsStudent");
     }
 
-    private static async Task<IResult> HandleCreate(
+    private static async Task<IResult> HandleSend(
         string resourceId,
-        CreateCodingSubmissionRequest request,
+        JudgeRequest request,
         SqidsEncoder<long> sqidsEncoder,
-        CodingSubmissionService service,
+        ICodingSubmissionService service,
         CancellationToken ct)
     {
         var decoded =
@@ -39,15 +37,10 @@ public static class CodingSubmissionEndpoints
         if (decoded.Count != 1)
         {
             return TypedResults.BadRequest(
-                "Invalid problem ID.");
+                "Invalid resource ID.");
         }
 
-        var result =
-            await service.CreateAsync(
-                decoded[0],
-                request.SourceCode,
-                (Core.Common.ProgrammingLanguage)request.Language,
-                ct);
+        var result = await service.Send(decoded[0], request, ct);
 
         if (!result.IsSuccess)
         {
@@ -57,8 +50,10 @@ public static class CodingSubmissionEndpoints
                     TypedResults.Forbid(),
 
                 "not_found" =>
-                    TypedResults.NotFound(
-                        result.Error.Message),
+                    TypedResults.NotFound(result.Error.Message),
+
+                "internal" =>
+                    TypedResults.InternalServerError(),
 
                 _ =>
                     TypedResults.BadRequest(
@@ -67,17 +62,7 @@ public static class CodingSubmissionEndpoints
             };
         }
 
-        var submissionId =
-            sqidsEncoder.Encode(result.Value);
-
-        return TypedResults.Ok(
-            new CodingSubmissionResponse(
-                submissionId,
-                SubmissionStatus.Pending.ToString(),
-                null,
-                null,
-                null,
-                null));
+        return TypedResults.Ok(result.Value!);
     }
 
     private static async Task<IResult> HandleGet(
@@ -95,49 +80,9 @@ public static class CodingSubmissionEndpoints
                 "Invalid submission ID.");
         }
 
-        var result =
-            await service.GetResultAsync(
-                decoded[0],
-                ct);
-
-        if (!result.IsSuccess)
-        {
-            return result.Error?.Code switch
-            {
-                "forbidden" =>
-                    TypedResults.Forbid(),
-
-                "not_found" =>
-                    TypedResults.NotFound(
-                        result.Error.Message),
-
-                _ =>
-                    TypedResults.BadRequest(
-                        result.Error?.Message)
-            };
-        }
-
-        var value = result.Value!;
-
-        return TypedResults.Ok(
-            new CodingSubmissionResponse(
-                submissionId,
-                value.Status.ToString(),
-                value.ExecutionTimeMs,
-                value.MemoryUsedKb,
-                value.PassedTestCases,
-                value.TotalTestCases));
+        var result = await service.Get(decoded[0], ct);
+        return result is not null
+            ? TypedResults.Ok(result)
+            : TypedResults.NotFound();
     }
 }
-
-public sealed record CreateCodingSubmissionRequest(
-    string SourceCode,
-    ProgrammingLanguage Language);
-
-public sealed record CodingSubmissionResponse(
-    string Id,
-    string Status,
-    int? ExecutionTimeMs,
-    int? MemoryUsedKb,
-    int? PassedTestCases,
-    int? TotalTestCases);

@@ -1,6 +1,8 @@
 using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Users;
+using Backend.Judge.Contracts;
+using Backend.JudgeWorker.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Backend.Api.Endpoints;
@@ -13,6 +15,7 @@ public static class DevelopmentOnlyEndpoints
 
         dev.MapGet("users", HandleGetUsers);
         dev.MapGet("auth-test", async () => TypedResults.Ok()).RequireAuthorization();
+        dev.MapPost("judge-test", HandleTestJudge);
     }
 
     private static async
@@ -23,5 +26,13 @@ public static class DevelopmentOnlyEndpoints
     {
         var results = await userService.QueryUsersAsync(query);
         return TypedResults.Ok(results);
+    }
+
+    private static async
+        Task<Ok<JudgeResult>>
+        HandleTestJudge(
+            [AsParameters] JudgeRequest request,
+            JudgeService judgeService)
+    {
     }
 }

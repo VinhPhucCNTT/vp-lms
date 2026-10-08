@@ -1,4 +1,4 @@
-namespace Backend.JudgeWorker.Contracts;
+namespace Backend.Judge.Contracts;
 
 public enum JudgeVerdict
 {

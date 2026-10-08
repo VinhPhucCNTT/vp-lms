@@ -14,24 +14,28 @@ public static class CodingProblemEndpoints
                 .WithTags("Coding Problems");
 
         group.MapPost(
-                "/module/{moduleId}",
-                HandleCreate)
-            .RequireAuthorization("IsInstructor");
+            "/module/{moduleId}",
+            HandleCreate).RequireAuthorization("IsInstructor");
 
         group.MapGet(
-                "/{resourceId}",
-                HandleGetById)
-            .RequireAuthorization();
+            "/{resourceId}",
+            HandleGetById).RequireAuthorization();
 
         group.MapPost(
-                "/{resourceId}/test-cases",
-                HandleAddTestCase)
-            .RequireAuthorization("IsInstructor");
+            "/{resourceId}/test-cases",
+            HandleAddTestCase).RequireAuthorization("IsInstructor");
 
         group.MapGet(
-                "/{resourceId}/test-cases",
-                HandleGetTestCases)
-            .RequireAuthorization();
+            "/{resourceId}/test-cases",
+            HandleGetTestCases).RequireAuthorization();
+
+        group.MapPut(
+            "/{resourceId}/language-profile/",
+            HandleSetLanguageProfile).RequireAuthorization("IsInstructor");
+
+        group.MapGet(
+            "/{resourceId}/language-profile/",
+            HandleGetLanguageProfiles).RequireAuthorization();
     }
 
     private static async Task<IResult> HandleCreate(
@@ -208,5 +212,18 @@ public static class CodingProblemEndpoints
         }
 
         return TypedResults.Ok(result.Value);
+    }
+
+    private static async Task<IResult> HandleSetLanguageProfile(
+        string resourceId,
+        LanguageProfileDto request,
+        SqidsEncoder<long> sqidsEncoder,
+        CodingProblemService service,
+        CancellationToken ct)
+    {
+        var decoded = sqidsEncoder.Decode(resourceId);
+
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
     }
 }

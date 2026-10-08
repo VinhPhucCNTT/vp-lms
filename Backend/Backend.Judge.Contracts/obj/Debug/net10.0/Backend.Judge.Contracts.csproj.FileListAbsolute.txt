@@ -1,0 +1,12 @@
+D:\vp-lms\Backend\Backend.Judge.Contracts\bin\Debug\net10.0\Backend.Judge.Contracts.deps.json
+D:\vp-lms\Backend\Backend.Judge.Contracts\bin\Debug\net10.0\Backend.Judge.Contracts.dll
+D:\vp-lms\Backend\Backend.Judge.Contracts\bin\Debug\net10.0\Backend.Judge.Contracts.pdb
+D:\vp-lms\Backend\Backend.Judge.Contracts\obj\Debug\net10.0\Backend.Judge.Contracts.GeneratedMSBuildEditorConfig.editorconfig
+D:\vp-lms\Backend\Backend.Judge.Contracts\obj\Debug\net10.0\Backend.Judge.Contracts.AssemblyInfoInputs.cache
+D:\vp-lms\Backend\Backend.Judge.Contracts\obj\Debug\net10.0\Backend.Judge.Contracts.AssemblyInfo.cs
+D:\vp-lms\Backend\Backend.Judge.Contracts\obj\Debug\net10.0\Backend.Judge.Contracts.csproj.CoreCompileInputs.cache
+D:\vp-lms\Backend\Backend.Judge.Contracts\obj\Debug\net10.0\Backend.Judge.Contracts.sourcelink.json
+D:\vp-lms\Backend\Backend.Judge.Contracts\obj\Debug\net10.0\Backend.Judge.Contracts.dll
+D:\vp-lms\Backend\Backend.Judge.Contracts\obj\Debug\net10.0\refint\Backend.Judge.Contracts.dll
+D:\vp-lms\Backend\Backend.Judge.Contracts\obj\Debug\net10.0\Backend.Judge.Contracts.pdb
+D:\vp-lms\Backend\Backend.Judge.Contracts\obj\Debug\net10.0\ref\Backend.Judge.Contracts.dll

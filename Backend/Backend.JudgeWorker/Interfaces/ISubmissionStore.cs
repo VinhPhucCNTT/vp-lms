@@ -1,10 +1,10 @@
-using Backend.JudgeWorker.Contracts;
+using Backend.Judge.Contracts;
 
 namespace Backend.JudgeWorker.Interfaces;
 
 public interface ISubmissionStore
 {
-    Task<SubmissionToJudge?> GetForJudgingAsync(
+    Task<JudgeSubmission?> GetForJudgingAsync(
         long submissionId,
         CancellationToken cancellationToken);
 

@@ -1,12 +1,10 @@
-using System.Text;
 using System.Text.Json;
 using Backend.JudgeWorker.Configuration;
-using Backend.JudgeWorker.Contracts;
-using Backend.JudgeWorker.Interfaces;
+using Backend.Judge.Contracts;
 using Backend.JudgeWorker.Services;
 using Microsoft.Extensions.Options;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
+using RabbitMQ.AMQP.Client;
+using RabbitMQ.AMQP.Client.Impl;
 
 namespace Backend.JudgeWorker.Messaging;
 
@@ -19,62 +17,60 @@ public sealed class RabbitMqConsumer(
     private readonly RabbitMqOptions _options =
         options.Value;
 
+    private IEnvironment? _environment;
     private IConnection? _connection;
-    private IChannel? _channel;
+    private IConsumer? _consumer;
 
     protected override async Task ExecuteAsync(
         CancellationToken stoppingToken)
     {
-        var factory = new ConnectionFactory
+        var settings =
+            ConnectionSettingsBuilder.Create()
+                .Uri(new Uri(_options.BrokerUri))
+                .ContainerId($"judge-worker-{Guid.NewGuid():N}")
+                .Build();
+
+        if (logger.IsEnabled(LogLevel.Information))
         {
-            HostName = _options.HostName,
-            Port = _options.Port,
-            UserName = _options.UserName,
-            Password = _options.Password,
+            logger.LogInformation(
+                    "Connecting to RabbitMQ with Uri {Uri}",
+                    _options.BrokerUri);
+        }
 
-            AutomaticRecoveryEnabled = true
-        };
-
-        logger.LogInformation(
-            "Connecting to RabbitMQ at {Host}:{Port}",
-            _options.HostName,
-            _options.Port);
+        _environment =
+            AmqpEnvironment.Create(settings);
 
         _connection =
-            await factory.CreateConnectionAsync(
-                cancellationToken: stoppingToken);
+            await _environment.CreateConnectionAsync();
 
-        _channel =
-            await _connection.CreateChannelAsync(
-                cancellationToken: stoppingToken);
+        // await DeclareTopologyAsync(
+        //     _connection,
+        //     stoppingToken);
 
-        await DeclareTopologyAsync(
-            _channel,
-            stoppingToken);
+        var management = _connection.Management();
 
-        await _channel.BasicQosAsync(
-            prefetchSize: 0,
-            prefetchCount: _options.PrefetchCount,
-            global: false,
-            cancellationToken: stoppingToken);
+        var queueSpec =
+            management
+                .Queue(_options.QueueName)
+                .Type(QueueType.QUORUM);
 
-        var consumer =
-            new AsyncEventingBasicConsumer(
-                _channel);
+        await queueSpec.DeclareAsync();
 
-        consumer.ReceivedAsync +=
-            async (_, eventArgs) =>
-            {
-                await HandleMessageAsync(
-                    eventArgs,
+        _consumer =
+            await _connection
+                .ConsumerBuilder()
+                .Queue(_options.QueueName)
+                .InitialCredits(_options.PrefetchCount)
+                .MessageHandler(
+                    async (context, message) =>
+                    {
+                        await HandleMessageAsync(
+                            context,
+                            message,
+                            stoppingToken);
+                    })
+                .BuildAndStartAsync(
                     stoppingToken);
-            };
-
-        await _channel.BasicConsumeAsync(
-            queue: _options.QueueName,
-            autoAck: false,
-            consumer: consumer,
-            cancellationToken: stoppingToken);
 
         logger.LogInformation(
             "Judge worker is listening on {Queue}",
@@ -93,23 +89,19 @@ public sealed class RabbitMqConsumer(
     }
 
     private async Task HandleMessageAsync(
-        BasicDeliverEventArgs eventArgs,
+        IContext context,
+        IMessage message,
         CancellationToken stoppingToken)
     {
-        if (_channel is null)
-        {
-            return;
-        }
+        var body =
+            message.Body()
+            ?? [];
 
-        // RabbitMQ owns the delivery buffer, so copy it before
-        // doing asynchronous work.
-        var body = eventArgs.Body.ToArray();
-
-        JudgeSubmissionMessage message;
+        JudgeSubmissionMessage submission;
 
         try
         {
-            message =
+            submission =
                 JsonSerializer.Deserialize<JudgeSubmissionMessage>(
                     body)
                 ?? throw new JsonException(
@@ -121,11 +113,8 @@ public sealed class RabbitMqConsumer(
                 ex,
                 "Invalid submission message.");
 
-            await _channel.BasicNackAsync(
-                deliveryTag: eventArgs.DeliveryTag,
-                multiple: false,
-                requeue: false,
-                cancellationToken: stoppingToken);
+            // Equivalent to BasicNack(requeue: false).
+            context.Discard();
 
             return;
         }
@@ -134,7 +123,7 @@ public sealed class RabbitMqConsumer(
         {
             logger.LogInformation(
                 "Received submission {SubmissionId}",
-                message.SubmissionId);
+                submission.SubmissionId);
 
             using var scope =
                 scopeFactory.CreateScope();
@@ -144,89 +133,79 @@ public sealed class RabbitMqConsumer(
                     .GetRequiredService<ISubmissionProcessor>();
 
             await processor.ProcessAsync(
-                message.SubmissionId,
+                submission.SubmissionId,
                 stoppingToken);
 
-            await _channel.BasicAckAsync(
-                deliveryTag: eventArgs.DeliveryTag,
-                multiple: false,
-                cancellationToken: stoppingToken);
+            // Equivalent to BasicAck.
+            context.Accept();
 
             logger.LogInformation(
                 "ACKed submission {SubmissionId}",
-                message.SubmissionId);
+                submission.SubmissionId);
         }
         catch (OperationCanceledException)
             when (stoppingToken.IsCancellationRequested)
         {
-            // Do not ACK. RabbitMQ can redeliver after shutdown.
+            // Do not settle the message.
+            //
+            // Leaving the delivery unsettled allows it to be
+            // redelivered after the consumer/connection closes.
             logger.LogInformation(
                 "Worker shutting down while processing submission {SubmissionId}",
-                message.SubmissionId);
+                submission.SubmissionId);
         }
         catch (Exception ex)
         {
             logger.LogError(
                 ex,
                 "Failed to process submission {SubmissionId}",
-                message.SubmissionId);
+                submission.SubmissionId);
 
-            await _channel.BasicNackAsync(
-                deliveryTag: eventArgs.DeliveryTag,
-                multiple: false,
-
-                // Don't endlessly requeue a poison message.
-                // Configure a dead-letter queue below.
-                requeue: false,
-
-                cancellationToken: stoppingToken);
+            // Equivalent to BasicNack(requeue: false).
+            context.Discard();
         }
     }
 
     private async Task DeclareTopologyAsync(
-        IChannel channel,
+        IConnection connection,
         CancellationToken cancellationToken)
     {
-        await channel.ExchangeDeclareAsync(
-            exchange: _options.DeadLetterExchange,
-            type: ExchangeType.Direct,
-            durable: true,
-            autoDelete: false,
-            cancellationToken: cancellationToken);
+        var management = connection.Management();
 
-        var deadLetterQueue =
-            $"{_options.QueueName}.dead";
+        // var deadLetterExchange =
+        //     management
+        //         .Exchange(_options.DeadLetterExchange)
+        //         .Type(ExchangeType.DIRECT);
+        //
+        // await deadLetterExchange.DeclareAsync();
+        //
+        // var deadLetterQueue =
+        //     $"{_options.QueueName}.dead";
+        //
+        // var deadLetterQueueSpec =
+        //     management
+        //         .Queue(deadLetterQueue)
+        //         .Type(QueueType.QUORUM);
+        //
+        // await deadLetterQueueSpec.DeclareAsync();
+        //
+        // var binding =
+        //     management
+        //         .Binding()
+        //         .SourceExchange(deadLetterExchange)
+        //         .DestinationQueue(deadLetterQueue)
+        //         .Key(_options.QueueName);
+        //
+        // await binding.BindAsync();
 
-        await channel.QueueDeclareAsync(
-            queue: deadLetterQueue,
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            cancellationToken: cancellationToken);
+        var queueSpec =
+            management
+                .Queue(_options.QueueName)
+                .Type(QueueType.QUORUM);
+                // .DeadLetterExchange(_options.DeadLetterExchange)
+                // .DeadLetterRoutingKey(_options.QueueName);
 
-        await channel.QueueBindAsync(
-            queue: deadLetterQueue,
-            exchange: _options.DeadLetterExchange,
-            routingKey: _options.QueueName,
-            cancellationToken: cancellationToken);
-
-        var arguments =
-            new Dictionary<string, object?>
-            {
-                ["x-dead-letter-exchange"] =
-                    _options.DeadLetterExchange,
-
-                ["x-dead-letter-routing-key"] =
-                    _options.QueueName
-            };
-
-        await channel.QueueDeclareAsync(
-            queue: _options.QueueName,
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: arguments,
-            cancellationToken: cancellationToken);
+        await queueSpec.DeclareAsync();
     }
 
     public override async Task StopAsync(
@@ -235,16 +214,20 @@ public sealed class RabbitMqConsumer(
         logger.LogInformation(
             "Stopping judge worker...");
 
-        if (_channel is not null)
+        if (_consumer is not null)
         {
-            await _channel.CloseAsync(
-                cancellationToken);
+            await _consumer.CloseAsync();
+            _consumer.Dispose();
         }
 
         if (_connection is not null)
         {
-            await _connection.CloseAsync(
-                cancellationToken);
+            await _connection.CloseAsync();
+        }
+
+        if (_environment is not null)
+        {
+            await _environment.CloseAsync();
         }
 
         await base.StopAsync(

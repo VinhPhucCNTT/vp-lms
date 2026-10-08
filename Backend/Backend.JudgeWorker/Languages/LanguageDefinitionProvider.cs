@@ -32,32 +32,32 @@ public sealed class LanguageDefinitionProvider
                 "python3 Main.py",
                 false),
 
-            [ProgrammingLanguage.Java] =
-            new(
-                ProgrammingLanguage.Java,
-                "judge-java",
-                "Main.java",
-                "javac Main.java",
-                "java Main",
-                true),
+            // [ProgrammingLanguage.Java] =
+            // new(
+            //     ProgrammingLanguage.Java,
+            //     "judge-java",
+            //     "Main.java",
+            //     "javac Main.java",
+            //     "java Main",
+            //     true),
 
-            [ProgrammingLanguage.TypeScript] =
-            new(
-                ProgrammingLanguage.TypeScript,
-                "judge-typescript",
-                "Main.ts",
-                "tsc Main.ts --target ES2022 --module commonjs --outDir out",
-                "node out/Main.js",
-                true),
+            // [ProgrammingLanguage.TypeScript] =
+            // new(
+            //     ProgrammingLanguage.TypeScript,
+            //     "judge-typescript",
+            //     "Main.ts",
+            //     "tsc Main.ts --target ES2022 --module commonjs --outDir out",
+            //     "node out/Main.js",
+            //     true),
 
-            [ProgrammingLanguage.CSharp] =
-            new(
-                ProgrammingLanguage.CSharp,
-                "judge-csharp",
-                "Program.cs",
-                "dotnet build Judge.csproj -c Release --ignore-failed-sources",
-                "dotnet bin/Release/net10.0/Judge.dll",
-                true)
+            // [ProgrammingLanguage.CSharp] =
+            // new(
+            //     ProgrammingLanguage.CSharp,
+            //     "judge-csharp",
+            //     "Program.cs",
+            //     "dotnet build Judge.csproj -c Release --ignore-failed-sources",
+            //     "dotnet bin/Release/net10.0/Judge.dll",
+            //     true)
         };
 
     public LanguageDefinition Get(

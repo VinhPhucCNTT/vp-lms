@@ -2,6 +2,7 @@ using Backend.Persistence.Common;
 using Backend.Persistence.Entities.Assessments;
 using Backend.Persistence.Entities.Content;
 using Backend.Persistence.Entities.Courses;
+using Backend.Persistence.Entities.Judge;
 
 namespace Backend.Persistence.Entities.Users;
 
@@ -25,6 +26,7 @@ public class User : BaseEntity
     public ICollection<Comment> Comments { get; set; } = [];
     public ICollection<FileAsset> FileAssets { get; set; } = [];
     public ICollection<QuestionBank> QuestionBanks { get; set; } = [];
+    public ICollection<LanguageProfileTemplate> LanguageProfileTemplates { get; set; } = [];
 }
 
 public enum UserRoles {

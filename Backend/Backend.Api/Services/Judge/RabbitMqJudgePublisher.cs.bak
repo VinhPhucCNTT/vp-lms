@@ -2,13 +2,13 @@ using System.Text;
 using System.Text.Json;
 using Backend.Api.Core.Common;
 using Microsoft.Extensions.Options;
-using RabbitMQ.Client;
+using RabbitMQ.AMQP.Client;
 
 namespace Backend.Api.Services.Judge;
 
-public sealed record JudgeSubmissionMessage(
-    long SubmissionId);
-
+// public sealed record JudgeSubmissionMessage(
+//     long SubmissionId);
+//
 public sealed class RabbitMqJudgePublisher(
     IOptions<RabbitMqOptions> options,
     ILogger<RabbitMqJudgePublisher> logger)

@@ -16,6 +16,7 @@ public sealed class DockerRunner(
     {
         if (!language.RequiresCompilation)
         {
+            logger.LogError("Language {Language} is not a compiled language.", language.Language);
             return new DockerExecutionResult(
                 ExitCode: 0,
                 StandardOutput: "",

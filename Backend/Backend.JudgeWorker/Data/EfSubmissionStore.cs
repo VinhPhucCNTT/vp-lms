@@ -25,7 +25,7 @@ public sealed class EfSubmissionStore(
                 {
                     x.Id,
                     x.SubmittedCode,
-                    x.Language,
+Language = x.GetLanguage(),
                     x.ProblemId,
 
                     x.Problem.TimeLimitMs,

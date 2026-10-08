@@ -2,6 +2,35 @@
   "version": 3,
   "targets": {
     "net10.0": {
+      "AMQPNetLite.Core/2.5.4": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Amqp.Net.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Amqp.Net.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "AMQPNetLite.WebSockets/2.5.2": {
+        "type": "package",
+        "dependencies": {
+          "AMQPNetLite.Core": "2.5.2"
+        },
+        "compile": {
+          "lib/netstandard2.0/Amqp.WebSockets.Client.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Amqp.WebSockets.Client.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "EFCore.NamingConventions/10.0.1": {
         "type": "package",
         "dependencies": {
@@ -726,18 +755,19 @@
           }
         }
       },
-      "RabbitMQ.Client/7.2.1": {
+      "RabbitMQ.AMQP.Client/1.4.0": {
         "type": "package",
         "dependencies": {
-          "System.Threading.RateLimiting": "8.0.0"
+          "AMQPNetLite.Core": "2.5.4",
+          "AMQPNetLite.WebSockets": "2.5.2"
         },
         "compile": {
-          "lib/net8.0/RabbitMQ.Client.dll": {
+          "lib/net8.0/RabbitMQ.AMQP.Client.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net8.0/RabbitMQ.Client.dll": {
+          "lib/net8.0/RabbitMQ.AMQP.Client.dll": {
             "related": ".xml"
           }
         }
@@ -768,20 +798,14 @@
           }
         }
       },
-      "System.Threading.RateLimiting/8.0.0": {
-        "type": "package",
+      "Backend.Judge.Contracts/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
         "compile": {
-          "lib/net8.0/System.Threading.RateLimiting.dll": {
-            "related": ".xml"
-          }
+          "bin/placeholder/Backend.Judge.Contracts.dll": {}
         },
         "runtime": {
-          "lib/net8.0/System.Threading.RateLimiting.dll": {
-            "related": ".xml"
-          }
-        },
-        "build": {
-          "buildTransitive/net6.0/_._": {}
+          "bin/placeholder/Backend.Judge.Contracts.dll": {}
         }
       },
       "Backend.Persistence/1.0.0": {
@@ -802,6 +826,38 @@
     }
   },
   "libraries": {
+    "AMQPNetLite.Core/2.5.4": {
+      "sha512": "KWrULsIa7+1Dq8g8ULhQk/pyC916tqLTRTLOfVsjftD2k7WjUvGzgfut5u12u00a2k+FFo8nPnCLEEZpRYK2yA==",
+      "type": "package",
+      "path": "amqpnetlite.core/2.5.4",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "amqpnetlite.core.2.5.4.nupkg.sha512",
+        "amqpnetlite.core.nuspec",
+        "docs/README.md",
+        "lib/netstandard1.3/Amqp.Net.dll",
+        "lib/netstandard1.3/Amqp.Net.xml",
+        "lib/netstandard2.0/Amqp.Net.dll",
+        "lib/netstandard2.0/Amqp.Net.xml"
+      ]
+    },
+    "AMQPNetLite.WebSockets/2.5.2": {
+      "sha512": "mGGGLu8iB1eAmdH/k2BHB4El8Q4voiQTrF5HVf8EpZu4b0JQjg6500f1qtUUdOQTwQDvD4yH8Amh1l/8wNbC2g==",
+      "type": "package",
+      "path": "amqpnetlite.websockets/2.5.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "amqpnetlite.websockets.2.5.2.nupkg.sha512",
+        "amqpnetlite.websockets.nuspec",
+        "docs/README.md",
+        "lib/netstandard1.3/Amqp.WebSockets.Client.dll",
+        "lib/netstandard1.3/Amqp.WebSockets.Client.xml",
+        "lib/netstandard2.0/Amqp.WebSockets.Client.dll",
+        "lib/netstandard2.0/Amqp.WebSockets.Client.xml"
+      ]
+    },
     "EFCore.NamingConventions/10.0.1": {
       "sha512": "Xs5k8XfNKPkkQSkGmZkmDI1je0prLTdxse+s8PgTFZxyBrlrTLzTBUTVJtQKSsbvu4y+luAv8DdtO5SALJE++A==",
       "type": "package",
@@ -1831,21 +1887,21 @@
         "postgresql.png"
       ]
     },
-    "RabbitMQ.Client/7.2.1": {
-      "sha512": "YKXEfg9fVQiTKgZlvIhAfPSFaamEgi8DsQmisCH0IAsU4FYLrtoguDrDj6JtJVGUt40QPnBLRH6fTQcAC4qsOg==",
+    "RabbitMQ.AMQP.Client/1.4.0": {
+      "sha512": "ckkPeaXiADjP2ufVw8u/FQuI8jfrVaIKEnMNn3GqUmFVp5EfaxNqiSZ2kGhi7OtrNqPXcAGZ73q0zwpq8Q48WA==",
       "type": "package",
-      "path": "rabbitmq.client/7.2.1",
+      "path": "rabbitmq.amqp.client/1.4.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "README.md",
         "icon.png",
-        "lib/net8.0/RabbitMQ.Client.dll",
-        "lib/net8.0/RabbitMQ.Client.xml",
-        "lib/netstandard2.0/RabbitMQ.Client.dll",
-        "lib/netstandard2.0/RabbitMQ.Client.xml",
-        "rabbitmq.client.7.2.1.nupkg.sha512",
-        "rabbitmq.client.nuspec"
+        "lib/net8.0/RabbitMQ.AMQP.Client.dll",
+        "lib/net8.0/RabbitMQ.AMQP.Client.xml",
+        "lib/netstandard2.0/RabbitMQ.AMQP.Client.dll",
+        "lib/netstandard2.0/RabbitMQ.AMQP.Client.xml",
+        "rabbitmq.amqp.client.1.4.0.nupkg.sha512",
+        "rabbitmq.amqp.client.nuspec"
       ]
     },
     "System.Diagnostics.EventLog/10.0.10": {
@@ -1886,34 +1942,10 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "System.Threading.RateLimiting/8.0.0": {
-      "sha512": "7mu9v0QDv66ar3DpGSZHg9NuNcxDaaAcnMULuZlaTpP9+hwXhrxNGsF5GmLkSHxFdb5bBc1TzeujsRgTrPWi+Q==",
-      "type": "package",
-      "path": "system.threading.ratelimiting/8.0.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "Icon.png",
-        "LICENSE.TXT",
-        "THIRD-PARTY-NOTICES.TXT",
-        "buildTransitive/net461/System.Threading.RateLimiting.targets",
-        "buildTransitive/net462/_._",
-        "buildTransitive/net6.0/_._",
-        "buildTransitive/netcoreapp2.0/System.Threading.RateLimiting.targets",
-        "lib/net462/System.Threading.RateLimiting.dll",
-        "lib/net462/System.Threading.RateLimiting.xml",
-        "lib/net6.0/System.Threading.RateLimiting.dll",
-        "lib/net6.0/System.Threading.RateLimiting.xml",
-        "lib/net7.0/System.Threading.RateLimiting.dll",
-        "lib/net7.0/System.Threading.RateLimiting.xml",
-        "lib/net8.0/System.Threading.RateLimiting.dll",
-        "lib/net8.0/System.Threading.RateLimiting.xml",
-        "lib/netstandard2.0/System.Threading.RateLimiting.dll",
-        "lib/netstandard2.0/System.Threading.RateLimiting.xml",
-        "system.threading.ratelimiting.8.0.0.nupkg.sha512",
-        "system.threading.ratelimiting.nuspec",
-        "useSharedDesignerContext.txt"
-      ]
+    "Backend.Judge.Contracts/1.0.0": {
+      "type": "project",
+      "path": "../Backend.Judge.Contracts/Backend.Judge.Contracts.csproj",
+      "msbuildProject": "../Backend.Judge.Contracts/Backend.Judge.Contracts.csproj"
     },
     "Backend.Persistence/1.0.0": {
       "type": "project",
@@ -1923,10 +1955,11 @@
   },
   "projectFileDependencyGroups": {
     "net10.0": [
+      "Backend.Judge.Contracts >= 1.0.0",
       "Backend.Persistence >= 1.0.0",
       "Microsoft.EntityFrameworkCore.Relational >= 10.0.5",
       "Microsoft.Extensions.Hosting >= 10.0.10",
-      "RabbitMQ.Client >= 7.2.1"
+      "RabbitMQ.AMQP.Client >= 1.4.0"
     ]
   },
   "packageFolders": {
@@ -1954,6 +1987,9 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
+            "D:\\vp-lms\\Backend\\Backend.Judge.Contracts\\Backend.Judge.Contracts.csproj": {
+              "projectPath": "D:\\vp-lms\\Backend\\Backend.Judge.Contracts\\Backend.Judge.Contracts.csproj"
+            },
             "D:\\vp-lms\\Backend\\Backend.Persistence\\Backend.Persistence.csproj": {
               "projectPath": "D:\\vp-lms\\Backend\\Backend.Persistence\\Backend.Persistence.csproj"
             }
@@ -1984,9 +2020,9 @@
             "target": "Package",
             "version": "[10.0.10, )"
           },
-          "RabbitMQ.Client": {
+          "RabbitMQ.AMQP.Client": {
             "target": "Package",
-            "version": "[7.2.1, )"
+            "version": "[1.4.0, )"
           }
         },
         "imports": [
@@ -2005,7 +2041,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.111/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.112/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -2282,13 +2318,5 @@
         }
       }
     }
-  },
-  "logs": [
-    {
-      "code": "NU1900",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "Error occurred while getting package vulnerability data: Unable to load the service index for source https://api.nuget.org/v3/index.json."
-    }
-  ]
+  }
 }

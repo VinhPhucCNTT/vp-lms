@@ -10,7 +10,8 @@ public enum ErrorType
     Validation,
     NotFound,
     Forbidden,
-    Conflict
+    Conflict,
+    Internal
 }
 
 public class Result
@@ -44,8 +45,7 @@ public sealed class Result<T> : Result
 
     private Result(IReadOnlyList<Error> errors)
         : base(false, errors)
-    {
-    }
+    {}
 
     public static Result<T> Success(T value) => new(value);
 

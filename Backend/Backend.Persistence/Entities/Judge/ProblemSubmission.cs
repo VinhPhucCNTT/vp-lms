@@ -15,8 +15,8 @@ public class ProblemSubmission : BaseEntity
     public SubmissionStatus Status { get; set; } = SubmissionStatus.Pending;
     public int? ExecutionTimeMs { get; set; }
     public int? MemoryUsedKb { get; set; }
-    public int? PassedTestCases { get; set; }
-    public int? TotalTestCases { get; set; }
+    // public int? PassedTestCases { get; set; }
+    // public int? TotalTestCases { get; set; }
 
     // Navigation properties
     public CodingProblem Problem { get; set; } = default!;
@@ -27,10 +27,19 @@ public class ProblemSubmission : BaseEntity
 public enum SubmissionStatus
 {
     Pending,
-    Accepted,
-    WrongAnswer,
+    Running,
+    CompilationFailed,
     RuntimeError,
     TimeLimitExceeded,
-    MemoryLimitExceeded,
-    CompilationError
+    SystemError
+}
+
+public enum ProgrammingLanguage
+{
+    C,
+    Cpp,
+    Python,
+    Java,
+    TypeScript,
+    CSharp
 }
