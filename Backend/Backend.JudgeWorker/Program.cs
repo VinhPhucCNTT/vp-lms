@@ -1,8 +1,4 @@
 using Backend.JudgeWorker.Configuration;
-using Backend.JudgeWorker.Data;
-using Backend.JudgeWorker.Interfaces;
-using Backend.JudgeWorker.Languages;
-using Backend.JudgeWorker.Messaging;
 using Backend.JudgeWorker.Services;
 using Backend.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
@@ -23,10 +19,6 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 });
 
 // Application services
-builder.Services.AddSingleton<
-    ILanguageDefinitionProvider,
-    LanguageDefinitionProvider>();
-
 builder.Services.AddScoped<
     ISubmissionProcessor,
     SubmissionProcessor>();
@@ -38,11 +30,6 @@ builder.Services.AddScoped<
 builder.Services.AddSingleton<
     IDockerRunner,
     DockerRunner>();
-
-// Database adapter
-builder.Services.AddScoped<
-    ISubmissionStore,
-    EfSubmissionStore>();
 
 // RabbitMQ consumer
 builder.Services.AddHostedService<

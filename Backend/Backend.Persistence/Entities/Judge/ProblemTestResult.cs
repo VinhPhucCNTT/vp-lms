@@ -8,10 +8,12 @@ public class ProblemTestResult : BaseEntity
     public long SubmissionId { get; set; }
     public long TestCaseId { get; set; }
 
-    public string Status { get; set; } = default!;
-    public string? ActualOutput { get; set; }
-    public string? ErrorMessage { get; set; }
-    public int? ExecutionTimeMs { get; set; }
+    public bool IsAccepted { get; set; }
+
+    public string? RuntimeOutput { get; set; } // stdout, null means same as test case
+    public string? RuntimeError { get; set; } // stderr
+
+    public double? ExecutionTimeMs { get; set; }
     public int? MemoryUsedKb { get; set; }
 
     // Navigation properties

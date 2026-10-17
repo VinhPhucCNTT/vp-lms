@@ -1,9 +1,8 @@
-using Backend.Judge.Contracts;
 using Backend.Persistence.Entities.Judge;
 
 namespace Backend.Api.Core.Types;
 
-public sealed record JudgeRequest(
+public sealed record JudgeTestRequest(
     ProgrammingLanguage Language,
     string SourceCode
 );
@@ -13,19 +12,29 @@ public sealed record JudgeResponse(
     string SubmittedCode,
     ProgrammingLanguage Language,
     SubmissionStatus Status,
-    int ExecutionTimeMs,
+    double ExecutionTimeMs,
     int MemoryUsedKb
 );
 
 public sealed record CompilerDto(
+    string Id,
     string Name,
+    ProgrammingLanguage Language,
+    string SourceFileName,
     string ApplicationName,
     string Version
+) : IEntityResponse;
+
+public sealed record LanguageProfileResponse(
+    CompilerDto CompilerInfo,
+    string Name,
+    string CompilerCmd,
+    string RunCmd
 );
 
-public sealed record LanguageProfileDto(
-    CompilerDto ComplierInfo,
+public sealed record LanguageProfileRequest(
+    string CompilerName,
     string Name,
-    string[] CompilerCmd,
-    string[] RunCmd
+    string CompilerCmd,
+    string RunCmd
 );

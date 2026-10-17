@@ -27,7 +27,6 @@ using Backend.Api.Endpoints.Course;
 using Backend.Api.Endpoints.Assessment;
 using Backend.Api.Endpoints.Assignment;
 using Backend.Api.Services.Development;
-using Backend.Api.Services.Judge;
 using Backend.Api.Core.Common;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -90,8 +89,7 @@ builder.Services.AddSingleton(provider =>
 );
 
 builder.Services.Configure<RabbitMqOptions>(
-    builder.Configuration.GetSection(
-        RabbitMqOptions.SectionName));
+    builder.Configuration.GetSection("RabbitMq"));
 
 // [[ AUTHENTICATION ]]
 
@@ -159,8 +157,7 @@ builder.Services.AddScoped<SubmissionService>();
 builder.Services.AddScoped<AssignmentGradeService>();
 
 builder.Services.AddScoped<CodingProblemService>();
-builder.Services.AddScoped<Backend.Api.Services.Judge.CodingSubmissionService>();
-builder.Services.AddSingleton<RabbitMqJudgePublisher>();
+builder.Services.AddSingleton<IJudgeSubmissionService, JudgeSubmissionService>();
 
 /////
 builder.Services.AddScoped<MultipleChoiceGrader>();

@@ -1,12 +1,11 @@
 using System.Text.Json;
 using Backend.JudgeWorker.Configuration;
 using Backend.Judge.Contracts;
-using Backend.JudgeWorker.Services;
 using Microsoft.Extensions.Options;
 using RabbitMQ.AMQP.Client;
 using RabbitMQ.AMQP.Client.Impl;
 
-namespace Backend.JudgeWorker.Messaging;
+namespace Backend.JudgeWorker.Services;
 
 public sealed class RabbitMqConsumer(
     IOptions<RabbitMqOptions> options,
@@ -93,29 +92,21 @@ public sealed class RabbitMqConsumer(
         IMessage message,
         CancellationToken stoppingToken)
     {
-        var body =
-            message.Body()
-            ?? [];
-
+        var body = message.Body() ?? [];
         JudgeSubmissionMessage submission;
 
         try
         {
             submission =
-                JsonSerializer.Deserialize<JudgeSubmissionMessage>(
-                    body)
-                ?? throw new JsonException(
-                    "Message deserialized to null.");
+                JsonSerializer.Deserialize<JudgeSubmissionMessage>(body)
+                ?? throw new JsonException("Message deserialized to null.");
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "Invalid submission message.");
+            logger.LogError(ex, "Exception occured when deserializing message.");
 
             // Equivalent to BasicNack(requeue: false).
             context.Discard();
-
             return;
         }
 
@@ -172,6 +163,7 @@ public sealed class RabbitMqConsumer(
     {
         var management = connection.Management();
 
+        // NOTE: Dead letter exchange not needed
         // var deadLetterExchange =
         //     management
         //         .Exchange(_options.DeadLetterExchange)

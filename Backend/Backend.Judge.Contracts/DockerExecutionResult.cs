@@ -4,6 +4,6 @@ public sealed record DockerExecutionResult(
     int ExitCode,
     string StandardOutput,
     string StandardError,
-    long ExecutionTimeMs,
+    double ExecutionTimeMs,
     bool TimedOut
 );

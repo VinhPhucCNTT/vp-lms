@@ -147,7 +147,7 @@ public sealed class CodingSubmissionService(
 
 public sealed record CodingSubmissionResult(
     SubmissionStatus Status,
-    int? ExecutionTimeMs,
+    double? ExecutionTimeMs,
     int? MemoryUsedKb,
     int? PassedTestCases,
     int? TotalTestCases);

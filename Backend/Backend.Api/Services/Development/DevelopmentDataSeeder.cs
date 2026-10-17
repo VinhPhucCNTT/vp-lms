@@ -251,7 +251,6 @@ public static class DevelopmentDataSeeder
                 ProblemStatementMarkdown = "# Add Two Numbers\n\nRead two integers from standard input and print their sum.",
                 ConstraintsMarkdown = "- The input contains two integers separated by whitespace.\n- The absolute value of each integer is at most 1,000,000.",
                 FunctionSignature = "Read from stdin and write to stdout",
-                Language = "Python",
                 TimeLimitMs = 1000,
                 MemoryLimitMb = 128,
                 IsPractice = true,

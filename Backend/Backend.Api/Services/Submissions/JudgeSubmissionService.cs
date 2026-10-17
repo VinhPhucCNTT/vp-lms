@@ -3,6 +3,7 @@ using AutoMapper;
 using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Common;
+using Backend.Judge.Contracts;
 using Backend.Persistence.Data;
 using Backend.Persistence.Entities.Judge;
 using Microsoft.EntityFrameworkCore;
@@ -12,23 +13,23 @@ using RabbitMQ.AMQP.Client.Impl;
 
 namespace Backend.Api.Services.Submissions;
 
-public interface ICodingSubmissionService
+public interface IJudgeSubmissionService
 {
     public Task<JudgeResponse?>
         Get(long submissionId, CancellationToken ct = default);
 
     public Task<Result<JudgeResponse>>
         Send(long resourceId,
-            JudgeRequest request,
+            JudgeTestRequest request,
             CancellationToken ct = default);
 }
 
-public sealed class CodingSubmissionService(
-    ILogger<CodingSubmissionService> logger,
+public sealed class JudgeSubmissionService(
+    ILogger<JudgeSubmissionService> logger,
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
     IMapper mapper,
-    IOptions<RabbitMqOptions> options) : ICodingSubmissionService
+    IOptions<RabbitMqOptions> options) : IJudgeSubmissionService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
@@ -48,7 +49,7 @@ public sealed class CodingSubmissionService(
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<Result<JudgeResponse>> Send(long resourceId, JudgeRequest request, CancellationToken ct = default)
+    public async Task<Result<JudgeResponse>> Send(long resourceId, JudgeTestRequest request, CancellationToken ct = default)
     {
         using var db = await _dbFactory.CreateDbContextAsync(ct);
 
@@ -58,7 +59,7 @@ public sealed class CodingSubmissionService(
         // TODO: See if this needs to be changed?
         var existing = problem.Submissions
             .Where(s =>
-                s.Status == SubmissionStatus.Pending &&
+                s.Status == SubmissionStatus.Queued &&
                 s.Status == SubmissionStatus.Running);
         if (existing.Any())
             return Result<JudgeResponse>.Failure(ErrorType.Forbidden, "Another submission is being processed.");
@@ -70,15 +71,15 @@ public sealed class CodingSubmissionService(
         {
             ProblemSubmission submission = new ProblemSubmission
             {
-                OrderIndex = problem.Submissions.Count() - 1,
+                OrderIndex = problem.Submissions.Where(s => s.UserId == _currentUserService.UserId).Count() - 1,
                 SubmittedCode = request.SourceCode,
-                Language = request.Language,
-                Status = SubmissionStatus.Pending
+                Status = SubmissionStatus.Queued
             };
             db.ProblemSubmissions.Add(submission);
             await db.SaveChangesAsync(ct);
 
-            var amqpMessage = new AmqpMessage(Encoding.UTF8.GetBytes(submission.Id.ToString()));
+            var message = new JudgeSubmissionMessage(submission.Id);
+            var amqpMessage = new AmqpMessage(Encoding.UTF8.GetBytes(message.ToString()));
             PublishResult pr = await _publisher!.PublishAsync(amqpMessage);
             if (pr.Outcome.State != OutcomeState.Accepted)
                 throw new Exception($"Unexpected amqp publish outcome: {pr.Outcome.State}.");
@@ -90,7 +91,7 @@ public sealed class CodingSubmissionService(
                 hasResult = await db.ProblemSubmissions
                     .Where(s => s.Id == submission.Id)
                     .AnyAsync(s =>
-                        s.Status != SubmissionStatus.Pending ||
+                        s.Status != SubmissionStatus.Queued ||
                         s.Status != SubmissionStatus.Running);
                 if (hasResult == true)
                     break;
@@ -106,7 +107,7 @@ public sealed class CodingSubmissionService(
         }
         catch (Exception ex)
         {
-            logger.LogError($"Exception occured when publishing: {ex.Message}");
+            logger.LogError(ex, "Exception occured when publishing.");
             return Result<JudgeResponse>.Failure(ErrorType.Internal, "");
         }
         finally
@@ -140,7 +141,7 @@ public sealed class CodingSubmissionService(
         }
         catch (Exception ex)
         {
-            logger.LogError($"Exception occured when creating connection: {ex.Message}");
+            logger.LogError(ex, "Exception occured when creating connection.");
             return true;
         }
         finally

@@ -1,4 +1,4 @@
-using Backend.Persistence.Common;
+using Backend.Persistence.Entities.Judge;
 
 namespace Backend.Api.Core.Types;
 
@@ -10,7 +10,7 @@ public sealed record CreateCodingSubmissionRequest(
 public sealed record CodingSubmissionResponse(
     string Id,
     string Status,
-    int? ExecutionTimeMs,
+    double? ExecutionTimeMs,
     int? MemoryUsedKb,
     int? PassedTestCases,
     int? TotalTestCases

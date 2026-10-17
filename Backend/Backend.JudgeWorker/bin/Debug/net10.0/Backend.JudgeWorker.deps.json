@@ -8,13 +8,33 @@
     ".NETCoreApp,Version=v10.0": {
       "Backend.JudgeWorker/1.0.0": {
         "dependencies": {
+          "Backend.Judge.Contracts": "1.0.0",
           "Backend.Persistence": "1.0.0",
           "Microsoft.EntityFrameworkCore.Relational": "10.0.5",
           "Microsoft.Extensions.Hosting": "10.0.10",
-          "RabbitMQ.Client": "7.2.1"
+          "RabbitMQ.AMQP.Client": "1.4.0"
         },
         "runtime": {
           "Backend.JudgeWorker.dll": {}
+        }
+      },
+      "AMQPNetLite.Core/2.5.4": {
+        "runtime": {
+          "lib/netstandard2.0/Amqp.Net.dll": {
+            "assemblyVersion": "2.5.0.0",
+            "fileVersion": "2.5.4.0"
+          }
+        }
+      },
+      "AMQPNetLite.WebSockets/2.5.2": {
+        "dependencies": {
+          "AMQPNetLite.Core": "2.5.4"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Amqp.WebSockets.Client.dll": {
+            "assemblyVersion": "2.5.0.0",
+            "fileVersion": "2.5.2.0"
+          }
         }
       },
       "EFCore.NamingConventions/10.0.1": {
@@ -475,14 +495,15 @@
           }
         }
       },
-      "RabbitMQ.Client/7.2.1": {
+      "RabbitMQ.AMQP.Client/1.4.0": {
         "dependencies": {
-          "System.Threading.RateLimiting": "8.0.0"
+          "AMQPNetLite.Core": "2.5.4",
+          "AMQPNetLite.WebSockets": "2.5.2"
         },
         "runtime": {
-          "lib/net8.0/RabbitMQ.Client.dll": {
-            "assemblyVersion": "7.0.0.0",
-            "fileVersion": "7.2.1.0"
+          "lib/net8.0/RabbitMQ.AMQP.Client.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.4.0.0"
           }
         }
       },
@@ -508,11 +529,11 @@
           }
         }
       },
-      "System.Threading.RateLimiting/8.0.0": {
+      "Backend.Judge.Contracts/1.0.0": {
         "runtime": {
-          "lib/net8.0/System.Threading.RateLimiting.dll": {
-            "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.23.53103"
+          "Backend.Judge.Contracts.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
           }
         }
       },
@@ -536,6 +557,20 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "AMQPNetLite.Core/2.5.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-KWrULsIa7+1Dq8g8ULhQk/pyC916tqLTRTLOfVsjftD2k7WjUvGzgfut5u12u00a2k+FFo8nPnCLEEZpRYK2yA==",
+      "path": "amqpnetlite.core/2.5.4",
+      "hashPath": "amqpnetlite.core.2.5.4.nupkg.sha512"
+    },
+    "AMQPNetLite.WebSockets/2.5.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-mGGGLu8iB1eAmdH/k2BHB4El8Q4voiQTrF5HVf8EpZu4b0JQjg6500f1qtUUdOQTwQDvD4yH8Amh1l/8wNbC2g==",
+      "path": "amqpnetlite.websockets/2.5.2",
+      "hashPath": "amqpnetlite.websockets.2.5.2.nupkg.sha512"
     },
     "EFCore.NamingConventions/10.0.1": {
       "type": "package",
@@ -782,12 +817,12 @@
       "path": "npgsql.entityframeworkcore.postgresql/10.0.3",
       "hashPath": "npgsql.entityframeworkcore.postgresql.10.0.3.nupkg.sha512"
     },
-    "RabbitMQ.Client/7.2.1": {
+    "RabbitMQ.AMQP.Client/1.4.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-YKXEfg9fVQiTKgZlvIhAfPSFaamEgi8DsQmisCH0IAsU4FYLrtoguDrDj6JtJVGUt40QPnBLRH6fTQcAC4qsOg==",
-      "path": "rabbitmq.client/7.2.1",
-      "hashPath": "rabbitmq.client.7.2.1.nupkg.sha512"
+      "sha512": "sha512-ckkPeaXiADjP2ufVw8u/FQuI8jfrVaIKEnMNn3GqUmFVp5EfaxNqiSZ2kGhi7OtrNqPXcAGZ73q0zwpq8Q48WA==",
+      "path": "rabbitmq.amqp.client/1.4.0",
+      "hashPath": "rabbitmq.amqp.client.1.4.0.nupkg.sha512"
     },
     "System.Diagnostics.EventLog/10.0.10": {
       "type": "package",
@@ -796,12 +831,10 @@
       "path": "system.diagnostics.eventlog/10.0.10",
       "hashPath": "system.diagnostics.eventlog.10.0.10.nupkg.sha512"
     },
-    "System.Threading.RateLimiting/8.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-7mu9v0QDv66ar3DpGSZHg9NuNcxDaaAcnMULuZlaTpP9+hwXhrxNGsF5GmLkSHxFdb5bBc1TzeujsRgTrPWi+Q==",
-      "path": "system.threading.ratelimiting/8.0.0",
-      "hashPath": "system.threading.ratelimiting.8.0.0.nupkg.sha512"
+    "Backend.Judge.Contracts/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     },
     "Backend.Persistence/1.0.0": {
       "type": "project",

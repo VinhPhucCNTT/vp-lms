@@ -8,7 +8,7 @@ public class CodingProblemRequestValidator : AbstractValidator<CodingProblemRequ
     public CodingProblemRequestValidator()
     {
         RuleFor(x => x.ResourceInfo)
-            .SetValidator(new ResourceRequestInfoValidator);
+            .SetValidator(new ResourceRequestInfoValidator());
 
         RuleFor(x => x.Info.ProblemStatementMarkdown)
             .NotEmpty().WithMessage("Problem statement is required.");

@@ -9,11 +9,11 @@ public class CodingProblemInfoValidator : AbstractValidator<CodingProblemInfo>
     {
         RuleFor(x => x.ProblemStatementMarkdown)
             .NotEmpty().WithMessage("Problem statement is required.");
-        
+
         RuleFor(x => x.TimeLimitMs)
             .GreaterThan(0).WithMessage("Time limit must be greater than zero.");
 
-        RuleFor(x => x.MemoryLimitMs)
+        RuleFor(x => x.MemoryLimitMb)
             .GreaterThan(0).WithMessage("Memory limit must be greater than zero.");
     }
 }

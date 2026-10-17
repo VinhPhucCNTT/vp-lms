@@ -10,7 +10,7 @@ public class CodeExecutionLog : BaseEntity
     public long? ProblemId { get; set; }
     public string Language { get; set; } = default!;
     public string? CodeSnippet { get; set; }
-    public int? ExecutionTimeMs { get; set; }
+    public double? ExecutionTimeMs { get; set; }
     public int? MemoryUsedKb { get; set; }
     public string? Status { get; set; }
     public string? ErrorMessage { get; set; }

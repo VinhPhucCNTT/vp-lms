@@ -26,9 +26,9 @@ public static class CodingSubmissionEndpoints
 
     private static async Task<IResult> HandleSend(
         string resourceId,
-        JudgeRequest request,
+        JudgeTestRequest request,
         SqidsEncoder<long> sqidsEncoder,
-        ICodingSubmissionService service,
+        IJudgeSubmissionService service,
         CancellationToken ct)
     {
         var decoded =
@@ -68,7 +68,7 @@ public static class CodingSubmissionEndpoints
     private static async Task<IResult> HandleGet(
         string submissionId,
         SqidsEncoder<long> sqidsEncoder,
-        CodingSubmissionService service,
+        JudgeSubmissionService service,
         CancellationToken ct)
     {
         var decoded =

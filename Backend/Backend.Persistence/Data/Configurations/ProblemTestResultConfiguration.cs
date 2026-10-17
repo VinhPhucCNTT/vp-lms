@@ -12,14 +12,14 @@ public class ProblemTestResultConfiguration : IEntityTypeConfiguration<ProblemTe
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Status)
-            .IsRequired()
-            .HasMaxLength(20);
+        // builder.Property(x => x.Status)
+        //     .IsRequired()
+        //     .HasMaxLength(20);
 
-        builder.Property(x => x.ActualOutput)
+        builder.Property(x => x.RuntimeOutput)
             .HasColumnType("text");
 
-        builder.Property(x => x.ErrorMessage)
+        builder.Property(x => x.RuntimeError)
             .HasColumnType("text");
 
         builder.HasOne(x => x.Submission)

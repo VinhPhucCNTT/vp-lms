@@ -1,22 +1,42 @@
 using System.Diagnostics;
-using Backend.JudgeWorker.Contracts;
-using Backend.JudgeWorker.Interfaces;
-using Backend.JudgeWorker.Languages;
+using Backend.Judge.Contracts;
+using Backend.Persistence.Common;
 
 namespace Backend.JudgeWorker.Services;
+
+public interface IDockerRunner
+{
+    Task<DockerExecutionResult> CompileAsync(
+        LanguageProfile profile,
+        string imageName,
+        string workspace,
+        int? memoryLimitMb,
+        CancellationToken ct);
+
+    Task<DockerExecutionResult> ExecuteAsync(
+        LanguageProfile profile,
+        string imageName,
+        string workspace,
+        string input,
+        int timeLimitMs,
+        int memoryLimitMb,
+        CancellationToken ct);
+}
 
 public sealed class DockerRunner(
     ILogger<DockerRunner> logger)
     : IDockerRunner
 {
     public async Task<DockerExecutionResult> CompileAsync(
-        LanguageDefinition language,
+        LanguageProfile profile,
+        string imageName,
         string workspace,
-        CancellationToken cancellationToken)
+        int? memoryLimitMb = null,
+        CancellationToken ct = default)
     {
-        if (!language.RequiresCompilation)
+        if (!profile.CompilerCmd.Any())
         {
-            logger.LogError("Language {Language} is not a compiled language.", language.Language);
+            logger.LogError("Profile {ProfileName} has no compile cmd defined.", profile.Name);
             return new DockerExecutionResult(
                 ExitCode: 0,
                 StandardOutput: "",
@@ -26,29 +46,31 @@ public sealed class DockerRunner(
         }
 
         var arguments = BuildDockerArguments(
-            language,
+            imageName,
             workspace,
-            language.CompileCommand);
+            profile.CompilerCmd,
+            memoryLimitMb);
 
         return await RunDockerAsync(
             arguments,
             timeoutMs: 30_000,
             input: null,
-            cancellationToken);
+            ct);
     }
 
     public async Task<DockerExecutionResult> ExecuteAsync(
-        LanguageDefinition language,
+        LanguageProfile profile,
+        string imageName,
         string workspace,
         string input,
         int timeLimitMs,
         int memoryLimitMb,
-        CancellationToken cancellationToken)
+        CancellationToken ct = default)
     {
         var arguments = BuildDockerArguments(
-            language,
+            imageName,
             workspace,
-            language.RunCommand,
+            profile.RunCmd,
             memoryLimitMb);
 
         try
@@ -57,7 +79,7 @@ public sealed class DockerRunner(
                 arguments,
                 timeoutMs: timeLimitMs,
                 input,
-                cancellationToken);
+                ct);
         }
         catch (OperationCanceledException)
         {
@@ -66,7 +88,7 @@ public sealed class DockerRunner(
     }
 
     private static List<string> BuildDockerArguments(
-        LanguageDefinition language,
+        string imageName,
         string workspace,
         string command,
         int? memoryLimitMb = null)
@@ -110,7 +132,7 @@ public sealed class DockerRunner(
             arguments.Add($"{memoryLimitMb.Value}m");
         }
 
-        arguments.Add(language.ImageName);
+        arguments.Add(imageName);
 
         arguments.Add("sh");
         arguments.Add("-c");
@@ -138,7 +160,6 @@ public sealed class DockerRunner(
                 RedirectStandardInput = true,
                 CreateNoWindow = true
             };
-
         foreach (var argument in arguments)
         {
             startInfo.ArgumentList.Add(argument);
@@ -149,20 +170,17 @@ public sealed class DockerRunner(
             {
                 StartInfo = startInfo
             };
-
         process.Start();
 
         if (input is not null)
         {
             await process.StandardInput.WriteAsync(input);
         }
-
         process.StandardInput.Close();
 
         using var timeoutCts =
             CancellationTokenSource.CreateLinkedTokenSource(
                 cancellationToken);
-
         timeoutCts.CancelAfter(timeoutMs);
 
         try
@@ -194,8 +212,7 @@ public sealed class DockerRunner(
                     ExitCode: -1,
                     StandardOutput: "",
                     StandardError: "",
-                    ExecutionTimeMs:
-                        (long)stopwatch.Elapsed.TotalMilliseconds,
+                    ExecutionTimeMs: stopwatch.Elapsed.TotalMilliseconds,
                     TimedOut: true);
             }
 

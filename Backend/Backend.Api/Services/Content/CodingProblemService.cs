@@ -2,10 +2,11 @@ using AutoMapper;
 using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Common;
-using Backend.Judge.Contracts;
+using Backend.Persistence.Common;
 using Backend.Persistence.Data;
 using Backend.Persistence.Entities.Content;
 using Backend.Persistence.Entities.Courses;
+using Backend.Persistence.Entities.Judge;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Content;
@@ -34,30 +35,32 @@ public interface ICodingProblemService
     public Task<Result>
         SetLanguageProfileAsync(
             long resourceId,
-            LanguageProfileDto[] request,
+            LanguageProfileResponse[] request,
             CancellationToken ct);
 }
 
 public sealed class CodingProblemService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUser,
-    IMapper mapper)
+    IMapper mapper,
+    ILogger<CodingProblemService> logger)
 {
     private readonly IMapper _mapper = mapper;
+    private readonly ILogger<CodingProblemService> _logger = logger;
 
     public async Task<Result<CodingProblemResponse>> CreateAsync(
         long moduleId,
         CodingProblemRequest request,
         CancellationToken ct = default)
     {
-        if (!TryParseLanguage(
-                request.Info.Language,
-                out _))
-        {
-            return Result<CodingProblemResponse>.Failure(
-                ErrorType.Validation,
-                $"Unsupported programming language '{request.Info.Language}'.");
-        }
+        // if (!TryParseLanguage(
+        //         request.Info.Language,
+        //         out _))
+        // {
+        //     return Result<CodingProblemResponse>.Failure(
+        //         ErrorType.Validation,
+        //         $"Unsupported programming language '{request.Info.Language}'.");
+        // }
 
         await using var db =
             await dbFactory.CreateDbContextAsync(ct);
@@ -69,18 +72,14 @@ public sealed class CodingProblemService(
                 ct);
 
         if (module is null)
-        {
             return Result<CodingProblemResponse>.Failure(
                 ErrorType.NotFound,
                 "Module not found.");
-        }
 
         if (module.Course.CreatorId != currentUser.UserId)
-        {
             return Result<CodingProblemResponse>.Failure(
                 ErrorType.Forbidden,
                 "You do not own this course.");
-        }
 
         await using var transaction =
             await db.Database.BeginTransactionAsync(ct);
@@ -98,29 +97,30 @@ public sealed class CodingProblemService(
 
             db.CourseResources.Add(resource);
 
-            var problem = new CodingProblem
-            {
-                Resource = resource,
-                ProblemStatementMarkdown =
-                    request.Info.ProblemStatementMarkdown,
-                ConstraintsMarkdown =
-                    request.Info.ConstraintsMarkdown,
-                FunctionSignature =
-                    request.Info.FunctionSignature,
-                TimeLimitMs =
-                    request.Info.TimeLimitMs,
-                MemoryLimitMb =
-                    request.Info.MemoryLimitMb,
-                IsPractice =
-                    request.Info.IsPractice,
-                Difficulty =
-                    request.Info.Difficulty
-            };
+            // var problem = new CodingProblem
+            // {
+            //     Resource = resource,
+            //     ProblemStatementMarkdown =
+            //         request.Info.ProblemStatementMarkdown,
+            //     ConstraintsMarkdown =
+            //         request.Info.ConstraintsMarkdown,
+            //     FunctionSignature =
+            //         request.Info.FunctionSignature,
+            //     TimeLimitMs =
+            //         request.Info.TimeLimitMs,
+            //     MemoryLimitMb =
+            //         request.Info.MemoryLimitMb,
+            //     IsPractice =
+            //         request.Info.IsPractice,
+            //     Difficulty =
+            //         request.Info.Difficulty
+            // };
+            var problem = _mapper.Map<CodingProblem>(request);
+            problem.Resource = resource;
 
             db.CodingProblems.Add(problem);
 
             await db.SaveChangesAsync(ct);
-
             await transaction.CommitAsync(ct);
 
             var response = new CodingProblemResponse(
@@ -145,13 +145,6 @@ public sealed class CodingProblemService(
         long resourceId,
         CancellationToken ct)
     {
-        if (!currentUser.IsAuthenticated)
-        {
-            return Result<CodingProblemResponse>.Failure(
-                ErrorType.Forbidden,
-                "Authentication is required.");
-        }
-
         await using var db =
             await dbFactory.CreateDbContextAsync(ct);
 
@@ -308,22 +301,84 @@ public sealed class CodingProblemService(
             .OrderBy(x => x.OrderIndex)
             .Select(x => _mapper.Map<ProblemTestCaseResponse>(x))
             .ToListAsync(ct);
-
         return Result<IReadOnlyList<ProblemTestCaseResponse>>.Success(
             testCases);
     }
 
-    public Task<Result<LanguageProfileDto[]>> GetLanguageProfileAsync(
+    public async Task<List<LanguageProfileResponse>?> GetLanguageProfileAsync(
             long resourceId,
-            CancellationToken ct)
+            CancellationToken ct = default)
     {
+        using var db = await dbFactory.CreateDbContextAsync(ct);
+        var problem = await db.CodingProblems
+            .AsNoTracking()
+            .Where(p => p.ResourceId == resourceId)
+            .FirstOrDefaultAsync(ct);
+        if (problem is null)
+            return null;
+
+        return await GetProfileDto(db, problem.LanguageProfile, ct);
     }
 
-    public Task<Result<LanguageProfileDto[]>> SetLanguageProfileAsync(
+    public async Task<List<LanguageProfileResponse>?> SetLanguageProfileAsync(
             long resourceId,
-            LanguageProfileDto[] request,
+            LanguageProfileRequest[] request,
             CancellationToken ct)
     {
+        using var db = await dbFactory.CreateDbContextAsync(ct);
+        var problem = await db.CodingProblems
+            .AsNoTracking()
+            .Where(p => p.ResourceId == resourceId)
+            .FirstOrDefaultAsync(ct);
+        if (problem is null)
+            return null;
+
+        LanguageProfile[] result = [];
+        foreach (var r in request)
+        {
+            var compiler = await db.Compilers.AsNoTracking().SingleOrDefaultAsync(c => c.Name == r.CompilerName);
+            if (compiler is null)
+            {
+                _logger.LogWarning("No compiler exists with name {CompilerName}.", r.CompilerName);
+                continue;
+            }
+
+            result.Append(new LanguageProfile
+            {
+                CompilerId = compiler.Id,
+                Name = r.Name,
+                CompilerCmd = r.CompilerCmd,
+                RunCmd = r.RunCmd
+            });
+        }
+
+        problem.LanguageProfile = result;
+        await db.SaveChangesAsync(ct);
+
+        return await GetProfileDto(db, result, ct);
+    }
+
+    private async Task<List<LanguageProfileResponse>> GetProfileDto(AppDbContext db, LanguageProfile[] languageProfiles, CancellationToken ct = default)
+    {
+        List<LanguageProfileResponse> result = [];
+        foreach (var profile in languageProfiles)
+        {
+            var compiler = await db.Compilers.AsNoTracking().SingleOrDefaultAsync(c => c.Id == profile.CompilerId);
+            if (compiler is null)
+            {
+                _logger.LogWarning("Compiler not defined for profile {ProfileName}.", profile.Name);
+                continue;
+            }
+
+            result.Append(new LanguageProfileResponse(
+                CompilerInfo: _mapper.Map<CompilerDto>(compiler),
+                Name: profile.Name,
+                CompilerCmd: profile.CompilerCmd,
+                RunCmd: profile.RunCmd
+            ));
+        }
+
+        return result;
     }
 
     private static bool TryParseLanguage(

@@ -45,9 +45,7 @@ D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\Microsoft.Extensions.Opt
 D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\Microsoft.Extensions.Primitives.dll
 D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\Npgsql.dll
 D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
-D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\RabbitMQ.Client.dll
 D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\System.Diagnostics.EventLog.dll
-D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\System.Threading.RateLimiting.dll
 D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\runtimes\win\lib\net10.0\System.Diagnostics.EventLog.Messages.dll
 D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\runtimes\win\lib\net10.0\System.Diagnostics.EventLog.dll
 D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\Backend.Persistence.dll
@@ -59,3 +57,8 @@ D:\vp-lms\Backend\Backend.JudgeWorker\obj\Debug\net10.0\Backend.JudgeWorker.pdb
 D:\vp-lms\Backend\Backend.JudgeWorker\obj\Debug\net10.0\Backend.JudgeWorker.genruntimeconfig.cache
 D:\vp-lms\Backend\Backend.JudgeWorker\obj\Debug\net10.0\ref\Backend.JudgeWorker.dll
 D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\Backend.JudgeWorker.exe
+D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\Amqp.Net.dll
+D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\Amqp.WebSockets.Client.dll
+D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\RabbitMQ.AMQP.Client.dll
+D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\Backend.Judge.Contracts.dll
+D:\vp-lms\Backend\Backend.JudgeWorker\bin\Debug\net10.0\Backend.Judge.Contracts.pdb

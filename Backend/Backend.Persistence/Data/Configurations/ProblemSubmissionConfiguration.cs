@@ -16,9 +16,9 @@ public class ProblemSubmissionConfiguration : IEntityTypeConfiguration<ProblemSu
             .IsRequired()
             .HasColumnType("text");
 
-        builder.Property(x => x.GetLanguage())
-            .IsRequired()
-            .HasMaxLength(20);
+        // builder.Property(x => x.Language)
+        //     .IsRequired()
+        //     .HasMaxLength(20);
 
         builder.Property(x => x.Status)
             .IsRequired()

@@ -216,7 +216,7 @@ public static class CodingProblemEndpoints
 
     private static async Task<IResult> HandleSetLanguageProfile(
         string resourceId,
-        LanguageProfileDto request,
+        LanguageProfileRequest[] request,
         SqidsEncoder<long> sqidsEncoder,
         CodingProblemService service,
         CancellationToken ct)
@@ -225,5 +225,28 @@ public static class CodingProblemEndpoints
 
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
+
+        var result = await service.SetLanguageProfileAsync(decoded[0], request, ct);
+        return result is not null
+            ? TypedResults.Ok(result)
+            : TypedResults.NotFound();
     }
+
+    private static async Task<IResult> HandleGetLanguageProfiles(
+        string resourceId,
+        SqidsEncoder<long> sqidsEncoder,
+        CodingProblemService service,
+        CancellationToken ct)
+    {
+        var decoded = sqidsEncoder.Decode(resourceId);
+
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        var result = await service.GetLanguageProfileAsync(decoded[0], ct);
+        return result is not null
+            ? TypedResults.Ok(result)
+            : TypedResults.NotFound();
+    }
+
 }

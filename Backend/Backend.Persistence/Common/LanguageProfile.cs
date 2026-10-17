@@ -6,7 +6,7 @@ public class LanguageProfile
 
     public string Name { get; set; } = "";
 
-    public string[] CompilerCmd { get; set; } = [];
+    public string CompilerCmd { get; set; } = "";
 
-    public string[] RunCmd { get; set; } = [];
+    public string RunCmd { get; set; } = "";
 }

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Backend.JudgeWorker")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e0089d911d0744ad7c34431de7940a63c3a8a3fe")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1a44c148fb2453c2048ac6bc45ba44278360f1a7")]
 [assembly: System.Reflection.AssemblyProductAttribute("Backend.JudgeWorker")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Backend.JudgeWorker")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
