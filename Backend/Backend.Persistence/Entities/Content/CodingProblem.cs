@@ -16,7 +16,7 @@ public class CodingProblem : BaseEntity, ISoftDeletable
     public int TimeLimitMs { get; set; } = 1000;
     public int MemoryLimitMb { get; set; } = 256;
 
-    public LanguageProfile[] LanguageProfile { get; set; } = [];
+    public LanguageProfileStruct[] LanguageProfile { get; set; } = [];
     public bool IsPractice { get; set; } = false; // TODO: ???
     public ProblemDifficulty Difficulty { get; set; }
 
@@ -27,6 +27,7 @@ public class CodingProblem : BaseEntity, ISoftDeletable
     public CourseResource Resource { get; set; } = default!;
     public ICollection<ProblemTestCase> TestCases { get; set; } = [];
     public ICollection<ProblemSubmission> Submissions { get; set; } = [];
+    public ICollection<CompilerProfile> Profiles { get; set; } = [];
 }
 
 public enum ProblemDifficulty

@@ -66,7 +66,7 @@ public sealed class AssessmentGradingService(
                 attemptQuestion.Answer);
 
             if (!result.IsSuccess)
-                return Result.Failure([.. result.Errors]);
+                return Result.Failure(result.Error!);
 
             var grade = result.Value!;
 

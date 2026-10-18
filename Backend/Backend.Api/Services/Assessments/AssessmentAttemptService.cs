@@ -37,8 +37,7 @@ public sealed class AssessmentAttemptService(
             .FirstOrDefaultAsync(x => x.Id == assessmentId, ct);
 
         if (assessment is null)
-            return Result<AssessmentAttempt>.Failure(
-                AssessmentErrors.NotFound);
+            return Result.Failure<AssessmentAttempt>(AssessmentErrors.NotFound);
 
         if (!assessment.Resource.IsPublished)
         {
@@ -112,7 +111,7 @@ public sealed class AssessmentAttemptService(
         {
             var expiration = await ExpireIfNeededAsync(db, existingAttempt, ct);
             if (!expiration.IsSuccess)
-                return Result<AssessmentAttempt>.Failure(expiration.Errors.ToArray());
+                return Result<AssessmentAttempt>.Failure(expiration.Error!);
 
             if (!expiration.Value)
                 return Result<AssessmentAttempt>.Success(existingAttempt);
@@ -138,8 +137,7 @@ public sealed class AssessmentAttemptService(
                 ct);
 
         if (!selected.IsSuccess)
-            return Result<AssessmentAttempt>.Failure(
-                selected.Errors.ToArray());
+            return Result<AssessmentAttempt>.Failure(selected.Error!);
 
         var attempt = new AssessmentAttempt
         {
@@ -197,7 +195,7 @@ public sealed class AssessmentAttemptService(
         var expiration = await ExpireIfNeededAsync(db, attempt, ct);
         return expiration.IsSuccess
             ? Result<AssessmentAttempt>.Success(attempt)
-            : Result<AssessmentAttempt>.Failure(expiration.Errors.ToArray());
+            : Result<AssessmentAttempt>.Failure(expiration.Error!);
     }
 
     public async Task<Result> SaveAnswerAsync(
@@ -231,7 +229,7 @@ public sealed class AssessmentAttemptService(
 
         var expiration = await ExpireIfNeededAsync(db, attemptQuestion.Attempt, ct);
         if (!expiration.IsSuccess)
-            return Result.Failure(expiration.Errors.ToArray());
+            return Result.Failure(expiration.Error!);
 
         if (expiration.Value)
         {
@@ -295,7 +293,7 @@ public sealed class AssessmentAttemptService(
 
         var expiration = await ExpireIfNeededAsync(db, question.Attempt, ct);
         if (!expiration.IsSuccess)
-            return Result.Failure(expiration.Errors.ToArray());
+            return Result.Failure(expiration.Error!);
 
         if (expiration.Value)
         {
@@ -344,7 +342,7 @@ public sealed class AssessmentAttemptService(
 
         var expiration = await ExpireIfNeededAsync(db, attempt, ct);
         if (!expiration.IsSuccess)
-            return Result.Failure(expiration.Errors.ToArray());
+            return Result.Failure(expiration.Error!);
 
         if (expiration.Value)
         {
@@ -369,7 +367,7 @@ public sealed class AssessmentAttemptService(
             ct);
 
         if (!gradeResult.IsSuccess)
-            return Result.Failure(gradeResult.Errors.ToArray());
+            return Result.Failure(gradeResult.Error!);
 
         attempt.SubmittedAt = DateTime.UtcNow;
         attempt.Status = AssessmentAttemptStatus.Submitted;
@@ -406,12 +404,12 @@ public sealed class AssessmentAttemptService(
             attempt.Assessment.TimeLimitMinutes <= 0 ||
             DateTime.UtcNow < attempt.StartedAt.AddMinutes(attempt.Assessment.TimeLimitMinutes))
         {
-            return Result<bool>.Success(false);
+            return Result.Success(false);
         }
 
         var gradeResult = await grading.GradeAsync(attempt.Id, ct);
         if (!gradeResult.IsSuccess)
-            return Result<bool>.Failure(gradeResult.Errors.ToArray());
+            return Result<bool>.Failure(gradeResult.Error!);
 
         await db.Entry(attempt).ReloadAsync(ct);
         attempt.SubmittedAt ??= DateTime.UtcNow;

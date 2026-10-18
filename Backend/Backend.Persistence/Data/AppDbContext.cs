@@ -36,7 +36,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ProblemTestResult> ProblemTestResults => Set<ProblemTestResult>();
     public DbSet<CodeExecutionLog> CodeExecutionLogs => Set<CodeExecutionLog>();
     public DbSet<Compiler> Compilers => Set<Compiler>();
-    public DbSet<LanguageProfileTemplate> LanguageProfileTemplates => Set<LanguageProfileTemplate>();
+    public DbSet<CompilerProfile> CompilerProfiles => Set<CompilerProfile>();
 
     public DbSet<Assessment> Assessments => Set<Assessment>();
     public DbSet<Question> Questions => Set<Question>();

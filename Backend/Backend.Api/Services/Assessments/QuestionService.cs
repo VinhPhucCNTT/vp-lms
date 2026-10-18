@@ -63,8 +63,7 @@ public sealed class QuestionService(
 
         if (!validation.IsSuccess)
         {
-            return Result<QuestionResponse>.Failure(
-                validation.Errors.ToArray());
+            return Result<QuestionResponse>.Failure(validation.Error!);
         }
 
         var question = new Question
@@ -128,7 +127,7 @@ public sealed class QuestionService(
             request.QuestionData);
 
         if (!validation.IsSuccess)
-            return Result.Failure(validation.Errors.ToArray());
+            return Result.Failure(validation.Error!);
 
         question.QuestionType = questionType;
         question.Text = request.Text;

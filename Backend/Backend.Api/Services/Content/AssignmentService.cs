@@ -160,7 +160,7 @@ public class AssignmentService(
         using var db = await _dbFactory.CreateDbContextAsync(ct);
         var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Type == ResourceType.Assignment && r.Id == resourceId, ct);
         if (resource is null)
-            return Result<bool>.Failure(ErrorType.NotFound, "Assignment not found.");
+            return Result<bool>.Failure(ResultError.NotFound, "Assignment not found.");
 
         resource.IsPublished = isPublished;
         await db.SaveChangesAsync(ct);

@@ -50,7 +50,7 @@ public class SubmissionService(
         using var db = await _dbFactory.CreateDbContextAsync(ct);
         var assignment = await GetStudentAssignmentAsync(db, resourceId, ct);
         if (assignment is null)
-            return Result<SubmissionDetailResponse>.Failure(ErrorType.NotFound, "Assignment not found.");
+            return Result<SubmissionDetailResponse>.Failure(ResultError.NotFound, "Assignment not found.");
 
         var userId = _currentUserService.UserId;
         var submission = await db.AssignmentSubmissions
@@ -132,11 +132,11 @@ public class SubmissionService(
         var userId = _currentUserService.UserId;
         var assignment = await GetStudentAssignmentAsync(db, resourceId, ct);
         if (assignment is null)
-            return Result<SubmissionDetailResponse>.Failure(ErrorType.NotFound, "Assignment not found");
+            return Result<SubmissionDetailResponse>.Failure(ResultError.NotFound, "Assignment not found");
 
         var availabilityError = ValidateAvailability(assignment);
         if (availabilityError is not null)
-            return Result<SubmissionDetailResponse>.Failure(ErrorType.Validation, availabilityError);
+            return Result<SubmissionDetailResponse>.Failure(ResultError.Validation, availabilityError);
 
         var submission = await db.AssignmentSubmissions
             .Include(s => s.Grade)
@@ -149,14 +149,14 @@ public class SubmissionService(
         var text = request.SubmissionText?.Trim();
         var textError = ValidateSubmissionText(assignment, text);
         if (textError is not null)
-            return Result<SubmissionDetailResponse>.Failure(ErrorType.Validation, textError);
+            return Result<SubmissionDetailResponse>.Failure(ResultError.Validation, textError);
 
         var fileCount = submission is null
             ? 0
             : await db.AssignmentFiles.CountAsync(f => f.SubmissionId == submission.Id, ct);
 
         if ((assignment.SubmissionType is SubmissionType.File or SubmissionType.Both) && fileCount == 0 && string.IsNullOrWhiteSpace(text))
-            return Result<SubmissionDetailResponse>.Failure(ErrorType.Validation, "Add at least one file or text response before submitting.");
+            return Result<SubmissionDetailResponse>.Failure(ResultError.Validation, "Add at least one file or text response before submitting.");
 
         if (submission is null)
             submission = await CreateEmptySubmissionAsync(db, assignment.Id, userId, ct);
@@ -217,31 +217,31 @@ public class SubmissionService(
         var userId = _currentUserService.UserId;
 
         var assignment = await GetStudentAssignmentAsync(db, resourceId, ct);
-        if (assignment is null) return Result<AssignmentSubmission>.Failure(ErrorType.NotFound, "Assignment not found");
+        if (assignment is null) return Result<AssignmentSubmission>.Failure(ResultError.NotFound, "Assignment not found");
 
         var submission = await db.AssignmentSubmissions
             .FirstOrDefaultAsync(s => s.AssignmentId == assignment.Id && s.UserId == userId, ct);
 
         var availabilityError = ValidateAvailability(assignment);
         if (availabilityError is not null)
-            return Result<AssignmentSubmission>.Failure(ErrorType.Validation, availabilityError);
+            return Result<AssignmentSubmission>.Failure(ResultError.Validation, availabilityError);
 
         if (submission?.SubmittedOn is not null)
-            return Result<AssignmentSubmission>.Failure(ErrorType.Validation, "This assignment has already been submitted.");
+            return Result<AssignmentSubmission>.Failure(ResultError.Validation, "This assignment has already been submitted.");
 
         if (assignment.SubmissionType == SubmissionType.Text)
-            return Result<AssignmentSubmission>.Failure(ErrorType.Validation, "Assignment does not accept files.");
+            return Result<AssignmentSubmission>.Failure(ResultError.Validation, "Assignment does not accept files.");
 
         if (assignment.AllowedExtensions is not null)
         {
             var extension = Path.GetExtension(file.FileName);
             if (!assignment.AllowedExtensions.Any(x => string.Equals(x, extension, StringComparison.OrdinalIgnoreCase)))
-                return Result<AssignmentSubmission>.Failure(ErrorType.Validation, $"This assignment does not accept extension of type {extension} (allowed: {assignment.AllowedExtensions}).");
+                return Result<AssignmentSubmission>.Failure(ResultError.Validation, $"This assignment does not accept extension of type {extension} (allowed: {assignment.AllowedExtensions}).");
         }
 
         var maxFileSize = ByteSize.FromKiloBytes(assignment.MaxFileSizeKb);
         if (file.Length > maxFileSize.Bytes)
-            return Result<AssignmentSubmission>.Failure(ErrorType.Validation, $"File is too large ({file.Length} > {assignment.MaxFileSizeKb} Kb).");
+            return Result<AssignmentSubmission>.Failure(ResultError.Validation, $"File is too large ({file.Length} > {assignment.MaxFileSizeKb} Kb).");
 
         if (assignment.MaxFileCount is not null)
         {
@@ -249,7 +249,7 @@ public class SubmissionService(
                 ? 0
                 : await db.AssignmentFiles.AsNoTracking().CountAsync(f => f.SubmissionId == submission.Id, ct);
             if (currentFileCount >= assignment.MaxFileCount)
-                return Result<AssignmentSubmission>.Failure(ErrorType.Validation, $"File count exceeded (max is {assignment.MaxFileCount}).");
+                return Result<AssignmentSubmission>.Failure(ResultError.Validation, $"File count exceeded (max is {assignment.MaxFileCount}).");
         }
 
         submission ??= await CreateEmptySubmissionAsync(db, assignment.Id, userId, ct);

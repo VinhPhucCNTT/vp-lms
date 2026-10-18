@@ -7,14 +7,14 @@ namespace Backend.JudgeWorker.Services;
 public interface IDockerRunner
 {
     Task<DockerExecutionResult> CompileAsync(
-        LanguageProfile profile,
+        LanguageProfileStruct profile,
         string imageName,
         string workspace,
         int? memoryLimitMb,
         CancellationToken ct);
 
     Task<DockerExecutionResult> ExecuteAsync(
-        LanguageProfile profile,
+        LanguageProfileStruct profile,
         string imageName,
         string workspace,
         string input,
@@ -28,7 +28,7 @@ public sealed class DockerRunner(
     : IDockerRunner
 {
     public async Task<DockerExecutionResult> CompileAsync(
-        LanguageProfile profile,
+        LanguageProfileStruct profile,
         string imageName,
         string workspace,
         int? memoryLimitMb = null,
@@ -59,7 +59,7 @@ public sealed class DockerRunner(
     }
 
     public async Task<DockerExecutionResult> ExecuteAsync(
-        LanguageProfile profile,
+        LanguageProfileStruct profile,
         string imageName,
         string workspace,
         string input,

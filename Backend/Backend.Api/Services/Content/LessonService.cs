@@ -75,7 +75,7 @@ public class LessonService(
         using var db = await _dbFactory.CreateDbContextAsync(ct);
         var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Type == ResourceType.Lesson && r.Id == resourceId, ct);
         if (resource is null)
-            return Result<bool>.Failure(ErrorType.NotFound, "Lesson not found.");
+            return Result<bool>.Failure(ResultError.NotFound, "Lesson not found.");
 
         resource.IsPublished = isPublished;
         await db.SaveChangesAsync(ct);

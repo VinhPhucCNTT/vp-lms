@@ -30,7 +30,7 @@ public static class CodingProblemEndpoints
             HandleGetTestCases).RequireAuthorization();
 
         group.MapPut(
-            "/{resourceId}/language-profile/",
+            "/{resourceId}/language-profile/{compilerId}",
             HandleSetLanguageProfile).RequireAuthorization("IsInstructor");
 
         group.MapGet(
@@ -216,17 +216,18 @@ public static class CodingProblemEndpoints
 
     private static async Task<IResult> HandleSetLanguageProfile(
         string resourceId,
-        LanguageProfileRequest[] request,
+        string compilerId,
+        CompilerProfileRequest request,
         SqidsEncoder<long> sqidsEncoder,
         CodingProblemService service,
         CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
-
-        if (decoded.Count != 1)
+        var rDecoded = sqidsEncoder.Decode(resourceId);
+        var cDecoded = sqidsEncoder.Decode(compilerId);
+        if (rDecoded.Count != 1 || cDecoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var result = await service.SetLanguageProfileAsync(decoded[0], request, ct);
+        var result = await service.SetLanguageProfileAsync(rDecoded[0], cDecoded[0], request, ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();
@@ -243,7 +244,7 @@ public static class CodingProblemEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var result = await service.GetLanguageProfileAsync(decoded[0], ct);
+        var result = await service.GetLanguageProfilesAsync(decoded[0], ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();

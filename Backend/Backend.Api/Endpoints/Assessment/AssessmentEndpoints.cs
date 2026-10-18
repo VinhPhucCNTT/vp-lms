@@ -17,16 +17,32 @@ public static class AssessmentEndpoints
     {
         var assessment = route.MapGroup("/api/assessments").RequireAuthorization();
 
-        assessment.MapGet("/", HandleQuery).RequireAuthorization("IsStudent");
-        assessment.MapGet("{resourceId}", HandleGetById).RequireAuthorization("IsStudent");
-        assessment.MapPost("{resourceId}/start", HandleStart).RequireAuthorization("IsStudent");
-        assessment.MapGet("{resourceId}/attempt/{attemptId}", HandleGetAttempt).RequireAuthorization("IsStudent");
-        assessment.MapPost("{resourceId}/attempt/{attemptId}/question/{attemptQuestionId}/answer", HandleSaveAnswer)
-            .RequireAuthorization("IsStudent");
-        assessment.MapPost("{resourceId}/attempt/{attemptId}/submit", HandleSubmit)
-            .RequireAuthorization("IsStudent");
+        assessment.MapGet(
+            "/",
+            HandleQuery).RequireAuthorization("IsStudent");
+
+        assessment.MapGet(
+            "{resourceId}",
+            HandleGetById).RequireAuthorization("IsStudent");
+
+        assessment.MapPost(
+            "{resourceId}/start",
+            HandleStart).RequireAuthorization("IsStudent");
+
+        assessment.MapGet(
+            "{resourceId}/attempt/{attemptId}",
+            HandleGetAttempt).RequireAuthorization("IsStudent");
+
+        assessment.MapPost(
+            "{resourceId}/attempt/{attemptId}/question/{attemptQuestionId}/answer",
+            HandleSaveAnswer).RequireAuthorization("IsStudent");
+
+        assessment.MapPost(
+            "{resourceId}/attempt/{attemptId}/submit",
+            HandleSubmit).RequireAuthorization("IsStudent");
 
         assessment.MapPost("{moduleId}", HandleCreate);
+
         assessment.MapPut("{resourceId}", HandleUpdate);
 
         assessment.MapPost("{resourceId}/set-publish", HandleSetPublish);

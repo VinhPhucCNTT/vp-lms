@@ -27,7 +27,7 @@ public sealed class JudgeService(
         CancellationToken ct = default)
     {
         // using var db = await _dbFactory.CreateDbContextAsync(ct);
-        LanguageProfile? profile = await GetLanguageConfigurationAsync(submission, ct);
+        LanguageProfileStruct? profile = await GetLanguageConfigurationAsync(submission, ct);
         if (profile is null)
         {
             logger.LogError("Profile does not exist.");
@@ -208,14 +208,14 @@ public sealed class JudgeService(
     }
 
     // NOTE: Currently the system assumes that each language has a single compiler
-    private async Task<LanguageProfile?> GetLanguageConfigurationAsync(
+    private async Task<LanguageProfileStruct?> GetLanguageConfigurationAsync(
         ProblemSubmission submission,
         CancellationToken ct = default)
     {
         var compiler = submission.Compiler;
         System.Diagnostics.Debug.Assert(compiler is not null);
 
-        LanguageProfile? profile = submission.Problem.LanguageProfile.FirstOrDefault(p => p.CompilerId == compiler.Id);
+        LanguageProfileStruct? profile = submission.Problem.LanguageProfile.FirstOrDefault(p => p.CompilerId == compiler.Id);
         if (profile is null)
         {
             logger.LogError($"Langauge profile for {compiler.Language} is not defined for problem #{submission.ProblemId}.");
@@ -227,7 +227,7 @@ public sealed class JudgeService(
 
     private static async Task PrepareWorkspaceAsync(
         ProblemSubmission submission,
-        LanguageProfile profile,
+        LanguageProfileStruct profile,
         string sourceFileName,
         string workspace,
         CancellationToken ct = default)

@@ -14,7 +14,7 @@ public class ProblemConfiguration : IEntityTypeConfiguration<CodingProblem>
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    private static readonly ValueComparer<LanguageProfile[]> ProfilesComparer =
+    private static readonly ValueComparer<LanguageProfileStruct[]> ProfilesComparer =
         new(
             (a, b) => JsonSerializer.Serialize(a, JsonOptions)
                    == JsonSerializer.Serialize(b, JsonOptions),
@@ -24,10 +24,10 @@ public class ProblemConfiguration : IEntityTypeConfiguration<CodingProblem>
                 : JsonSerializer.Serialize(v, JsonOptions).GetHashCode(),
 
             v => v == null
-                ? Array.Empty<LanguageProfile>()
-                : JsonSerializer.Deserialize<LanguageProfile[]>(
+                ? Array.Empty<LanguageProfileStruct>()
+                : JsonSerializer.Deserialize<LanguageProfileStruct[]>(
                     JsonSerializer.Serialize(v, JsonOptions),
-                    JsonOptions) ?? Array.Empty<LanguageProfile>()
+                    JsonOptions) ?? Array.Empty<LanguageProfileStruct>()
         );
 
     public void Configure(EntityTypeBuilder<CodingProblem> builder)
@@ -52,8 +52,8 @@ public class ProblemConfiguration : IEntityTypeConfiguration<CodingProblem>
                 profiles => JsonSerializer.Serialize(
                     profiles, JsonOptions),
 
-                json => JsonSerializer.Deserialize<LanguageProfile[]>(
-                    json, JsonOptions) ?? Array.Empty<LanguageProfile>()
+                json => JsonSerializer.Deserialize<LanguageProfileStruct[]>(
+                    json, JsonOptions) ?? Array.Empty<LanguageProfileStruct>()
             )
             .HasColumnType("jsonb")
             .Metadata.SetValueComparer(ProfilesComparer);

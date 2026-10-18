@@ -54,7 +54,7 @@ public sealed class JudgeSubmissionService(
         using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         var problem = await db.CodingProblems.FirstOrDefaultAsync(p => p.ResourceId == resourceId);
-        if (problem is null) return Result<JudgeResponse>.Failure(ErrorType.NotFound, "Problem not found.");
+        if (problem is null) return Result<JudgeResponse>.Failure(ResultError.NotFound, "Problem not found.");
 
         // TODO: See if this needs to be changed?
         var existing = problem.Submissions
@@ -62,10 +62,10 @@ public sealed class JudgeSubmissionService(
                 s.Status == SubmissionStatus.Queued &&
                 s.Status == SubmissionStatus.Running);
         if (existing.Any())
-            return Result<JudgeResponse>.Failure(ErrorType.Forbidden, "Another submission is being processed.");
+            return Result<JudgeResponse>.Failure(ResultError.Forbidden, "Another submission is being processed.");
 
         if (await InitializeConnectionAsync())
-            return Result<JudgeResponse>.Failure(ErrorType.Internal, "");
+            return Result<JudgeResponse>.Failure(ResultError.Internal, "");
 
         try
         {
@@ -108,7 +108,7 @@ public sealed class JudgeSubmissionService(
         catch (Exception ex)
         {
             logger.LogError(ex, "Exception occured when publishing.");
-            return Result<JudgeResponse>.Failure(ErrorType.Internal, "");
+            return Result<JudgeResponse>.Failure(ResultError.Internal, "");
         }
         finally
         {

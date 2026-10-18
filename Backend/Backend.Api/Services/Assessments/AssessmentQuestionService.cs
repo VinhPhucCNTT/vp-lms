@@ -68,10 +68,7 @@ public class AssessmentQuestionService(
             request.QuestionData);
 
         if (!validation.IsSuccess)
-        {
-            return Result<AssessmentQuestionInfo>.Failure(
-                [.. validation.Errors]);
-        }
+            return Result<AssessmentQuestionInfo>.Failure(validation.Error!);
 
         var nextIndex = await db.AssessmentQuestions
             .Where(x => x.AssessmentId == assessment.Id)
@@ -132,10 +129,7 @@ public class AssessmentQuestionService(
             questionData);
 
         if (!validation.IsSuccess)
-        {
-            return Result<AssessmentQuestionInfo>.Failure(
-                [.. validation.Errors]);
-        }
+            return Result<AssessmentQuestionInfo>.Failure(validation.Error!);
 
         var nextIndex = await db.AssessmentQuestions
             .Where(x => x.AssessmentId == resourceId)
@@ -198,7 +192,7 @@ public class AssessmentQuestionService(
             request.QuestionData);
 
         if (!validation.IsSuccess)
-            return Result.Failure([.. validation.Errors]);
+            return Result.Failure(validation.Error!);
 
         question.QuestionType = request.QuestionType;
         question.QuestionData = request.QuestionData;

@@ -1,6 +1,6 @@
 namespace Backend.Persistence.Common;
 
-public class LanguageProfile
+public class LanguageProfileStruct
 {
     public long CompilerId { get; set; }
 

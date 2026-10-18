@@ -25,16 +25,15 @@ public sealed record CompilerDto(
     string Version
 ) : IEntityResponse;
 
-public sealed record LanguageProfileResponse(
+public sealed record CompilerProfileResponse(
     CompilerDto CompilerInfo,
     string Name,
-    string CompilerCmd,
+    string CompileCmd,
     string RunCmd
 );
 
-public sealed record LanguageProfileRequest(
-    string CompilerName,
+public sealed record CompilerProfileRequest(
     string Name,
-    string CompilerCmd,
+    string CompileCmd,
     string RunCmd
 );
