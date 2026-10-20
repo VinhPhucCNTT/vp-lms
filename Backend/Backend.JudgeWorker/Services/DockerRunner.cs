@@ -1,20 +1,21 @@
 using System.Diagnostics;
 using Backend.Judge.Contracts;
 using Backend.Persistence.Common;
+using Backend.Persistence.Entities.Judge;
 
 namespace Backend.JudgeWorker.Services;
 
 public interface IDockerRunner
 {
     Task<DockerExecutionResult> CompileAsync(
-        LanguageProfileStruct profile,
+        CompilerProfile profile,
         string imageName,
         string workspace,
         int? memoryLimitMb,
         CancellationToken ct);
 
     Task<DockerExecutionResult> ExecuteAsync(
-        LanguageProfileStruct profile,
+        CompilerProfile profile,
         string imageName,
         string workspace,
         string input,
@@ -28,13 +29,13 @@ public sealed class DockerRunner(
     : IDockerRunner
 {
     public async Task<DockerExecutionResult> CompileAsync(
-        LanguageProfileStruct profile,
+        CompilerProfile profile,
         string imageName,
         string workspace,
         int? memoryLimitMb = null,
         CancellationToken ct = default)
     {
-        if (!profile.CompilerCmd.Any())
+        if (String.IsNullOrEmpty(profile.CompileCmd))
         {
             logger.LogError("Profile {ProfileName} has no compile cmd defined.", profile.Name);
             return new DockerExecutionResult(
@@ -48,7 +49,7 @@ public sealed class DockerRunner(
         var arguments = BuildDockerArguments(
             imageName,
             workspace,
-            profile.CompilerCmd,
+            profile.CompileCmd,
             memoryLimitMb);
 
         return await RunDockerAsync(
@@ -59,7 +60,7 @@ public sealed class DockerRunner(
     }
 
     public async Task<DockerExecutionResult> ExecuteAsync(
-        LanguageProfileStruct profile,
+        CompilerProfile profile,
         string imageName,
         string workspace,
         string input,

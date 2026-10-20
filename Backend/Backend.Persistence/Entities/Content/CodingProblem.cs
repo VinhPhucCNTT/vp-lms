@@ -16,7 +16,6 @@ public class CodingProblem : BaseEntity, ISoftDeletable
     public int TimeLimitMs { get; set; } = 1000;
     public int MemoryLimitMb { get; set; } = 256;
 
-    public LanguageProfileStruct[] LanguageProfile { get; set; } = [];
     public bool IsPractice { get; set; } = false; // TODO: ???
     public ProblemDifficulty Difficulty { get; set; }
 

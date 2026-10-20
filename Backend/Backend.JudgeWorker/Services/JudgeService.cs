@@ -1,6 +1,5 @@
 using Backend.JudgeWorker.Configuration;
 using Backend.JudgeWorker.Types;
-using Backend.Persistence.Common;
 using Backend.Persistence.Entities.Judge;
 using Microsoft.Extensions.Options;
 
@@ -27,15 +26,8 @@ public sealed class JudgeService(
         CancellationToken ct = default)
     {
         // using var db = await _dbFactory.CreateDbContextAsync(ct);
-        LanguageProfileStruct? profile = await GetLanguageConfigurationAsync(submission, ct);
-        if (profile is null)
-        {
-            logger.LogError("Profile does not exist.");
-            return new JudgeResult(
-                SubmissionStatus.SystemError,
-                0, Results: null);
-        }
-
+        var profile = submission.Profile;
+        var compiler = profile.Compiler;
         var workspace =
             Path.Combine(
                 options.Value.WorkspaceRelativeDir,
@@ -43,23 +35,23 @@ public sealed class JudgeService(
                 submission.Id.ToString());
         Directory.CreateDirectory(workspace);
 
-        string languageName = submission.Compiler.Language.ToString();
+        string languageName = profile.Compiler.Language.ToString();
         string imageName = GetImageName(languageName);
         try
         {
             await PrepareWorkspaceAsync(
                 submission,
                 profile,
-                submission.Compiler.SourceFileName,
+                compiler.SourceFileName,
                 workspace,
                 ct);
 
-            if (!string.IsNullOrEmpty(profile.CompilerCmd))
+            if (!string.IsNullOrEmpty(profile.CompileCmd))
             {
                 logger.LogInformation(
                     "Compiling submission {SubmissionId} using {Language}",
                     submission.Id,
-                    submission.Compiler.Name);
+                    compiler.Name);
 
                 var compileResult =
                     await dockerRunner.CompileAsync(
@@ -93,7 +85,7 @@ public sealed class JudgeService(
                 logger.LogInformation(
                     "Running submission {SubmissionId}, language {Language}, test #{Test}",
                     submission.Id,
-                    submission.Compiler.Language.ToString(),
+                    compiler.Language.ToString(),
                     testCase.OrderIndex);
 
                 var result =
@@ -208,26 +200,26 @@ public sealed class JudgeService(
     }
 
     // NOTE: Currently the system assumes that each language has a single compiler
-    private async Task<LanguageProfileStruct?> GetLanguageConfigurationAsync(
-        ProblemSubmission submission,
-        CancellationToken ct = default)
-    {
-        var compiler = submission.Compiler;
-        System.Diagnostics.Debug.Assert(compiler is not null);
-
-        LanguageProfileStruct? profile = submission.Problem.LanguageProfile.FirstOrDefault(p => p.CompilerId == compiler.Id);
-        if (profile is null)
-        {
-            logger.LogError($"Langauge profile for {compiler.Language} is not defined for problem #{submission.ProblemId}.");
-            return null;
-        }
-
-        return profile;
-    }
+    // private async Task<LanguageProfileStruct?> GetLanguageConfigurationAsync(
+    //     ProblemSubmission submission,
+    //     CancellationToken ct = default)
+    // {
+    //     var compiler = submission.Compiler;
+    //     System.Diagnostics.Debug.Assert(compiler is not null);
+    //
+    //     LanguageProfileStruct? profile = submission.Problem.LanguageProfile.FirstOrDefault(p => p.CompilerId == compiler.Id);
+    //     if (profile is null)
+    //     {
+    //         logger.LogError($"Langauge profile for {compiler.Language} is not defined for problem #{submission.ProblemId}.");
+    //         return null;
+    //     }
+    //
+    //     return profile;
+    // }
 
     private static async Task PrepareWorkspaceAsync(
         ProblemSubmission submission,
-        LanguageProfileStruct profile,
+        CompilerProfile profile,
         string sourceFileName,
         string workspace,
         CancellationToken ct = default)
@@ -242,7 +234,7 @@ public sealed class JudgeService(
             submission.SubmittedCode,
             ct);
 
-        if (submission.Compiler.Language ==
+        if (profile.Compiler.Language ==
             ProgrammingLanguage.CSharp)
         {
             var projectPath =

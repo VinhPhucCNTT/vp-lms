@@ -8,7 +8,7 @@ public class ProblemSubmission : BaseEntity
 {
     public long ProblemId { get; set; }
     public long UserId { get; set; }
-    public long CompilerId { get; set; }
+    public long ProfileId { get; set; }
 
     public int OrderIndex { get; set; }
     public string SubmittedCode { get; set; } = default!;
@@ -18,7 +18,7 @@ public class ProblemSubmission : BaseEntity
     // Navigation properties
     public CodingProblem Problem { get; set; } = default!;
     public User User { get; set; } = default!;
-    public Compiler Compiler { get; set; } = default!;
+    public CompilerProfile Profile { get; set; } = default!;
     public ICollection<ProblemTestResult> TestResults { get; set; } = [];
 }
 

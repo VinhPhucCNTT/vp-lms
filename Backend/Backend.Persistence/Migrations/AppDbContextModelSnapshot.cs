@@ -720,12 +720,6 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_practice");
 
-                    b.Property<string>("Language")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("language");
-
                     b.Property<int>("MemoryLimitMb")
                         .HasColumnType("integer")
                         .HasColumnName("memory_limit_mb");
@@ -1316,8 +1310,8 @@ namespace Backend.Persistence.Migrations
                         .HasColumnName("executed_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<int?>("ExecutionTimeMs")
-                        .HasColumnType("integer")
+                    b.Property<double?>("ExecutionTimeMs")
+                        .HasColumnType("double precision")
                         .HasColumnName("execution_time_ms");
 
                     b.Property<string>("Language")
@@ -1358,6 +1352,109 @@ namespace Backend.Persistence.Migrations
                     b.ToTable("code_execution_logs", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Persistence.Entities.Judge.Compiler", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ApplicationName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("application_name");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("Language")
+                        .HasColumnType("integer")
+                        .HasColumnName("language");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("SourceFileName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("source_file_name");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_compilers");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_compilers_name");
+
+                    b.ToTable("compilers", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Persistence.Entities.Judge.CompilerProfile", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("CompileCmd")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("compile_cmd");
+
+                    b.Property<long>("CompilerId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("compiler_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<long>("ProblemId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("problem_id");
+
+                    b.Property<string>("RunCmd")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("run_cmd");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_compiler_profiles");
+
+                    b.HasIndex("CompilerId")
+                        .HasDatabaseName("ix_compiler_profiles_compiler_id");
+
+                    b.HasIndex("ProblemId")
+                        .HasDatabaseName("ix_compiler_profiles_problem_id");
+
+                    b.ToTable("compiler_profiles", (string)null);
+                });
+
             modelBuilder.Entity("Backend.Persistence.Entities.Judge.ProblemSubmission", b =>
                 {
                     b.Property<long>("Id")
@@ -1367,34 +1464,25 @@ namespace Backend.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<string>("CompileError")
+                        .HasColumnType("text")
+                        .HasColumnName("compile_error");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
-
-                    b.Property<int?>("ExecutionTimeMs")
-                        .HasColumnType("integer")
-                        .HasColumnName("execution_time_ms");
-
-                    b.Property<int>("Language")
-                        .HasMaxLength(20)
-                        .HasColumnType("integer")
-                        .HasColumnName("language");
-
-                    b.Property<int?>("MemoryUsedKb")
-                        .HasColumnType("integer")
-                        .HasColumnName("memory_used_kb");
 
                     b.Property<int>("OrderIndex")
                         .HasColumnType("integer")
                         .HasColumnName("order_index");
 
-                    b.Property<int?>("PassedTestCases")
-                        .HasColumnType("integer")
-                        .HasColumnName("passed_test_cases");
-
                     b.Property<long>("ProblemId")
                         .HasColumnType("bigint")
                         .HasColumnName("problem_id");
+
+                    b.Property<long>("ProfileId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("profile_id");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -1407,10 +1495,6 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("submitted_code");
 
-                    b.Property<int?>("TotalTestCases")
-                        .HasColumnType("integer")
-                        .HasColumnName("total_test_cases");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -1421,6 +1505,9 @@ namespace Backend.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_problem_submissions");
+
+                    b.HasIndex("ProfileId")
+                        .HasDatabaseName("ix_problem_submissions_profile_id");
 
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_problem_submissions_user_id");
@@ -1440,31 +1527,29 @@ namespace Backend.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("ActualOutput")
-                        .HasColumnType("text")
-                        .HasColumnName("actual_output");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("ErrorMessage")
-                        .HasColumnType("text")
-                        .HasColumnName("error_message");
-
-                    b.Property<int?>("ExecutionTimeMs")
-                        .HasColumnType("integer")
+                    b.Property<double?>("ExecutionTimeMs")
+                        .HasColumnType("double precision")
                         .HasColumnName("execution_time_ms");
+
+                    b.Property<bool>("IsAccepted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_accepted");
 
                     b.Property<int?>("MemoryUsedKb")
                         .HasColumnType("integer")
                         .HasColumnName("memory_used_kb");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("status");
+                    b.Property<string>("RuntimeError")
+                        .HasColumnType("text")
+                        .HasColumnName("runtime_error");
+
+                    b.Property<string>("RuntimeOutput")
+                        .HasColumnType("text")
+                        .HasColumnName("runtime_output");
 
                     b.Property<long>("SubmissionId")
                         .HasColumnType("bigint")
@@ -1999,6 +2084,27 @@ namespace Backend.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Backend.Persistence.Entities.Judge.CompilerProfile", b =>
+                {
+                    b.HasOne("Backend.Persistence.Entities.Judge.Compiler", "Compiler")
+                        .WithMany()
+                        .HasForeignKey("CompilerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_compiler_profiles_compilers_compiler_id");
+
+                    b.HasOne("Backend.Persistence.Entities.Content.CodingProblem", "Problem")
+                        .WithMany("Profiles")
+                        .HasForeignKey("ProblemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_compiler_profiles_coding_problems_problem_id");
+
+                    b.Navigation("Compiler");
+
+                    b.Navigation("Problem");
+                });
+
             modelBuilder.Entity("Backend.Persistence.Entities.Judge.ProblemSubmission", b =>
                 {
                     b.HasOne("Backend.Persistence.Entities.Content.CodingProblem", "Problem")
@@ -2006,6 +2112,13 @@ namespace Backend.Persistence.Migrations
                         .HasForeignKey("ProblemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_problem_submissions_coding_problems_problem_id");
+
+                    b.HasOne("Backend.Persistence.Entities.Judge.CompilerProfile", "Profile")
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_problem_submissions_compiler_profiles_profile_id");
 
                     b.HasOne("Backend.Persistence.Entities.Users.User", "User")
                         .WithMany()
@@ -2015,6 +2128,8 @@ namespace Backend.Persistence.Migrations
                         .HasConstraintName("fk_problem_submissions_users_user_id");
 
                     b.Navigation("Problem");
+
+                    b.Navigation("Profile");
 
                     b.Navigation("User");
                 });
@@ -2106,6 +2221,8 @@ namespace Backend.Persistence.Migrations
 
             modelBuilder.Entity("Backend.Persistence.Entities.Content.CodingProblem", b =>
                 {
+                    b.Navigation("Profiles");
+
                     b.Navigation("Submissions");
 
                     b.Navigation("TestCases");
