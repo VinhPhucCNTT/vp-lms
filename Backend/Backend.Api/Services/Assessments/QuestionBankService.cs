@@ -8,6 +8,26 @@ using Backend.Api.Core.Types;
 
 namespace Backend.Api.Services.Assessments;
 
+public interface IQuestionBankService
+{
+    public Task<Result<QuestionBankInfo>> GetByIdAsync(
+        long bankId,
+        CancellationToken ct = default);
+
+    public Task<Result<QuestionBankInfo>> CreateAsync(
+        QuestionBankInfo request,
+        CancellationToken ct = default);
+
+    public Task<Result> UpdateAsync(
+        long bankId,
+        QuestionBankInfo request,
+        CancellationToken ct = default);
+
+    public Task<Result> DeleteAsync(
+        long bankId,
+        CancellationToken ct = default);
+}
+
 public sealed class QuestionBankService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,

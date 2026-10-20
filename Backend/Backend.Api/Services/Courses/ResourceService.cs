@@ -8,6 +8,33 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Courses;
 
+public interface IResourceService
+{
+    public Task<ResourceDetailResponse?> GetResourceByIdAsync(long resourceId);
+
+    public Task<List<ResourceResponse>> GetPublishedResourcesAsync(long moduleId);
+
+    public Task<List<ResourceResponse>> GetUnpublishedResourcesAsync(long moduleId);
+
+    public Task<ResourceProgressResponse?> GetResourceProgressAsync(long resourceId);
+
+    public Task<ResourceProgressResponse?> MarkResourceCompletedAsync(long resourceId);
+
+    public Task<bool> DeleteResourceAsync(long resourceId);
+
+    public Task<bool> ReorderResourceAsync(long resourceId, int orderIndex);
+
+    public Task<bool> CheckOwnerAsync(long resourceId);
+
+    public Task<List<long>> GetCourseResourceIdsAsync(AppDbContext db, long courseId);
+
+    public Task<CourseProgress> GetCourseProgressAsync(AppDbContext db, long courseId, long userId);
+
+    public Task<CourseResource> CreateResourceAsync(AppDbContext db, long moduleId, ResourceRequestInfo info, ResourceType type, CancellationToken ct = default);
+
+    public Task<CourseResource> UpdateResourceAsync(AppDbContext db, long resourceId, ResourceRequestInfo info);
+}
+
 public class ResourceService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,

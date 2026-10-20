@@ -9,6 +9,17 @@ using Backend.Api.Core.Common;
 
 namespace Backend.Api.Services.Content;
 
+public interface ILessonService
+{
+    public Task<LessonResponse?> GetLessonByIdAsync(long resourceId);
+
+    public Task<LessonResponse> CreateAsync(long moduleId, LessonRequest request, CancellationToken ct = default);
+
+    public Task<LessonResponse?> UpdateLessonAsync(long resourceId, LessonRequest request);
+
+    public Task<Result<bool>> SetPublishStatusAsync(long resourceId, bool isPublished, CancellationToken ct = default);
+}
+
 public class LessonService(
     IDbContextFactory<AppDbContext> dbFactory,
     IMapper mapper)

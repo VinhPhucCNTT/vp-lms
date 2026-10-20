@@ -11,6 +11,32 @@ using Backend.Api.Services.Assessments.Validators;
 
 namespace Backend.Api.Services.Assessments;
 
+public interface IQuestionService
+{
+    public Task<Result<QuestionResponse>> CreateAsync(
+        long bankId,
+        QuestionRequest request,
+        CancellationToken ct = default);
+
+    public Task<List<QuestionResponse>> GetForAssessmentAsync(
+        long resourceId,
+        CancellationToken ct = default);
+
+    public Task<Result> UpdateAsync(
+        long questionId,
+        QuestionRequest request,
+        CancellationToken ct = default);
+
+    public Task<Result> DeleteAsync(
+        long questionId,
+        CancellationToken ct = default);
+
+    public Task<Result<QuestionResponse>> CopyAsync(
+           long sourceQuestionId,
+           long destinationBankId,
+           CancellationToken ct = default);
+}
+
 public sealed class QuestionService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,

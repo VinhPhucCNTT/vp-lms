@@ -12,6 +12,12 @@ using Isopoh.Cryptography.Argon2;
 
 namespace Backend.Api.Services.Auth;
 
+public interface IAuthenticationService
+{
+    public Task<LoginResponse?> LoginAsync(LoginRequest dto);
+    public Task<RegisterResponse?> RegisterAsync(RegisterRequest dto);
+}
+
 public class AuthenticationService(
     IConfiguration config,
     IDbContextFactory<AppDbContext> contextFactory)

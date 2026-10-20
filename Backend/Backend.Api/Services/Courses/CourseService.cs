@@ -9,6 +9,36 @@ using Backend.Api.Services.Content;
 
 namespace Backend.Api.Services.Courses;
 
+public interface ICourseService
+{
+    public Task<Course?> GetAsync(long courseId);
+
+    public Task<Course?> GetFromModuleAsync(long moduleId);
+
+    public Task<CourseResponse?> GetDtoAsync(long courseId);
+
+    public Task<List<CourseStudentResponse>> GetStudentCoursesAsync();
+    
+    public Task<List<CourseResponse>> GetInstructorCoursesAsync();
+
+    public Task<CourseExploreResponse> GetExploreAsync();
+
+    public Task<PaginatedResponse<CourseResponse>> QueryCoursesAsync(CourseRequest query);
+
+    public Task<long> UploadBackgroundAsync(
+        Course course,
+        IFormFile file,
+        CancellationToken ct);
+
+    public Task<CourseSetResponse> CreateCourseAsync(CourseSetRequest request);
+
+    public Task<CourseSetResponse> UpdateCourseAsync(Course course, CourseSetRequest request);
+
+    public Task DeleteCourseAsync(Course course);
+
+    public Task SetCoursePublishStatusAsync(Course course, bool value);
+}
+
 public class CourseService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,

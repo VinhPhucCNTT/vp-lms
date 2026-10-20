@@ -9,6 +9,27 @@ using AutoMapper;
 
 namespace Backend.Api.Services.Users;
 
+public interface IUserService
+{
+    public Task<UserDetailResponse?> GetUserByIdAsync(long userId);
+
+    public Task<UserStatResponse?> GetUserStatAsync(long userId);
+
+    public Task<PaginatedResponse<UserResponse>> QueryUsersAsync(UserRequest query);
+
+    public Task<UserSetResponse> CreateUserAsync(UserCreateRequest dto);
+
+    public Task<UserSetResponse?> UpdateUserAsync(long userId, UserUpdateRequest dto);
+
+    public Task<bool> DeleteUserAsync(long userId);
+
+    public Task<bool> IsUserActiveAsync(long userId);
+
+    public Task<bool> DeactivateUserAsync(long userId);
+
+    public Task<bool> ActivateUserAsync(long userId);
+}
+
 public class UserService(
     IDbContextFactory<AppDbContext> dbFactory,
     IMapper mapper
@@ -124,7 +145,8 @@ public class UserService(
         return true;
     }
 
-    public async Task<bool> IsUserActiveAsync(long userId) {
+    public async Task<bool> IsUserActiveAsync(long userId)
+    {
         using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
         return user != null && user.IsActive;

@@ -6,6 +6,23 @@ using AutoMapper;
 
 namespace Backend.Api.Services.Courses;
 
+public interface IModuleService
+{
+    public Task<List<ModuleResponse>> GetCourseModulesAsync(long courseId);
+
+    public Task<ModuleSetResponse> CreateModuleAsync(long courseId, ModuleSetRequest dto);
+
+    public Task<ModuleSetResponse?> UpdateModuleAsync(long moduleId, ModuleSetRequest dto);
+
+    public Task<bool> SetModulePublishStatusAsync(long courseId, long moduleId, bool isPublished);
+
+    public Task<bool> DeleteModuleAsync(long moduleId);
+
+    public Task<bool> ReorderModuleAsync(long moduleId, int orderIndex);
+
+    public Task GetModuleProgressAsync(long moduleId);
+}
+
 public class ModuleService(
     IDbContextFactory<AppDbContext> dbFactory,
     IMapper mapper)

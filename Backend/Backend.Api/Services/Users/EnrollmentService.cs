@@ -7,6 +7,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Users;
 
+public interface IEnrollmentService
+{
+    public Task<EnrollmentDetailResponse?> GetEnrollmentByIdAsync(long enrollmentId);
+
+    public Task<List<EnrollmentResponse>> GetCourseEnrollmentsAsync(long courseId);
+
+    public Task<List<EnrollmentResponse>> GetUserEnrollmentsAsync(long userId);
+
+    public Task<List<EnrollmentResponse>> GetCurrentEnrollmentsAsync();
+
+    public Task<EnrollmentResponse?> EnrollCourseAsync(long courseId);
+
+    public Task<bool> UnenrollCourseAsync(long courseId);
+
+    public Task<EnrollmentResponse?> SetTAAsync(long enrollmentId, bool enable);
+
+    public Task<bool> RemoveEnrollmentAsync(long enrollmentId);
+}
+
 public class EnrollmentService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,

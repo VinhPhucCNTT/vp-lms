@@ -10,6 +10,21 @@ using Backend.Api.Services.Common;
 
 namespace Backend.Api.Services.Content;
 
+public interface IAssignmentService
+{
+    public Task<AssignmentResponse?> GetDtoByIdAsync(long resourceId, CancellationToken ct = default);
+
+    public Task<List<StudentAssignmentSummaryResponse>> QueryStudentAsync(CancellationToken ct = default);
+
+    public Task<List<AssignmentResponse>> QueryAsync(CancellationToken ct = default);
+
+    public Task<AssignmentResponse?> CreateAsync(long moduleId, AssignmentRequest request, CancellationToken ct = default);
+
+    public Task<AssignmentResponse?> UpdateAsync(long resourceId, AssignmentRequest request);
+
+    public Task<Result<bool>> SetPublishStatusAsync(long resourceId, bool isPublished, CancellationToken ct = default);
+}
+
 public class AssignmentService(
     IDbContextFactory<AppDbContext> dbFactory,
     IMapper mapper,

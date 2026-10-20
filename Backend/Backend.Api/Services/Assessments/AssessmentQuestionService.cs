@@ -10,6 +10,40 @@ using Backend.Api.Services.Assessments.Validators;
 
 namespace Backend.Api.Services.Assessments;
 
+public interface IAssessmentQuestionService
+{
+    public Task<Result<IReadOnlyList<AssessmentQuestionInfo>>> GetQuestionsAsync(
+            long assessmentId,
+            CancellationToken ct = default);
+
+    public Task<Result<AssessmentQuestionInfo>> AddAsync(
+        long resourceId,
+        AssessmentQuestionInfo request,
+        CancellationToken ct = default);
+
+    public Task<Result<AssessmentQuestionInfo>> AddFromBankAsync(
+           long resourceId,
+           long questionId,
+           decimal points,
+           CancellationToken ct = default);
+
+    public Task<Result> UpdateAsync(
+           long assessmentId,
+           long questionId,
+           AssessmentQuestionInfo request,
+           CancellationToken ct = default);
+
+    public Task<Result> RemoveAsync(
+            long assessmentId,
+            long questionId,
+            CancellationToken ct = default);
+
+    public Task<Result> ReorderAsync(
+           long assessmentId,
+           IReadOnlyList<long> questionIds,
+           CancellationToken ct = default);
+}
+
 public class AssessmentQuestionService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,

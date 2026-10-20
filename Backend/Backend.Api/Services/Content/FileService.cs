@@ -8,6 +8,23 @@ using Microsoft.Extensions.Options;
 
 namespace Backend.Api.Services.Content;
 
+public interface IFileService
+{
+    public Task<long> UploadAsync(
+        Stream stream,
+        string originalFileName,
+        string contentType,
+        long userId,
+        FileCategory category,
+        CancellationToken ct = default);
+
+    public Task<IResult?> GetFileAsync(long fileId, CancellationToken ct = default);
+    
+    public Task DeleteAsync(long fileId, CancellationToken ct = default);
+
+    public Task<Stream> ReadAsync(string storagePath);
+}
+
 public class FileService(
     IOptions<Core.Common.FileOptions> fileOptions,
     IDbContextFactory<AppDbContext> dbFactory)

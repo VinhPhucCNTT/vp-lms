@@ -11,6 +11,21 @@ using Sqids;
 
 namespace Backend.Api.Services.Content;
 
+public interface IAssessmentService
+{
+    public Task<Assessment?> GetAsync(long resourceId, CancellationToken ct = default);
+
+    public Task<AssessmentResponse?> GetDtoByIdAsync(long resourceId, CancellationToken ct = default);
+
+    public Task<List<AssessmentListResponse>> QueryAsync(CancellationToken ct = default);
+
+    public Task<AssessmentResponse> CreateAsync(long moduleId, AssessmentRequest request, CancellationToken ct = default);
+
+    public Task<AssessmentResponse?> UpdateAsync(long assessmentId, AssessmentRequest request, CancellationToken ct = default);
+
+    public Task<Result<bool>> SetPublishStatusAsync(long resourceId, bool isPublished, CancellationToken ct = default);
+}
+
 public class AssessmentService(
     IDbContextFactory<AppDbContext> dbFactory,
     IMapper mapper,

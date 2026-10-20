@@ -5,6 +5,10 @@ using Backend.Persistence.Entities.Courses;
 
 namespace Backend.Api.Services.Dashboard;
 
+public interface IDashboardService
+{
+}
+
 public class DashboardService(
     IDbContextFactory<AppDbContext> dbFactory)
 {

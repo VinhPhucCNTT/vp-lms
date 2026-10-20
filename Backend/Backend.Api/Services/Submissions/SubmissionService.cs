@@ -12,6 +12,28 @@ using Backend.Api.Services.Content;
 
 namespace Backend.Api.Services.Submissions;
 
+public interface ISubmissionService
+{
+    public Task<PaginatedResponse<SubmissionResponse>> GetListAsync(long resourceId, PageRequest page, CancellationToken ct = default);
+
+    public Task<Result<SubmissionDetailResponse>> GetOwnDetailAsync(long resourceId, CancellationToken ct = default);
+
+    public Task<PaginatedResponse<SubmissionResponse>> GetGradedAsync(long resourceId, PageRequest page, CancellationToken ct = default);
+
+    public Task<PaginatedResponse<SubmissionResponse>> GetUngradedAsync(long resourceId, PageRequest page, CancellationToken ct = default);
+
+    public Task<Result<SubmissionDetailResponse>> SubmitAsync(long resourceId, SubmissionRequest request, CancellationToken ct = default);
+
+    public Task<AssignmentFileResponse> UploadFileAsync(AssignmentSubmission submission, IFormFile file, CancellationToken ct);
+
+    public Task<Result<AssignmentSubmission>> ValidateFileAsync(
+        long resourceId,
+        IFormFile file,
+        CancellationToken ct);
+
+    public Task<bool> RemoveAsync(long resourceId, CancellationToken ct = default);
+}
+
 public class SubmissionService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,

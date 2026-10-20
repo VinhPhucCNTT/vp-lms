@@ -126,7 +126,6 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddHttpContextAccessor();
-
 // Automapper
 builder.Services.AddTransient<SqidConverter>();
 builder.Services.AddAutoMapper(cfg => { },
@@ -138,49 +137,26 @@ builder.Services.AddAutoMapper(cfg => { },
         typeof(AssignmentProfile),
         typeof(FileProfile));
 
-// Inject services
-builder.Services.AddScoped<CurrentUserService>();
-builder.Services.AddScoped<AuthenticationService>();
+builder.Services.Scan(scan => scan
+    .FromAssemblyOf<Program>()
+    .AddClasses(classes => classes
+        .InNamespaces("Backend.Api.Services.Assessments")
+        .InNamespaces("Backend.Api.Services.Auth")
+        .InNamespaces("Backend.Api.Services.Content")
+        .InNamespaces("Backend.Api.Services.Courses")
+        // .InNamespaces("Backend.Api.Services.Dashboard")
+        .InNamespaces("Backend.Api.Services.Judge")
+        // .InNamespaces("Backend.Api.Services.Social")
+        .InNamespaces("Backend.Api.Services.Submissions")
+        .InNamespaces("Backend.Api.Services.Users"))
+    .AsImplementedInterfaces()
+    .WithScopedLifetime()
 
-builder.Services.AddScoped<CourseAuthorization>();
-
-builder.Services.AddScoped<FileService>();
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<EnrollmentService>();
-
-builder.Services.AddScoped<CourseService>();
-builder.Services.AddScoped<ModuleService>();
-builder.Services.AddScoped<ResourceService>();
-builder.Services.AddScoped<LessonService>();
-builder.Services.AddScoped<AssignmentService>();
-builder.Services.AddScoped<SubmissionService>();
-builder.Services.AddScoped<AssignmentGradeService>();
-
-builder.Services.AddScoped<CodingProblemService>();
-builder.Services.AddSingleton<IJudgeSubmissionService, JudgeSubmissionService>();
-
-/////
-builder.Services.AddScoped<MultipleChoiceGrader>();
-builder.Services.AddScoped<MultipleSelectGrader>();
-builder.Services.AddScoped<TrueFalseGrader>();
-builder.Services.AddScoped<IQuestionGrader, TrueFalseGrader>();
-builder.Services.AddScoped<ShortAnswerGrader>();
-builder.Services.AddScoped<DragAndDropGrader>();
-builder.Services.AddScoped<CodingGrader>();
-builder.Services.AddScoped<QuestionContentValidator>();
-builder.Services.AddScoped<IQuestionContentValidator>(sp =>
-    sp.GetRequiredService<QuestionContentValidator>());
-builder.Services.AddScoped<IQuestionTypeValidator, ChoiceQuestionValidator>();
-
-builder.Services.AddScoped<QuestionSelectionService>();
-
-builder.Services.AddScoped<AssessmentService>();
-builder.Services.AddScoped<AssessmentQuestionService>();
-builder.Services.AddScoped<AssessmentAttemptService>();
-builder.Services.AddScoped<QuestionBankService>();
-builder.Services.AddScoped<QuestionService>();
-builder.Services.AddScoped<AssessmentGradingService>();
-/////
+    .AddClasses(classes => classes
+        .InNamespaces("Backend.Api.Services.Assessments.Graders"))
+    .As<IQuestionGrader>()
+    .WithScopedLifetime()
+);
 
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())

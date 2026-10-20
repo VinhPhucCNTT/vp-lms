@@ -8,6 +8,25 @@ using Backend.Api.Core.Common;
 
 namespace Backend.Api.Services.Submissions;
 
+public interface IAssignmentGradeService
+{
+    public Task<AssignmentGradeResponse?> GetGradeAsync(long submissionId, CancellationToken ct = default);
+
+    public Task<PaginatedResponse<AssignmentGradeResponse>?> GetAssignmentGradesAsync(long resourceId, PageRequest page, CancellationToken ct = default);
+
+    public Task<PaginatedResponse<AssignmentGradeResponse>?> GetInstructorGradedAsync(PageRequest page, CancellationToken ct = default);
+
+    public Task<PaginatedResponse<AssignmentGradeResponse>?> GetStudentSelfGradesAsync(PageRequest page, CancellationToken ct = default);
+
+    public Task<PaginatedResponse<AssignmentGradeResponse>?> GetStudentGradesAsync(long resourceId, long studentUserId, PageRequest page, CancellationToken ct = default);
+
+    public Task<AssignmentGradeResponse?> GradeAsync(long submissionId, AssignmentGradeRequest request);
+
+    public Task<AssignmentGradeResponse?> UpdateAsync(long submissionId, AssignmentGradeRequest request);
+
+    public Task<bool> RemoveAsync(long submissionId);
+}
+
 public class AssignmentGradeService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,

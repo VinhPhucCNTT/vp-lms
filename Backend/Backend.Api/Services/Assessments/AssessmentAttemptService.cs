@@ -10,6 +10,35 @@ using System.Text.Json;
 
 namespace Backend.Api.Services.Assessments;
 
+public interface IAssessmentAttemptService
+{
+    public Task<Result<AssessmentAttempt>> StartAsync(
+           long assessmentId,
+           CancellationToken ct = default);
+
+    public Task<Result<AssessmentAttempt>> GetAsync(
+        long attemptId,
+        CancellationToken ct = default);
+
+    public Task<Result> SaveAnswerAsync(
+        long assessmentId,
+        long attemptId,
+        long attemptQuestionId,
+        JsonDocument answer,
+        CancellationToken ct = default);
+
+    public Task<Result> SetFlagAsync(
+        long attemptId,
+        long attemptQuestionId,
+        bool flagged,
+        CancellationToken ct = default);
+
+    public Task<Result> SubmitAsync(
+        long assessmentId,
+        long attemptId,
+        CancellationToken ct = default);
+}
+
 public sealed class AssessmentAttemptService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,

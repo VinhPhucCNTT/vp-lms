@@ -1,4 +1,5 @@
 using Backend.Api.Core.Common;
+using Backend.Api.Core.Types;
 using Backend.Persistence.Entities.Assessments;
 
 namespace Backend.Api.Services.Assessments.Graders;
