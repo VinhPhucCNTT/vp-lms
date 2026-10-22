@@ -10,7 +10,7 @@ public interface IDashboardService
 }
 
 public class DashboardService(
-    IDbContextFactory<AppDbContext> dbFactory)
+    IDbContextFactory<AppDbContext> dbFactory) : IDashboardService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
 

@@ -31,7 +31,7 @@ public interface IQuestionBankService
 public sealed class QuestionBankService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
-    IMapper mapper)
+    IMapper mapper) : IQuestionBankService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;

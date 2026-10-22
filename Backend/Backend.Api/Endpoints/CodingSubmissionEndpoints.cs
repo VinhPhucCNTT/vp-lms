@@ -28,7 +28,7 @@ public static class CodingSubmissionEndpoints
         string resourceId,
         JudgeTestRequest request,
         SqidsEncoder<long> sqidsEncoder,
-        IJudgeSubmissionService service,
+        IJudgeSubmissionService judgeSubmissionService,
         CancellationToken ct)
     {
         var decoded =
@@ -40,7 +40,7 @@ public static class CodingSubmissionEndpoints
                 "Invalid resource ID.");
         }
 
-        var result = await service.Send(decoded[0], request, ct);
+        var result = await judgeSubmissionService.Send(decoded[0], request, ct);
 
         if (!result.IsSuccess)
         {
@@ -68,7 +68,7 @@ public static class CodingSubmissionEndpoints
     private static async Task<IResult> HandleGet(
         string submissionId,
         SqidsEncoder<long> sqidsEncoder,
-        JudgeSubmissionService service,
+        IJudgeSubmissionService judgeSubmissionService,
         CancellationToken ct)
     {
         var decoded =
@@ -80,7 +80,7 @@ public static class CodingSubmissionEndpoints
                 "Invalid submission ID.");
         }
 
-        var result = await service.Get(decoded[0], ct);
+        var result = await judgeSubmissionService.Get(decoded[0], ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();

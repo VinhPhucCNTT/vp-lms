@@ -6,16 +6,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Core.Authorization;
 
+public interface IAssessmentAuthorization
+{
+}
+
 public class AssessmentAuthorization(
     CurrentUserService currentUserService,
     IDbContextFactory<AppDbContext> dbFactory,
-    CourseService courseService,
-    CourseAuthorization courseAuthorization)
+    ICourseService courseService,
+    ICourseAuthorization courseAuthorization) : IAssessmentAuthorization
 {
     private readonly CurrentUserService currentUserService = currentUserService;
     private readonly IDbContextFactory<AppDbContext> dbFactory = dbFactory;
-    private readonly CourseService courseService = courseService;
-    private readonly CourseAuthorization courseAuthorization = courseAuthorization;
+    private readonly ICourseService courseService = courseService;
+    private readonly ICourseAuthorization courseAuthorization = courseAuthorization;
 
     // public async Task<bool> CanModifyQuestionAsync(Assessment assessment, CancellationToken ct = default)
     // {

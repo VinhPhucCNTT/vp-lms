@@ -20,7 +20,7 @@ public static class QuestionEndpoints
     private static async Task<Results<Ok<List<QuestionResponse>>, BadRequest>> HandleGetQuestions(
         string resourceId,
         SqidsEncoder<long> sqidsEncoder,
-        QuestionService questionService,
+        IQuestionService questionService,
         CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);

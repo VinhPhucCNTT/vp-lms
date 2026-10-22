@@ -25,7 +25,7 @@ public interface IModuleService
 
 public class ModuleService(
     IDbContextFactory<AppDbContext> dbFactory,
-    IMapper mapper)
+    IMapper mapper) : IModuleService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly IMapper _mapper = mapper;

@@ -27,7 +27,7 @@ public interface IFileService
 
 public class FileService(
     IOptions<Core.Common.FileOptions> fileOptions,
-    IDbContextFactory<AppDbContext> dbFactory)
+    IDbContextFactory<AppDbContext> dbFactory) : IFileService
 {
     private readonly string _root = fileOptions.Value.RootPath;
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;

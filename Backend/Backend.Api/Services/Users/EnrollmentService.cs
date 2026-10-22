@@ -29,7 +29,7 @@ public interface IEnrollmentService
 public class EnrollmentService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
-    IMapper mapper)
+    IMapper mapper) : IEnrollmentService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;

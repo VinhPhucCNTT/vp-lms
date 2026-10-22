@@ -26,7 +26,7 @@ public static class LessonEndpoints
         HandleGetById(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            LessonService lessonService)
+            ILessonService lessonService)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)
@@ -44,9 +44,9 @@ public static class LessonEndpoints
             string moduleId,
             LessonRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            LessonService lessonService,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            ILessonService lessonService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(moduleId);
@@ -67,9 +67,9 @@ public static class LessonEndpoints
             string resourceId,
             LessonRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            LessonService lessonService)
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            ILessonService lessonService)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)
@@ -90,9 +90,9 @@ public static class LessonEndpoints
         HandleSetPublish(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            LessonService lessonService,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            ILessonService lessonService,
             CancellationToken ct,
             [AsParameters] bool isPublished = true)
     {

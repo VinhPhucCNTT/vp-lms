@@ -42,7 +42,7 @@ public static class CodingProblemEndpoints
         string moduleId,
         CodingProblemRequest request,
         SqidsEncoder<long> sqidsEncoder,
-        CodingProblemService service,
+        ICodingProblemService problemService,
         CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(moduleId);
@@ -53,7 +53,7 @@ public static class CodingProblemEndpoints
                 "Invalid module ID.");
         }
 
-        var result = await service.CreateAsync(
+        var result = await problemService.CreateAsync(
             decoded[0],
             request,
             ct);
@@ -99,7 +99,7 @@ public static class CodingProblemEndpoints
     private static async Task<IResult> HandleGetById(
         string resourceId,
         SqidsEncoder<long> sqidsEncoder,
-        CodingProblemService service,
+        ICodingProblemService problemService,
         CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -111,7 +111,7 @@ public static class CodingProblemEndpoints
         }
 
         var result =
-            await service.GetByResourceIdAsync(
+            await problemService.GetByResourceIdAsync(
                 decoded[0],
                 ct);
 
@@ -139,7 +139,7 @@ public static class CodingProblemEndpoints
         string resourceId,
         ProblemTestCaseRequest request,
         SqidsEncoder<long> sqidsEncoder,
-        CodingProblemService service,
+        ICodingProblemService problemService,
         CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -150,7 +150,7 @@ public static class CodingProblemEndpoints
                 "Invalid problem ID.");
         }
 
-        var result = await service.AddTestCaseAsync(
+        var result = await problemService.AddTestCaseAsync(
             decoded[0],
             request,
             ct);
@@ -178,7 +178,7 @@ public static class CodingProblemEndpoints
     private static async Task<IResult> HandleGetTestCases(
         string resourceId,
         SqidsEncoder<long> sqidsEncoder,
-        CodingProblemService service,
+        ICodingProblemService problemService,
         CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -190,7 +190,7 @@ public static class CodingProblemEndpoints
         }
 
         var result =
-            await service.GetTestCasesAsync(
+            await problemService.GetTestCasesAsync(
                 decoded[0],
                 ct);
 
@@ -219,7 +219,7 @@ public static class CodingProblemEndpoints
         string compilerId,
         CompilerProfileRequest request,
         SqidsEncoder<long> sqidsEncoder,
-        CodingProblemService service,
+        ICodingProblemService problemService,
         CancellationToken ct)
     {
         var rDecoded = sqidsEncoder.Decode(resourceId);
@@ -227,7 +227,7 @@ public static class CodingProblemEndpoints
         if (rDecoded.Count != 1 || cDecoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var result = await service.SetLanguageProfileAsync(rDecoded[0], cDecoded[0], request, ct);
+        var result = await problemService.SetLanguageProfileAsync(rDecoded[0], cDecoded[0], request, ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();
@@ -236,7 +236,7 @@ public static class CodingProblemEndpoints
     private static async Task<IResult> HandleGetLanguageProfiles(
         string resourceId,
         SqidsEncoder<long> sqidsEncoder,
-        CodingProblemService service,
+        ICodingProblemService problemService,
         CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -244,7 +244,7 @@ public static class CodingProblemEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var result = await service.GetLanguageProfilesAsync(decoded[0], ct);
+        var result = await problemService.GetLanguageProfilesAsync(decoded[0], ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();

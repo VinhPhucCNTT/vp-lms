@@ -39,7 +39,7 @@ public static class AssignmentEndpoints
     }
 
     private static async Task<Ok<List<StudentAssignmentSummaryResponse>>> HandleQuery(
-        AssignmentService assignmentService,
+        IAssignmentService assignmentService,
         CancellationToken ct)
     {
         return TypedResults.Ok(await assignmentService.QueryStudentAsync(ct));
@@ -50,7 +50,7 @@ public static class AssignmentEndpoints
         HandleGetById(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            AssignmentService assignmentService,
+            IAssignmentService assignmentService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -69,9 +69,9 @@ public static class AssignmentEndpoints
             string moduleId,
             AssignmentRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            AssignmentService assignmentService,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            IAssignmentService assignmentService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(moduleId);
@@ -94,9 +94,9 @@ public static class AssignmentEndpoints
             string resourceId,
             AssignmentRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            AssignmentService assignmentService)
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            IAssignmentService assignmentService)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)
@@ -118,7 +118,7 @@ public static class AssignmentEndpoints
             string resourceId,
             IFormFile file,
             SqidsEncoder<long> sqidsEncoder,
-            SubmissionService submissionService,
+            ISubmissionService submissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -139,7 +139,7 @@ public static class AssignmentEndpoints
             string resourceId,
             SubmissionRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            SubmissionService submissionService,
+            ISubmissionService submissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -160,7 +160,7 @@ public static class AssignmentEndpoints
         HandleRemoveSelfSubmit(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            SubmissionService submissionService,
+            ISubmissionService submissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -179,9 +179,9 @@ public static class AssignmentEndpoints
             string resourceId,
             [AsParameters] PageRequest page,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            AssignmentGradeService assignmentGradeService,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            IAssignmentGradeService assignmentGradeService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -203,7 +203,7 @@ public static class AssignmentEndpoints
         HandleGetOwnSubmit(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            SubmissionService submissionService,
+            ISubmissionService submissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -222,9 +222,9 @@ public static class AssignmentEndpoints
             string resourceId,
             [AsParameters] PageRequest page,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            SubmissionService submissionService,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            ISubmissionService submissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -247,9 +247,9 @@ public static class AssignmentEndpoints
             string resourceId,
             [AsParameters] PageRequest page,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            SubmissionService submissionService,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            ISubmissionService submissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -270,9 +270,9 @@ public static class AssignmentEndpoints
             string resourceId,
             [AsParameters] PageRequest page,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            SubmissionService submissionService,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            ISubmissionService submissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -293,9 +293,9 @@ public static class AssignmentEndpoints
         HandleSetPublish(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            AssignmentService assignmentService,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            IAssignmentService assignmentService,
             CancellationToken ct,
             [AsParameters] bool isPublished = true)
     {

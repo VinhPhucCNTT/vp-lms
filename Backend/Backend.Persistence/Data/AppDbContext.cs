@@ -76,12 +76,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         builder.Entity<Lesson>()
             .HasQueryFilter(l => !l.IsDeleted && !l.Resource.IsDeleted);
+
         builder.Entity<Assignment>()
             .HasQueryFilter(a => !a.IsDeleted && !a.Resource.IsDeleted);
+
         builder.Entity<Assessment>()
             .HasQueryFilter(a => !a.IsDeleted && !a.Resource.IsDeleted);
+        builder.Entity<AssessmentQuestion>()
+            .HasQueryFilter(q => !q.Assessment.IsDeleted);
+
         builder.Entity<CodingProblem>()
             .HasQueryFilter(j => !j.IsDeleted && !j.Resource.IsDeleted);
+        builder.Entity<CompilerProfile>()
+            .HasQueryFilter(p => !p.Problem.IsDeleted);
 
         builder.Entity<QuestionBank>()
             .HasQueryFilter(b => !b.IsDeleted);
@@ -90,10 +97,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         builder.Entity<AssignmentSubmission>()
             .HasQueryFilter(s => !s.IsDeleted && !s.Assignment.IsDeleted);
+        builder.Entity<AssignmentFile>()
+            .HasQueryFilter(f => !f.Submission.IsDeleted);
 
-        // Not needed
-        // builder.Entity<AssessmentQuestion>()
-        //     .HasQueryFilter(q => !q.IsDeleted && !q.Assessment.IsDeleted);
         // builder.Entity<AttemptAnswer>()
         //     .HasQueryFilter(r => !r.Question.IsDeleted);
 

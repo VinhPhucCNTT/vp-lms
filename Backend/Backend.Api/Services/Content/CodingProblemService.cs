@@ -16,7 +16,7 @@ public interface ICodingProblemService
         CreateAsync(long moduleId, CodingProblemRequest request, CancellationToken ct);
 
     public Task<Result<CodingProblemResponse>>
-        GetByResourceAsync(long resourceId, CancellationToken ct);
+        GetByResourceIdAsync(long resourceId, CancellationToken ct);
 
     public Task<Result<ProblemTestCaseResponse>>
         AddTestCaseAsync(long resourceId, ProblemTestCaseRequest request, CancellationToken ct);
@@ -35,7 +35,7 @@ public interface ICodingProblemService
         SetLanguageProfileAsync(
             long resourceId,
             long compilerId,
-            CompilerProfileResponse request,
+            CompilerProfileRequest request,
             CancellationToken ct);
 }
 
@@ -43,7 +43,7 @@ public sealed class CodingProblemService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUser,
     IMapper mapper,
-    ILogger<CodingProblemService> logger)
+    ILogger<CodingProblemService> logger) : ICodingProblemService
 {
     private readonly IMapper _mapper = mapper;
     private readonly ILogger<CodingProblemService> _logger = logger;

@@ -29,7 +29,7 @@ public static class EnrollmentEndpoints
         HandleGetById(
             string enrollmentId,
             SqidsEncoder<long> sqidsEncoder,
-            EnrollmentService enrollmentService)
+            IEnrollmentService enrollmentService)
     {
         var decoded = sqidsEncoder.Decode(enrollmentId);
         if (decoded.Count != 1)
@@ -46,7 +46,7 @@ public static class EnrollmentEndpoints
         HandleGetByCourseId(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
-            EnrollmentService enrollmentService)
+            IEnrollmentService enrollmentService)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
@@ -63,7 +63,7 @@ public static class EnrollmentEndpoints
         HandleGetByUserId(
             string userId,
             SqidsEncoder<long> sqidsEncoder,
-            EnrollmentService enrollmentService)
+            IEnrollmentService enrollmentService)
     {
         var decoded = sqidsEncoder.Decode(userId);
         if (decoded.Count != 1)
@@ -79,7 +79,7 @@ public static class EnrollmentEndpoints
         Task<Results<Ok<List<EnrollmentResponse>>, BadRequest, NotFound>>
         HandleGetCurrent(
             SqidsEncoder<long> sqidsEncoder,
-            EnrollmentService enrollmentService)
+            IEnrollmentService enrollmentService)
     {
         var results = await enrollmentService.GetCurrentEnrollmentsAsync();
         return results is not null
@@ -92,7 +92,7 @@ public static class EnrollmentEndpoints
         HandleEnroll(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
-            EnrollmentService enrollmentService)
+            IEnrollmentService enrollmentService)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
@@ -109,7 +109,7 @@ public static class EnrollmentEndpoints
         HandleUnenroll(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
-            EnrollmentService enrollmentService)
+            IEnrollmentService enrollmentService)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
@@ -126,7 +126,7 @@ public static class EnrollmentEndpoints
         HandleSetTA(
             string enrollmentId,
             SqidsEncoder<long> sqidsEncoder,
-            EnrollmentService enrollmentService,
+            IEnrollmentService enrollmentService,
             [FromQuery] bool enable = true)
     {
         var decoded = sqidsEncoder.Decode(enrollmentId);
@@ -144,7 +144,7 @@ public static class EnrollmentEndpoints
         HandleDelete(
             string enrollmentId,
             SqidsEncoder<long> sqidsEncoder,
-            EnrollmentService enrollmentService)
+            IEnrollmentService enrollmentService)
     {
         var decoded = sqidsEncoder.Decode(enrollmentId);
         if (decoded.Count != 1)

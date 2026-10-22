@@ -32,7 +32,7 @@ public static class UserEndpoints
         HandleGetById(
             string id,
             SqidsEncoder<long> sqidsEncoder,
-            UserService userService)
+            [FromServices] IUserService userService)
     {
         var decoded = sqidsEncoder.Decode(id);
         if (decoded.Count != 1)
@@ -49,7 +49,7 @@ public static class UserEndpoints
         HandleGetUserStat(
             string id,
             SqidsEncoder<long> sqidsEncoder,
-            UserService userService)
+            [FromServices] IUserService userService)
     {
         var decoded = sqidsEncoder.Decode(id);
         if (decoded.Count != 1)
@@ -65,7 +65,7 @@ public static class UserEndpoints
         Task<Ok<PaginatedResponse<UserResponse>>>
         HandleQuery(
             [AsParameters] UserRequest query,
-            UserService userService)
+            [FromServices] IUserService userService)
     {
         var results = await userService.QueryUsersAsync(query);
         return TypedResults.Ok(results);
@@ -75,7 +75,7 @@ public static class UserEndpoints
         Task<Ok<UserSetResponse>>
         HandleCreate(
             [FromBody] UserCreateRequest request,
-            UserService userService)
+            [FromServices] IUserService userService)
     {
         var result = await userService.CreateUserAsync(request);
         return TypedResults.Ok(result);
@@ -87,7 +87,7 @@ public static class UserEndpoints
             string id,
             [FromBody] UserUpdateRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            UserService userService)
+            [FromServices] IUserService userService)
     {
         var decoded = sqidsEncoder.Decode(id);
         if (decoded.Count != 1)
@@ -104,7 +104,7 @@ public static class UserEndpoints
         HandleDelete(
             string id,
             SqidsEncoder<long> sqidsEncoder,
-            UserService userService)
+            [FromServices] IUserService userService)
     {
         var decoded = sqidsEncoder.Decode(id);
         if (decoded.Count != 1)
@@ -121,7 +121,7 @@ public static class UserEndpoints
         HandleCheckActive(
             string id,
             SqidsEncoder<long> sqidsEncoder,
-            UserService userService)
+            [FromServices] IUserService userService)
     {
         var decoded = sqidsEncoder.Decode(id);
         if (decoded.Count != 1)
@@ -136,7 +136,7 @@ public static class UserEndpoints
         HandleActivate(
             string id,
             SqidsEncoder<long> sqidsEncoder,
-            UserService userService)
+            [FromServices] IUserService userService)
     {
         var decoded = sqidsEncoder.Decode(id);
         if (decoded.Count != 1)
@@ -153,7 +153,7 @@ public static class UserEndpoints
         HandleDeactivate(
             string id,
             SqidsEncoder<long> sqidsEncoder,
-            UserService userService)
+            [FromServices] IUserService userService)
     {
         var decoded = sqidsEncoder.Decode(id);
         if (decoded.Count != 1)

@@ -25,21 +25,12 @@ public interface IResourceService
     public Task<bool> ReorderResourceAsync(long resourceId, int orderIndex);
 
     public Task<bool> CheckOwnerAsync(long resourceId);
-
-    public Task<List<long>> GetCourseResourceIdsAsync(AppDbContext db, long courseId);
-
-    public Task<CourseProgress> GetCourseProgressAsync(AppDbContext db, long courseId, long userId);
-
-    public Task<CourseResource> CreateResourceAsync(AppDbContext db, long moduleId, ResourceRequestInfo info, ResourceType type, CancellationToken ct = default);
-
-    public Task<CourseResource> UpdateResourceAsync(AppDbContext db, long resourceId, ResourceRequestInfo info);
 }
 
 public class ResourceService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
-    IMapper mapper
-)
+    IMapper mapper) : IResourceService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;

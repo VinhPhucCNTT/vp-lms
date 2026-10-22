@@ -22,7 +22,7 @@ public static class DevelopmentOnlyEndpoints
         Task<Ok<PaginatedResponse<UserResponse>>>
         HandleGetUsers(
             [AsParameters] UserRequest query,
-            UserService userService)
+            IUserService userService)
     {
         var results = await userService.QueryUsersAsync(query);
         return TypedResults.Ok(results);

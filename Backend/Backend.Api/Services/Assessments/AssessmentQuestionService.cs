@@ -48,7 +48,7 @@ public class AssessmentQuestionService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
     IMapper mapper,
-    IQuestionContentValidator contentValidator)
+    IQuestionContentValidator contentValidator) : IAssessmentQuestionService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;

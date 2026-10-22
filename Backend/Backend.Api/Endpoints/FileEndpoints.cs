@@ -19,7 +19,7 @@ public static class FileEndpoints
         HandleGet(
             string fileId,
             SqidsEncoder<long> sqidsEncoder,
-            FileService fileService,
+            IFileService fileService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(fileId);

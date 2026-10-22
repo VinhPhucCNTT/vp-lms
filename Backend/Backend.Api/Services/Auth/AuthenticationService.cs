@@ -20,7 +20,7 @@ public interface IAuthenticationService
 
 public class AuthenticationService(
     IConfiguration config,
-    IDbContextFactory<AppDbContext> contextFactory)
+    IDbContextFactory<AppDbContext> contextFactory) : IAuthenticationService
 {
     private readonly IConfiguration _config = config;
     private readonly IDbContextFactory<AppDbContext> _contextFactory = contextFactory;

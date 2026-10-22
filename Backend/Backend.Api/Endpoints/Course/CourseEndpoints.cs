@@ -38,7 +38,8 @@ public static class CourseEndpoints
         HandleGetCourseById(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService)
+            ICourseService courseService,
+            CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
@@ -52,7 +53,8 @@ public static class CourseEndpoints
 
     private static async
         Task<Ok<List<CourseStudentResponse>>>
-        HandleGetStudent(CourseService courseService)
+        HandleGetStudent(ICourseService courseService,
+            CancellationToken ct)
     {
         return TypedResults.Ok(
             await courseService.GetStudentCoursesAsync());
@@ -60,7 +62,8 @@ public static class CourseEndpoints
 
     private static async
         Task<Ok<List<CourseResponse>>>
-        HandleGetInstructor(CourseService courseService)
+        HandleGetInstructor(ICourseService courseService,
+            CancellationToken ct)
     {
         return TypedResults.Ok(
             await courseService.GetInstructorCoursesAsync());
@@ -68,7 +71,8 @@ public static class CourseEndpoints
 
     private static async
         Task<Ok<CourseExploreResponse>>
-        HandleGetExplore(CourseService courseService)
+        HandleGetExplore(ICourseService courseService,
+            CancellationToken ct)
     {
         return TypedResults.Ok(
             await courseService.GetExploreAsync());
@@ -76,7 +80,8 @@ public static class CourseEndpoints
 
     private static async
         Task<Ok<PaginatedResponse<CourseResponse>>>
-        HandleQuery([AsParameters] CourseRequest query, CourseService courseService)
+        HandleQuery([AsParameters] CourseRequest query, ICourseService courseService,
+            CancellationToken ct)
     {
         return TypedResults.Ok(
             await courseService.QueryCoursesAsync(query));
@@ -87,7 +92,7 @@ public static class CourseEndpoints
         HandleGetModules(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
-            ModuleService moduleService)
+            IModuleService moduleService)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
@@ -103,7 +108,7 @@ public static class CourseEndpoints
             string courseId,
             [FromBody] ModuleSetRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            ModuleService moduleService)
+            IModuleService moduleService)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
@@ -115,7 +120,8 @@ public static class CourseEndpoints
 
     private static async
         Task<Ok<CourseSetResponse>>
-        HandleCreate([FromBody] CourseSetRequest request, CourseService courseService)
+        HandleCreate([FromBody] CourseSetRequest request, ICourseService courseService,
+            CancellationToken ct)
     {
         return TypedResults.Ok(
             await courseService.CreateCourseAsync(request));
@@ -127,8 +133,9 @@ public static class CourseEndpoints
             string courseId,
             [FromBody] CourseSetRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            CourseAuthorization auth,
-            CourseService courseService)
+            ICourseAuthorization auth,
+            ICourseService courseService,
+            CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
@@ -149,8 +156,9 @@ public static class CourseEndpoints
         HandleDelete(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
-            CourseAuthorization auth,
-            CourseService courseService)
+            ICourseAuthorization auth,
+            ICourseService courseService,
+            CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
@@ -170,8 +178,8 @@ public static class CourseEndpoints
             string courseId,
             IFormFile file,
             SqidsEncoder<long> sqidsEncoder,
-            CourseAuthorization auth,
-            CourseService courseService,
+            ICourseAuthorization auth,
+            ICourseService courseService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(courseId);
@@ -193,8 +201,9 @@ public static class CourseEndpoints
         HandlePublish(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
-            CourseAuthorization auth,
-            CourseService courseService)
+            ICourseAuthorization auth,
+            ICourseService courseService,
+            CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
@@ -213,8 +222,9 @@ public static class CourseEndpoints
         HandleUnpublish(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
-            CourseAuthorization auth,
-            CourseService courseService)
+            ICourseAuthorization auth,
+            ICourseService courseService,
+            CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)

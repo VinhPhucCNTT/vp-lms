@@ -59,7 +59,7 @@ public static class AssessmentEndpoints
     }
 
     private static async Task<Ok<List<AssessmentListResponse>>> HandleQuery(
-        AssessmentService assessmentService,
+        IAssessmentService assessmentService,
         CancellationToken ct)
     {
         return TypedResults.Ok(await assessmentService.QueryAsync(ct));
@@ -68,8 +68,8 @@ public static class AssessmentEndpoints
     private static async Task<IResult> HandleStart(
         string resourceId,
         SqidsEncoder<long> sqidsEncoder,
-        AssessmentService assessmentService,
-        AssessmentAttemptService attemptService,
+        IAssessmentService assessmentService,
+        IAssessmentAttemptService attemptService,
         CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -105,8 +105,8 @@ public static class AssessmentEndpoints
         string resourceId,
         string attemptId,
         SqidsEncoder<long> sqidsEncoder,
-        AssessmentService assessmentService,
-        AssessmentAttemptService attemptService,
+        IAssessmentService assessmentService,
+        IAssessmentAttemptService attemptService,
         CancellationToken ct)
     {
         var resourceDecoded = sqidsEncoder.Decode(resourceId);
@@ -131,28 +131,28 @@ public static class AssessmentEndpoints
         string attemptQuestionId,
         SaveAttemptAnswerRequest request,
         SqidsEncoder<long> sqidsEncoder,
-        AssessmentService assessmentService,
-        AssessmentAttemptService attemptService,
+        IAssessmentService assessmentService,
+        IAssessmentAttemptService attemptService,
         CancellationToken ct)
     {
-        var resourceDecoded = sqidsEncoder.Decode(resourceId);
-        var attemptDecoded = sqidsEncoder.Decode(attemptId);
-        var attemptQuestionDecoded = sqidsEncoder.Decode(attemptQuestionId);
-        if (resourceDecoded.Count != 1 ||
-            attemptDecoded.Count != 1 ||
-            attemptQuestionDecoded.Count != 1)
+        var rDecoded = sqidsEncoder.Decode(resourceId);
+        var aDecoded = sqidsEncoder.Decode(attemptId);
+        var aqDecoded = sqidsEncoder.Decode(attemptQuestionId);
+        if (rDecoded.Count != 1 ||
+            aDecoded.Count != 1 ||
+            aqDecoded.Count != 1)
         {
             return TypedResults.BadRequest();
         }
 
-        var assessment = await assessmentService.GetAsync(resourceDecoded[0], ct);
+        var assessment = await assessmentService.GetAsync(rDecoded[0], ct);
         if (assessment is null)
             return TypedResults.NotFound("Assessment not found.");
 
         var result = await attemptService.SaveAnswerAsync(
             assessment.Id,
-            attemptDecoded[0],
-            attemptQuestionDecoded[0],
+            aDecoded[0],
+            aqDecoded[0],
             request.AnswerData,
             ct);
 
@@ -167,8 +167,8 @@ public static class AssessmentEndpoints
         string resourceId,
         string attemptId,
         SqidsEncoder<long> sqidsEncoder,
-        AssessmentService assessmentService,
-        AssessmentAttemptService attemptService,
+        IAssessmentService assessmentService,
+        IAssessmentAttemptService attemptService,
         CancellationToken ct)
     {
         var resourceDecoded = sqidsEncoder.Decode(resourceId);
@@ -252,7 +252,7 @@ public static class AssessmentEndpoints
         HandleGetById(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            AssessmentService assessmentService,
+            IAssessmentService assessmentService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -271,9 +271,9 @@ public static class AssessmentEndpoints
             string moduleId,
             AssessmentRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            AssessmentService assessmentService,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            IAssessmentService assessmentService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(moduleId);
@@ -294,9 +294,9 @@ public static class AssessmentEndpoints
             string resourceId,
             AssessmentRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            AssessmentService assessmentService,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            IAssessmentService assessmentService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -319,9 +319,9 @@ public static class AssessmentEndpoints
         HandleSetPublish(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            AssessmentService assessmentService,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            IAssessmentService assessmentService,
             CancellationToken ct,
             [AsParameters] bool isPublished = true)
     {

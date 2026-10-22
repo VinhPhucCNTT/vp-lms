@@ -28,7 +28,7 @@ public interface IAssignmentService
 public class AssignmentService(
     IDbContextFactory<AppDbContext> dbFactory,
     IMapper mapper,
-    CurrentUserService currentUserService)
+    CurrentUserService currentUserService) : IAssignmentService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly IMapper _mapper = mapper;

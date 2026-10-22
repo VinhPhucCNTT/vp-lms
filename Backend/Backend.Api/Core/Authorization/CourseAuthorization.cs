@@ -5,9 +5,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Core.Authorization;
 
+public interface ICourseAuthorization
+{
+    public Task<bool> IsCourseOwnerAsync(Course course);
+
+    public Task<bool> IsParticipantAsync(long courseId);
+}
+
 public class CourseAuthorization(
     CurrentUserService currentUserService,
-    IDbContextFactory<AppDbContext> dbFactory)
+    IDbContextFactory<AppDbContext> dbFactory) : ICourseAuthorization
 {
     private readonly CurrentUserService currentUserService = currentUserService;
     private readonly IDbContextFactory<AppDbContext> dbFactory = dbFactory;

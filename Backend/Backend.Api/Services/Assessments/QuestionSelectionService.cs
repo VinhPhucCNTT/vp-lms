@@ -5,11 +5,6 @@ using Backend.Api.Core.Types;
 
 namespace Backend.Api.Services.Assessments;
 
-public sealed record SelectedQuestion(
-    long QuestionId,
-    int OrderIndex,
-    decimal Points);
-
 public interface IQuestionSelectionService
 {
     public Task<Result<IReadOnlyList<SelectedQuestion>>>
@@ -19,7 +14,7 @@ public interface IQuestionSelectionService
 }
 
 public sealed class QuestionSelectionService(
-    IDbContextFactory<AppDbContext> dbFactory)
+    IDbContextFactory<AppDbContext> dbFactory) : IQuestionSelectionService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
 

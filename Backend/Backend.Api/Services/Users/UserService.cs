@@ -32,8 +32,7 @@ public interface IUserService
 
 public class UserService(
     IDbContextFactory<AppDbContext> dbFactory,
-    IMapper mapper
-    )
+    IMapper mapper) : IUserService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly IMapper _mapper = mapper;

@@ -29,7 +29,7 @@ public static class SubmissionEndpoints
         HandleGetById(
             string submissionId,
             SqidsEncoder<long> sqidsEncoder,
-            SubmissionService submissionService,
+            ISubmissionService submissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(submissionId);
@@ -47,7 +47,7 @@ public static class SubmissionEndpoints
         HandleGetGrade(
             string submissionId,
             SqidsEncoder<long> sqidsEncoder,
-            AssignmentGradeService assignmentGradeService,
+            IAssignmentGradeService assignmentGradeService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(submissionId);
@@ -65,9 +65,9 @@ public static class SubmissionEndpoints
         HandleGetSelfSubmission(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            CourseService courseService,
-            CourseAuthorization auth,
-            SubmissionService submissionService,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            ISubmissionService submissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
@@ -86,7 +86,7 @@ public static class SubmissionEndpoints
 
     private static async Task<Ok<PaginatedResponse<AssignmentGradeResponse>>> HandleGetOwnGrades(
         [AsParameters] PageRequest page,
-        AssignmentGradeService gradeService,
+        IAssignmentGradeService gradeService,
         CancellationToken ct)
     {
         return TypedResults.Ok((await gradeService.GetStudentSelfGradesAsync(page, ct))!);
@@ -96,7 +96,7 @@ public static class SubmissionEndpoints
         string submissionId,
         AssignmentGradeRequest request,
         SqidsEncoder<long> sqidsEncoder,
-        AssignmentGradeService gradeService)
+        IAssignmentGradeService gradeService)
     {
         var decoded = sqidsEncoder.Decode(submissionId);
         if (decoded.Count != 1)

@@ -42,12 +42,12 @@ public interface ICourseService
 public class CourseService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
-    FileService fileService,
-    IMapper mapper)
+    IFileService fileService,
+    IMapper mapper) : ICourseService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
-    private readonly FileService _fileService = fileService;
+    private readonly IFileService _fileService = fileService;
     private readonly IMapper _mapper = mapper;
 
     public async Task<Course?> GetAsync(long courseId)

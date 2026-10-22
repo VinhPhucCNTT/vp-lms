@@ -27,7 +27,7 @@ public static class ModuleEndpoints
             string moduleId,
             [FromBody] ModuleSetRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            ModuleService moduleService)
+            IModuleService moduleService)
     {
         var decoded = sqidsEncoder.Decode(moduleId);
         if (decoded.Count != 1)
@@ -44,7 +44,7 @@ public static class ModuleEndpoints
         HandleDelete(
             string moduleId,
             SqidsEncoder<long> sqidsEncoder,
-            ModuleService moduleService)
+            IModuleService moduleService)
     {
         var decoded = sqidsEncoder.Decode(moduleId);
         if (decoded.Count != 1)
@@ -61,7 +61,7 @@ public static class ModuleEndpoints
             string courseId,
             string moduleId,
             SqidsEncoder<long> sqidsEncoder,
-            ModuleService moduleService)
+            IModuleService moduleService)
     {
         var dModuleId = sqidsEncoder.Decode(moduleId);
         var dCourseId = sqidsEncoder.Decode(courseId);
@@ -80,7 +80,7 @@ public static class ModuleEndpoints
             string courseId,
             string moduleId,
             SqidsEncoder<long> sqidsEncoder,
-            ModuleService moduleService)
+            IModuleService moduleService)
     {
         var dModuleId = sqidsEncoder.Decode(moduleId);
         var dCourseId = sqidsEncoder.Decode(courseId);
@@ -99,7 +99,7 @@ public static class ModuleEndpoints
             string moduleId,
             [FromQuery] int orderIndex,
             SqidsEncoder<long> sqidsEncoder,
-            ModuleService moduleService)
+            IModuleService moduleService)
     {
         var decoded = sqidsEncoder.Decode(moduleId);
         if (decoded.Count != 1)

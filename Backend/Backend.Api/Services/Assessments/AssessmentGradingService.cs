@@ -14,7 +14,7 @@ public interface IAssessmentGradingService
 
 public sealed class AssessmentGradingService(
     IDbContextFactory<AppDbContext> dbFactory,
-    IEnumerable<IQuestionGrader> graders)
+    IEnumerable<IQuestionGrader> graders) : IAssessmentGradingService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
 

@@ -9,25 +9,19 @@ using Sqids;
 
 using Backend.Persistence.Data;
 using Backend.Api.Endpoints;
-using Backend.Api.Services.Common;
-using Backend.Api.Services.Auth;
-using Backend.Api.Services.Courses;
-using Backend.Api.Services.Users;
 using Backend.Api.Core.Automapper;
 using Backend.Api.Core.Helpers;
 using System.IdentityModel.Tokens.Jwt;
-using Backend.Api.Services.Content;
-using Backend.Api.Services.Submissions;
-using Backend.Api.Core.Authorization;
 using Backend.Persistence.Entities.Users;
 using Backend.Api.Services.Assessments.Graders;
-using Backend.Api.Services.Assessments.Validators;
-using Backend.Api.Services.Assessments;
 using Backend.Api.Endpoints.Course;
 using Backend.Api.Endpoints.Assessment;
 using Backend.Api.Endpoints.Assignment;
 using Backend.Api.Services.Development;
 using Backend.Api.Core.Common;
+using Backend.Api.Services.Common;
+using Backend.Api.Services.Assessments.Validators;
+using Backend.Api.Core.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -138,25 +132,40 @@ builder.Services.AddAutoMapper(cfg => { },
         typeof(FileProfile));
 
 builder.Services.Scan(scan => scan
-    .FromAssemblyOf<Program>()
+    .FromAssembliesOf(typeof(Program))
     .AddClasses(classes => classes
-        .InNamespaces("Backend.Api.Services.Assessments")
-        .InNamespaces("Backend.Api.Services.Auth")
-        .InNamespaces("Backend.Api.Services.Content")
-        .InNamespaces("Backend.Api.Services.Courses")
-        // .InNamespaces("Backend.Api.Services.Dashboard")
-        .InNamespaces("Backend.Api.Services.Judge")
-        // .InNamespaces("Backend.Api.Services.Social")
-        .InNamespaces("Backend.Api.Services.Submissions")
-        .InNamespaces("Backend.Api.Services.Users"))
+        .InNamespaces(
+            "Backend.Api.Services.Assessments",
+            "Backend.Api.Services.Auth",
+            "Backend.Api.Services.Content",
+            "Backend.Api.Services.Courses",
+            "Backend.Api.Services.Judge",
+            "Backend.Api.Services.Submissions",
+            "Backend.Api.Services.Users"
+        )
+    )
     .AsImplementedInterfaces()
     .WithScopedLifetime()
 
     .AddClasses(classes => classes
+        .AssignableTo<IQuestionGrader>()
         .InNamespaces("Backend.Api.Services.Assessments.Graders"))
     .As<IQuestionGrader>()
     .WithScopedLifetime()
+
+    .AddClasses(classes => classes
+        .AssignableTo<IQuestionTypeValidator>()
+        .InNamespaces("Backend.Api.Services.Assessments.Validators"))
+    .As<IQuestionTypeValidator>()
+    .WithScopedLifetime()
 );
+
+// Manual service registrations
+builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<IQuestionContentValidator, QuestionContentValidator>();
+
+builder.Services.AddScoped<ICourseAuthorization, CourseAuthorization>();
+// builder.Services.AddScoped<IAssessmentAuthorization, AssessmentAuthorization>();
 
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())

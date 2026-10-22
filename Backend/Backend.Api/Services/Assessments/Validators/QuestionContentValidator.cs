@@ -32,10 +32,3 @@ public sealed class QuestionContentValidator(
         return validator.Validate(content);
     }
 }
-
-public interface IQuestionTypeValidator
-{
-    QuestionType Type { get; }
-
-    Result Validate(JsonDocument content);
-}

@@ -37,13 +37,13 @@ public interface ISubmissionService
 public class SubmissionService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
-    FileService fileService,
+    IFileService fileService,
     SqidsEncoder<long> sqidsEncoder,
-    IMapper mapper)
+    IMapper mapper) : ISubmissionService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
-    private readonly FileService _fileService = fileService;
+    private readonly IFileService _fileService = fileService;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
     private readonly IMapper _mapper = mapper;
 

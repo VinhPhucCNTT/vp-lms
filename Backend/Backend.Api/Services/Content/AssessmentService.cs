@@ -30,7 +30,7 @@ public class AssessmentService(
     IDbContextFactory<AppDbContext> dbFactory,
     IMapper mapper,
     CurrentUserService currentUserService,
-    SqidsEncoder<long> sqidsEncoder)
+    SqidsEncoder<long> sqidsEncoder) : IAssessmentService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly IMapper _mapper = mapper;

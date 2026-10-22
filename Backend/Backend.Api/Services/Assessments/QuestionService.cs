@@ -42,13 +42,13 @@ public sealed class QuestionService(
     CurrentUserService currentUserService,
     IMapper mapper,
     SqidsEncoder<long> sqidsEncoder,
-    QuestionContentValidator contentValidator)
+    IQuestionContentValidator contentValidator) : IQuestionService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly IMapper _mapper = mapper;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
-    private readonly QuestionContentValidator _contentValidator = contentValidator;
+    private readonly IQuestionContentValidator _contentValidator = contentValidator;
 
     // public async Task<Question?> GetByIdAsync(
     //     long questionId,

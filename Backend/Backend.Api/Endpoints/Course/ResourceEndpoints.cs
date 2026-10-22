@@ -31,7 +31,7 @@ public static class ResourceEndpoints
         HandleGetByModule(
             string moduleId,
             SqidsEncoder<long> sqidsEncoder,
-            ResourceService resourceService)
+            IResourceService resourceService)
     {
         var decoded = sqidsEncoder.Decode(moduleId);
         if (decoded.Count != 1)
@@ -46,7 +46,7 @@ public static class ResourceEndpoints
         HandleGetProgress(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            ResourceService resourceService)
+            IResourceService resourceService)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)
@@ -63,7 +63,7 @@ public static class ResourceEndpoints
         HandleComplete(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            ResourceService resourceService)
+            IResourceService resourceService)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)
@@ -80,7 +80,7 @@ public static class ResourceEndpoints
         HandleDelete(
             string resourceId,
             SqidsEncoder<long> sqidsEncoder,
-            ResourceService resourceService)
+            IResourceService resourceService)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)
@@ -100,7 +100,7 @@ public static class ResourceEndpoints
             string resourceId,
             [FromQuery] int orderIndex,
             SqidsEncoder<long> sqidsEncoder,
-            ResourceService resourceService)
+            IResourceService resourceService)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)

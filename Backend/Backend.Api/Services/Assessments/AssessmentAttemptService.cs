@@ -44,13 +44,15 @@ public sealed class AssessmentAttemptService(
     CurrentUserService currentUserService,
     IMapper mapper,
     SqidsEncoder<long> sqidsEncoder,
-    QuestionSelectionService questionSelection,
-    AssessmentGradingService grading)
+    IQuestionSelectionService questionSelectionService,
+    IAssessmentGradingService grading) : IAssessmentAttemptService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly IMapper _mapper = mapper;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
+    private readonly IQuestionSelectionService _questionSelectionService = questionSelectionService;
+    private readonly IAssessmentGradingService  _grading = grading;
 
     public async Task<Result<AssessmentAttempt>> StartAsync(
            long assessmentId,
@@ -160,7 +162,7 @@ public sealed class AssessmentAttemptService(
                     "The maximum number of attempts has been reached."));
         }
 
-        var selected = await questionSelection
+        var selected = await _questionSelectionService
             .SelectForAttemptAsync(
                 assessmentId,
                 ct);
@@ -391,7 +393,7 @@ public sealed class AssessmentAttemptService(
                     "The assessment attempt is no longer active."));
         }
 
-        var gradeResult = await grading.GradeAsync(
+        var gradeResult = await _grading.GradeAsync(
             attemptId,
             ct);
 
@@ -436,7 +438,7 @@ public sealed class AssessmentAttemptService(
             return Result.Success(false);
         }
 
-        var gradeResult = await grading.GradeAsync(attempt.Id, ct);
+        var gradeResult = await _grading.GradeAsync(attempt.Id, ct);
         if (!gradeResult.IsSuccess)
             return Result<bool>.Failure(gradeResult.Error!);
 

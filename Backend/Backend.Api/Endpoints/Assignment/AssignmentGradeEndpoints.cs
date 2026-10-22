@@ -22,14 +22,14 @@ public static class AssignmentGradeEndpoints
     private static async Task<Results<Ok<AssignmentGradeResponse>, BadRequest, NotFound<string>>> HandleGetById(
         string resourceId,
         SqidsEncoder<long> sqidsEncoder,
-        AssignmentGradeService gradeService,
+        IAssignmentGradeService assignGradeService,
         CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var result = await gradeService.GetGradeAsync(decoded[0], ct);
+        var result = await assignGradeService.GetGradeAsync(decoded[0], ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound("Grade not found.");
