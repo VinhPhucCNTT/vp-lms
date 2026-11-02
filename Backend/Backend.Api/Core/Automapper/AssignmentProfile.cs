@@ -1,7 +1,7 @@
 using AutoMapper;
+using Backend.Api.Core.Types;
 using Backend.Persistence.Entities.Assignments;
 using Backend.Persistence.Entities.Content;
-using Backend.Api.Core.Types;
 
 namespace Backend.Api.Core.Automapper;
 

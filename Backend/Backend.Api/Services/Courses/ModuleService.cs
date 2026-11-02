@@ -1,8 +1,8 @@
-using Backend.Persistence.Data;
-using Backend.Api.Core.Types;
-using Microsoft.EntityFrameworkCore;
-using Backend.Persistence.Entities.Courses;
 using AutoMapper;
+using Backend.Api.Core.Types;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Courses;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Courses;
 
@@ -32,7 +32,7 @@ public class ModuleService(
 
     public async Task<List<ModuleResponse>> GetCourseModulesAsync(long courseId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         return await db.CourseModules
             .AsNoTracking()
             .Where(m => m.CourseId == courseId)
@@ -42,7 +42,7 @@ public class ModuleService(
 
     public async Task<ModuleSetResponse> CreateModuleAsync(long courseId, ModuleSetRequest dto)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var module = new CourseModule
         {
             CourseId = courseId,
@@ -59,7 +59,7 @@ public class ModuleService(
 
     public async Task<ModuleSetResponse?> UpdateModuleAsync(long moduleId, ModuleSetRequest dto)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var module = await db.CourseModules.FirstOrDefaultAsync(m => m.Id == moduleId);
         if (module == null)
             return null;
@@ -75,7 +75,7 @@ public class ModuleService(
 
     public async Task<bool> SetModulePublishStatusAsync(long courseId, long moduleId, bool isPublished)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var count = await db.CourseModules
             .Where(m => m.CourseId == courseId && m.IsPublished != isPublished)
             .Where(m => m.Id == moduleId)
@@ -85,7 +85,7 @@ public class ModuleService(
 
     public async Task<bool> DeleteModuleAsync(long moduleId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var module = await db.CourseModules.FirstOrDefaultAsync(m => m.Id == moduleId);
         if (module is null)
             return false;
@@ -96,7 +96,7 @@ public class ModuleService(
 
     public async Task<bool> ReorderModuleAsync(long moduleId, int orderIndex)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         await using var transaction = await db.Database.BeginTransactionAsync();
 
         try

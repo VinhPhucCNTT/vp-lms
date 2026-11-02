@@ -1,12 +1,12 @@
-using Backend.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
-using Backend.Api.Core.Types;
-using Backend.Persistence.Entities.Courses;
-using Backend.Persistence.Entities.Content;
 using AutoMapper;
-using Backend.Api.Services.Courses;
 using Backend.Api.Core.Common;
+using Backend.Api.Core.Types;
 using Backend.Api.Services.Common;
+using Backend.Api.Services.Courses;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Content;
+using Backend.Persistence.Entities.Courses;
+using Microsoft.EntityFrameworkCore;
 using Sqids;
 
 namespace Backend.Api.Services.Content;
@@ -39,7 +39,7 @@ public class AssessmentService(
 
     public async Task<Assessment?> GetAsync(long resourceId, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         return await db.Assessments
             .Where(a => a.ResourceId == resourceId)
             .FirstOrDefaultAsync(ct);
@@ -47,7 +47,7 @@ public class AssessmentService(
 
     public async Task<AssessmentResponse?> GetDtoByIdAsync(long resourceId, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var userId = _currentUserService.UserId;
         var assessment = await db.Assessments
             .AsNoTracking()
@@ -68,7 +68,7 @@ public class AssessmentService(
 
     public async Task<List<AssessmentListResponse>> QueryAsync(CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var userId = _currentUserService.UserId;
         var assessments = await db.Assessments
             .AsNoTracking()
@@ -128,7 +128,7 @@ public class AssessmentService(
 
     public async Task<AssessmentResponse> CreateAsync(long moduleId, AssessmentRequest request, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         var resource = await ResourceService.CreateResourceAsync(db, moduleId, request.ResourceInfo, ResourceType.Assessment, ct);
         var assessment = new Assessment
@@ -152,7 +152,7 @@ public class AssessmentService(
 
     public async Task<AssessmentResponse?> UpdateAsync(long assessmentId, AssessmentRequest request, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var assessment = await db.Assessments.FirstOrDefaultAsync(a => a.Id == assessmentId, ct);
         if (assessment is null)
             return null;
@@ -310,10 +310,10 @@ public class AssessmentService(
 
     public async Task<Result<bool>> SetPublishStatusAsync(long resourceId, bool isPublished, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Type == ResourceType.Assessment && r.Id == resourceId, ct);
         if (resource is null)
-            return Result<bool>.Failure(AssessmentErrors.NotFound);
+            return Result<bool>.Failure(ResourceErrors.NotFound);
 
         resource.IsPublished = isPublished;
         await db.SaveChangesAsync(ct);

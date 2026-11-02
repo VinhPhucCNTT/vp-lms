@@ -1,13 +1,13 @@
-using Backend.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
-using Backend.Api.Services.Common;
-using Sqids;
-using AutoMapper;
-using Backend.Api.Core.Types;
-using Backend.Persistence.Entities.Assessments;
-using Backend.Api.Core.Common;
 using System.Text.Json;
+using AutoMapper;
+using Backend.Api.Core.Common;
+using Backend.Api.Core.Types;
 using Backend.Api.Services.Assessments.Validators;
+using Backend.Api.Services.Common;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Assessments;
+using Microsoft.EntityFrameworkCore;
+using Sqids;
 
 namespace Backend.Api.Services.Assessments;
 
@@ -73,12 +73,20 @@ public sealed class QuestionService(
             .FirstOrDefaultAsync(x => x.Id == bankId, ct);
 
         if (bank is null)
+        {
+
             return Result<QuestionResponse>.Failure(
                 QuestionErrors.NotFound);
+        }
+
 
         if (bank.OwnerId != instructorId)
+        {
+
             return Result<QuestionResponse>.Failure(
                 QuestionErrors.Forbidden);
+        }
+
 
         if (!Enum.TryParse<QuestionType>(request.QuestionType, true, out var questionType))
             return Result<QuestionResponse>.Failure(QuestionErrors.InvalidContent);
@@ -198,20 +206,31 @@ public sealed class QuestionService(
             .FirstOrDefaultAsync(x => x.Id == destinationBankId, ct);
 
         if (destination is null)
+        {
             return Result<QuestionResponse>.Failure(
                 QuestionErrors.NotFound);
+        }
+
 
         if (destination.OwnerId != instructorId)
+        {
+
             return Result<QuestionResponse>.Failure(
                 QuestionErrors.Forbidden);
+        }
+
 
         var source = await db.Questions
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == sourceQuestionId, ct);
 
         if (source is null)
+        {
+
             return Result<QuestionResponse>.Failure(
                 QuestionErrors.NotFound);
+        }
+
 
         var copy = new Question
         {

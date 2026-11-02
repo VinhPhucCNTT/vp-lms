@@ -21,7 +21,7 @@ public sealed class RabbitMqConsumer(
     private IConsumer? _consumer;
 
     protected override async Task ExecuteAsync(
-        CancellationToken stoppingToken)
+        CancellationToken ct)
     {
         var settings =
             ConnectionSettingsBuilder.Create()
@@ -40,7 +40,7 @@ public sealed class RabbitMqConsumer(
             AmqpEnvironment.Create(settings);
 
         _connection =
-            await _environment.CreateConnectionAsync();
+            await _environment.CreateConnectionAsync(ct);
 
         // await DeclareTopologyAsync(
         //     _connection,
@@ -66,20 +66,23 @@ public sealed class RabbitMqConsumer(
                         await HandleMessageAsync(
                             context,
                             message,
-                            stoppingToken);
+                            ct);
                     })
                 .BuildAndStartAsync(
-                    stoppingToken);
+                    ct);
 
-        logger.LogInformation(
-            "Judge worker is listening on {Queue}",
-            _options.QueueName);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Judge worker is listening on {Queue}",
+                _options.QueueName);
+        }
 
         try
         {
             await Task.Delay(
                 Timeout.InfiniteTimeSpan,
-                stoppingToken);
+                ct);
         }
         catch (OperationCanceledException)
         {
@@ -95,10 +98,13 @@ public sealed class RabbitMqConsumer(
         var body = message.Body() ?? [];
         JudgeSubmissionMessage submission;
 
+        if (logger.IsEnabled(LogLevel.Information))
+            logger.LogInformation("Message received: {Msg}", message.BodyAsString());
+
         try
         {
             submission =
-                JsonSerializer.Deserialize<JudgeSubmissionMessage>(body)
+                JsonSerializer.Deserialize<JudgeSubmissionMessage>(message.BodyAsString())
                 ?? throw new JsonException("Message deserialized to null.");
         }
         catch (Exception ex)
@@ -112,9 +118,12 @@ public sealed class RabbitMqConsumer(
 
         try
         {
-            logger.LogInformation(
-                "Received submission {SubmissionId}",
-                submission.SubmissionId);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Received submission {SubmissionId}",
+                    submission.SubmissionId);
+            }
 
             using var scope =
                 scopeFactory.CreateScope();
@@ -130,9 +139,12 @@ public sealed class RabbitMqConsumer(
             // Equivalent to BasicAck.
             context.Accept();
 
-            logger.LogInformation(
-                "ACKed submission {SubmissionId}",
-                submission.SubmissionId);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "ACKed submission {SubmissionId}",
+                    submission.SubmissionId);
+            }
         }
         catch (OperationCanceledException)
             when (stoppingToken.IsCancellationRequested)
@@ -141,9 +153,12 @@ public sealed class RabbitMqConsumer(
             //
             // Leaving the delivery unsettled allows it to be
             // redelivered after the consumer/connection closes.
-            logger.LogInformation(
-                "Worker shutting down while processing submission {SubmissionId}",
-                submission.SubmissionId);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Worker shutting down while processing submission {SubmissionId}",
+                    submission.SubmissionId);
+            }
         }
         catch (Exception ex)
         {
@@ -157,48 +172,47 @@ public sealed class RabbitMqConsumer(
         }
     }
 
-    private async Task DeclareTopologyAsync(
-        IConnection connection,
-        CancellationToken cancellationToken)
-    {
-        var management = connection.Management();
-
-        // NOTE: Dead letter exchange not needed
-        // var deadLetterExchange =
-        //     management
-        //         .Exchange(_options.DeadLetterExchange)
-        //         .Type(ExchangeType.DIRECT);
-        //
-        // await deadLetterExchange.DeclareAsync();
-        //
-        // var deadLetterQueue =
-        //     $"{_options.QueueName}.dead";
-        //
-        // var deadLetterQueueSpec =
-        //     management
-        //         .Queue(deadLetterQueue)
-        //         .Type(QueueType.QUORUM);
-        //
-        // await deadLetterQueueSpec.DeclareAsync();
-        //
-        // var binding =
-        //     management
-        //         .Binding()
-        //         .SourceExchange(deadLetterExchange)
-        //         .DestinationQueue(deadLetterQueue)
-        //         .Key(_options.QueueName);
-        //
-        // await binding.BindAsync();
-
-        var queueSpec =
-            management
-                .Queue(_options.QueueName)
-                .Type(QueueType.QUORUM);
-                // .DeadLetterExchange(_options.DeadLetterExchange)
-                // .DeadLetterRoutingKey(_options.QueueName);
-
-        await queueSpec.DeclareAsync();
-    }
+    // private async Task DeclareTopologyAsync(
+    //     IConnection connection)
+    // {
+    //     var management = connection.Management();
+    //
+    //     // NOTE: Dead letter exchange not needed
+    //     // var deadLetterExchange =
+    //     //     management
+    //     //         .Exchange(_options.DeadLetterExchange)
+    //     //         .Type(ExchangeType.DIRECT);
+    //     //
+    //     // await deadLetterExchange.DeclareAsync();
+    //     //
+    //     // var deadLetterQueue =
+    //     //     $"{_options.QueueName}.dead";
+    //     //
+    //     // var deadLetterQueueSpec =
+    //     //     management
+    //     //         .Queue(deadLetterQueue)
+    //     //         .Type(QueueType.QUORUM);
+    //     //
+    //     // await deadLetterQueueSpec.DeclareAsync();
+    //     //
+    //     // var binding =
+    //     //     management
+    //     //         .Binding()
+    //     //         .SourceExchange(deadLetterExchange)
+    //     //         .DestinationQueue(deadLetterQueue)
+    //     //         .Key(_options.QueueName);
+    //     //
+    //     // await binding.BindAsync();
+    //
+    //     var queueSpec =
+    //         management
+    //             .Queue(_options.QueueName)
+    //             .Type(QueueType.QUORUM);
+    //             // .DeadLetterExchange(_options.DeadLetterExchange)
+    //             // .DeadLetterRoutingKey(_options.QueueName);
+    //
+    //     await queueSpec.DeclareAsync();
+    // }
 
     public override async Task StopAsync(
         CancellationToken cancellationToken)

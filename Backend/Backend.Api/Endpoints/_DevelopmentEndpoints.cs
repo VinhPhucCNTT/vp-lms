@@ -14,14 +14,13 @@ public static class DevelopmentOnlyEndpoints
         var dev = route.MapGroup("/api/dev");
 
         dev.MapGet("users", HandleGetUsers);
-        dev.MapGet("auth-test", async () => TypedResults.Ok()).RequireAuthorization();
         dev.MapPost("judge-test/{resourceId}", HandleTestJudge);
     }
 
     private static async
         Task<Ok<PaginatedResponse<UserResponse>>>
         HandleGetUsers(
-            [AsParameters] UserRequest query,
+            [AsParameters] UserQueryRequest query,
             IUserService userService)
     {
         var results = await userService.QueryUsersAsync(query);
@@ -32,28 +31,26 @@ public static class DevelopmentOnlyEndpoints
         Task<IResult>
         HandleTestJudge(
             string resourceId,
-            [AsParameters] JudgeTestRequest request,
+            [AsParameters] ProblemSubmissionRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            JudgeSubmissionService judgeSubmissionService,
+            IProblemSubmissionService ProblemSubmissionService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(resourceId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var result = await judgeSubmissionService.Send(decoded[0], request, ct);
+        var result = await ProblemSubmissionService.Send(decoded[0], request, ct);
         if (!result.IsSuccess)
-            switch (result.Error?.Code)
+        {
+            return (result.Error?.Code) switch
             {
-                case "not_found":
-                    return TypedResults.NotFound();
-                case "forbidden":
-                    return TypedResults.Forbid();
-                case "internal":
-                    return TypedResults.InternalServerError();
-                default:
-                    return TypedResults.InternalServerError();
-            }
+                "not_found" => TypedResults.NotFound(),
+                "forbidden" => TypedResults.Forbid(),
+                // incl internal
+                _ => TypedResults.InternalServerError(),
+            };
+        }
 
         return TypedResults.Ok(result.Value);
     }

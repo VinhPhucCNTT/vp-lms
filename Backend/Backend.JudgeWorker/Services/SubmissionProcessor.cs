@@ -24,13 +24,17 @@ public sealed class SubmissionProcessor(
         long submissionId,
         CancellationToken ct = default)
     {
-        logger.LogInformation(
-            "Processing submission {SubmissionId}",
-            submissionId);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Processing submission {SubmissionId}",
+                submissionId);
+        }
 
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
-        var submission = await db.ProblemSubmissions.SingleAsync(s => s.Id == submissionId);
+        var submission = await db.ProblemSubmissions
+            .SingleAsync(s => s.Id == submissionId, ct);
         if (submission is null)
         {
             logger.LogWarning(
@@ -40,13 +44,14 @@ public sealed class SubmissionProcessor(
             return;
         }
 
-        submission.Status = Persistence.Entities.Judge.SubmissionStatus.Running;
+        submission.Status = SubmissionStatus.Running;
         await db.SaveChangesAsync(ct);
 
         try
         {
-            var result =
+            JudgeResult result =
                 await judgeService.JudgeAsync(
+                    db,
                     submission,
                     ct);
 
@@ -56,10 +61,13 @@ public sealed class SubmissionProcessor(
             submission.CompileError = result.CompileError;
             await db.SaveChangesAsync(ct);
 
-            logger.LogInformation(
-                "Submission {SubmissionId} completed with {Verdict}",
-                submissionId,
-                result.Status);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Submission {SubmissionId} completed with {Verdict}",
+                    submissionId,
+                    result.Status);
+            }
         }
         catch (OperationCanceledException)
             when (ct.IsCancellationRequested)
@@ -74,6 +82,7 @@ public sealed class SubmissionProcessor(
                 submissionId);
 
             submission.Status = SubmissionStatus.RuntimeError;
+            await db.SaveChangesAsync(ct);
 
             throw;
         }
@@ -103,8 +112,10 @@ public sealed class SubmissionProcessor(
         foreach (var testCase in testCases)
         {
             var testCaseResult = judgeResult.Results.SingleOrDefault(t => t.Idx == testCase.OrderIndex);
-            if (testCaseResult is null) {
-                logger.LogInformation("SaveTestCases(): Processed {N} test cases.", count);
+            if (testCaseResult is null)
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                    logger.LogInformation("SaveTestCases(): Processed {N} test cases.", count);
                 if (count != testCase.OrderIndex) // NOTE: Exceptional case.
                     logger.LogWarning("SaveTestCases(): Current test case index does not match counter.");
                 continue;

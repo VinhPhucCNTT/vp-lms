@@ -3,13 +3,16 @@ using Backend.Persistence.Entities.Users;
 
 namespace Backend.Persistence.Entities.Assignments;
 
-public class AssignmentGrade : BaseEntity
+public class AssignmentGrade : BaseEntity, ISoftDeletable
 {
     public long SubmissionId { get; set; }
     public long GraderId { get; set; }
 
     public decimal Score { get; set; }
     public string? FeedbackText { get; set; }
+
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
     public AssignmentSubmission Submission { get; set; } = default!;

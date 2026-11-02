@@ -1,9 +1,8 @@
-using Microsoft.AspNetCore.Http.HttpResults;
-
-using Backend.Api.Core.Types;
 using Backend.Api.Core.Common;
-using Microsoft.AspNetCore.Mvc;
+using Backend.Api.Core.Types;
 using Backend.Api.Services.Users;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Sqids;
 
 namespace Backend.Api.Endpoints;
@@ -64,7 +63,7 @@ public static class UserEndpoints
     private static async
         Task<Ok<PaginatedResponse<UserResponse>>>
         HandleQuery(
-            [AsParameters] UserRequest query,
+            [AsParameters] UserQueryRequest query,
             [FromServices] IUserService userService)
     {
         var results = await userService.QueryUsersAsync(query);

@@ -4,7 +4,7 @@ using Backend.Persistence.Entities.Users;
 
 namespace Backend.Persistence.Entities.Assessments;
 
-public class AttemptAnswer : BaseEntity
+public class AttemptAnswer : BaseEntity, ISoftDeletable
 {
     public long? GraderId { get; set; }
     public long AttemptQuestionId { get; set; }
@@ -14,6 +14,9 @@ public class AttemptAnswer : BaseEntity
     public bool? IsCorrect { get; set; }
     public DateTime? AnsweredAt { get; set; }
     public DateTime? GradedAt { get; set; }
+
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
     public AttemptQuestion AttemptQuestion { get; set; } = default!;

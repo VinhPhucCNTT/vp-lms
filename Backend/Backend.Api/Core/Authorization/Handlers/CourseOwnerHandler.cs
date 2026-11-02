@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using Backend.Api.Core.Authorization.Requirements;
-using Backend.Persistence.Entities.Users;
 using Backend.Api.Core.Types;
+using Backend.Persistence.Entities.Users;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Backend.Api.Core.Authorization.Handlers;
@@ -29,7 +29,9 @@ public sealed class CourseOwnerHandler(
         if (!long.TryParse(
             httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value,
             out var userId))
+        {
             return;
+        }
 
         if (resource.CreatorId == userId)
             context.Succeed(requirement);

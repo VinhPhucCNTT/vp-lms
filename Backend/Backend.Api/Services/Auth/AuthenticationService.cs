@@ -1,14 +1,12 @@
-using Backend.Persistence.Data;
-using Backend.Api.Core.Types;
-using Backend.Persistence.Entities.Users;
-
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Backend.Api.Core.Types;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Users;
+using Isopoh.Cryptography.Argon2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-
-using Isopoh.Cryptography.Argon2;
 
 namespace Backend.Api.Services.Auth;
 
@@ -27,7 +25,7 @@ public class AuthenticationService(
 
     public async Task<LoginResponse?> LoginAsync(LoginRequest dto)
     {
-        using var dbContext = await _contextFactory.CreateDbContextAsync();
+        await using var dbContext = await _contextFactory.CreateDbContextAsync();
 
         var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
         if (user is null)
@@ -41,7 +39,7 @@ public class AuthenticationService(
 
     public async Task<RegisterResponse?> RegisterAsync(RegisterRequest dto)
     {
-        using var dbContext = await _contextFactory.CreateDbContextAsync();
+        await using var dbContext = await _contextFactory.CreateDbContextAsync();
 
         if (await dbContext.Users.AnyAsync(u => u.Email == dto.Email))
             return null;

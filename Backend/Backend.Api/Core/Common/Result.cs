@@ -11,7 +11,8 @@ public enum ResultError
     NotFound,
     Forbidden,
     Conflict,
-    Internal
+    Internal,
+    BadRequest
 }
 
 public class Result
@@ -46,6 +47,9 @@ public class Result
     // ... Up to here (After implementing proper error codes instead of using ResultError)
 
     public static Result<T> Failure<T>(Error error) =>
+        Result<T>.CreateFailure(error);
+
+    public static Result<T> Failure<T>(Error error, T value) =>
         Result<T>.CreateFailure(error);
 
     // public static Result Failure<T>(

@@ -4,9 +4,9 @@ using Sqids;
 
 namespace Backend.Api.Endpoints;
 
-public static class CodingSubmissionEndpoints
+public static class JudgeSubmissionEndpoints
 {
-    public static void AddCodingSubmissionEndpoints(
+    public static void AddJudgeSubmissionEndpoints(
         this IEndpointRouteBuilder route)
     {
         var group =
@@ -14,21 +14,21 @@ public static class CodingSubmissionEndpoints
                 .WithTags("Coding Submissions");
 
         group.MapPost(
-                "/{resourceId}",
-                HandleSend)
-            .RequireAuthorization("IsStudent");
+            "/{resourceId}",
+            HandleSend)
+        .RequireAuthorization("IsStudent");
 
         group.MapGet(
-                "/{submissionId}",
-                HandleGet)
-            .RequireAuthorization("IsStudent");
+            "/{submissionId}",
+            HandleGet)
+        .RequireAuthorization("IsStudent");
     }
 
     private static async Task<IResult> HandleSend(
         string resourceId,
-        JudgeTestRequest request,
+        ProblemSubmissionRequest request,
         SqidsEncoder<long> sqidsEncoder,
-        IJudgeSubmissionService judgeSubmissionService,
+        IProblemSubmissionService judgeSubmissionService,
         CancellationToken ct)
     {
         var decoded =
@@ -62,13 +62,13 @@ public static class CodingSubmissionEndpoints
             };
         }
 
-        return TypedResults.Ok(result.Value!);
+        return TypedResults.Ok(result.Value);
     }
 
     private static async Task<IResult> HandleGet(
         string submissionId,
         SqidsEncoder<long> sqidsEncoder,
-        IJudgeSubmissionService judgeSubmissionService,
+        IProblemSubmissionService problemSubmissionService,
         CancellationToken ct)
     {
         var decoded =
@@ -80,7 +80,7 @@ public static class CodingSubmissionEndpoints
                 "Invalid submission ID.");
         }
 
-        var result = await judgeSubmissionService.Get(decoded[0], ct);
+        var result = await problemSubmissionService.Get(decoded[0], ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();

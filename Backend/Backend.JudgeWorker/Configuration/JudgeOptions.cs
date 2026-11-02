@@ -2,9 +2,9 @@ namespace Backend.JudgeWorker.Configuration;
 
 public class JudgeOptions
 {
-    public string WorkspaceRelativeDir = "";
+    required public string WorkspaceRelativeDir { get; set; }
 
-    public int CpuLimit = 1;
+    required public int CpuLimit { get; set; }
 
-    public int PidsLimit = 64;
+    required public int PidsLimit { get; set; }
 }

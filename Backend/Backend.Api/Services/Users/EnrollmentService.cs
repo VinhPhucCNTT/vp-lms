@@ -1,8 +1,8 @@
 using AutoMapper;
-using Backend.Persistence.Entities.Courses;
 using Backend.Api.Core.Types;
-using Backend.Persistence.Data;
 using Backend.Api.Services.Common;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Courses;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Users;
@@ -37,7 +37,7 @@ public class EnrollmentService(
 
     public async Task<EnrollmentDetailResponse?> GetEnrollmentByIdAsync(long enrollmentId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Enrollments
             .AsNoTracking()
             .Where(e => e.Id == enrollmentId)
@@ -47,26 +47,26 @@ public class EnrollmentService(
 
     public async Task<List<EnrollmentResponse>> GetCourseEnrollmentsAsync(long courseId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         return await GetEnrollmentsAsync(db, e => e.CourseId == courseId);
     }
 
     public async Task<List<EnrollmentResponse>> GetUserEnrollmentsAsync(long userId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         return await GetEnrollmentsAsync(db, e => e.UserId == userId);
     }
 
     public async Task<List<EnrollmentResponse>> GetCurrentEnrollmentsAsync()
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
         return await GetEnrollmentsAsync(db, e => e.UserId == currentUserId);
     }
 
     public async Task<EnrollmentResponse?> EnrollCourseAsync(long courseId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
 
         var course = await db.Courses.AsNoTracking().FirstOrDefaultAsync(c => c.Id == courseId);
@@ -90,7 +90,7 @@ public class EnrollmentService(
 
     public async Task<bool> UnenrollCourseAsync(long courseId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
 
         var course = await db.Courses.AsNoTracking().FirstOrDefaultAsync(c => c.Id == courseId);
@@ -108,7 +108,7 @@ public class EnrollmentService(
 
     public async Task<EnrollmentResponse?> SetTAAsync(long enrollmentId, bool enable)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
 
         var enrollment = await db.Enrollments.FirstOrDefaultAsync(e => e.Id == enrollmentId && e.Course.CreatorId == currentUserId);
@@ -124,7 +124,7 @@ public class EnrollmentService(
 
     public async Task<bool> RemoveEnrollmentAsync(long enrollmentId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
 
         var enrollment = await db.Enrollments.FirstOrDefaultAsync(e => e.Id == enrollmentId && e.UserId == currentUserId);

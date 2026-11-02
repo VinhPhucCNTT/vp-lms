@@ -1,10 +1,10 @@
-using Backend.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
-using Backend.Api.Services.Common;
-using Backend.Api.Core.Types;
 using AutoMapper;
-using Backend.Persistence.Entities.Assignments;
 using Backend.Api.Core.Common;
+using Backend.Api.Core.Types;
+using Backend.Api.Services.Common;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Assignments;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Submissions;
 
@@ -38,7 +38,7 @@ public class AssignmentGradeService(
 
     public async Task<AssignmentGradeResponse?> GetGradeAsync(long submissionId, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         return await db.AssignmentGrades
             .AsNoTracking()
             .Where(g => g.SubmissionId == submissionId)
@@ -48,33 +48,33 @@ public class AssignmentGradeService(
 
     public async Task<PaginatedResponse<AssignmentGradeResponse>?> GetAssignmentGradesAsync(long resourceId, PageRequest page, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         return await GetGradesAsync(db, page, g => g.Submission.AssignmentId == resourceId, ct);
     }
 
     public async Task<PaginatedResponse<AssignmentGradeResponse>?> GetInstructorGradedAsync(PageRequest page, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
         return await GetGradesAsync(db, page, g => g.GraderId == currentUserId, ct);
     }
 
     public async Task<PaginatedResponse<AssignmentGradeResponse>?> GetStudentSelfGradesAsync(PageRequest page, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
         return await GetGradesAsync(db, page, g => g.Submission.UserId == currentUserId, ct);
     }
 
     public async Task<PaginatedResponse<AssignmentGradeResponse>?> GetStudentGradesAsync(long resourceId, long studentUserId, PageRequest page, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         return await GetGradesAsync(db, page, g => g.Submission.AssignmentId == resourceId && g.Submission.UserId == studentUserId, ct);
     }
 
     public async Task<AssignmentGradeResponse?> GradeAsync(long submissionId, AssignmentGradeRequest request)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var submission = await db.AssignmentSubmissions.FirstOrDefaultAsync(s => s.Id == submissionId && s.SubmittedOn != null);
         if (submission is null)
             return null;
@@ -95,7 +95,7 @@ public class AssignmentGradeService(
 
     public async Task<AssignmentGradeResponse?> UpdateAsync(long submissionId, AssignmentGradeRequest request)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var grade = await db.AssignmentGrades.FirstOrDefaultAsync(x => x.SubmissionId == submissionId);
         if (grade is null)
             return null;
@@ -108,7 +108,7 @@ public class AssignmentGradeService(
 
     public async Task<bool> RemoveAsync(long submissionId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var grade = await db.AssignmentGrades.FirstOrDefaultAsync(x => x.SubmissionId == submissionId);
         if (grade is null)
             return false;

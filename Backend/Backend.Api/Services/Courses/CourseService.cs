@@ -1,11 +1,11 @@
-using Backend.Persistence.Data;
-using Backend.Api.Core.Common;
-using Microsoft.EntityFrameworkCore;
-using Backend.Api.Services.Common;
-using Backend.Api.Core.Types;
-using Backend.Persistence.Entities.Courses;
 using AutoMapper;
+using Backend.Api.Core.Common;
+using Backend.Api.Core.Types;
+using Backend.Api.Services.Common;
 using Backend.Api.Services.Content;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Courses;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Courses;
 
@@ -52,7 +52,7 @@ public class CourseService(
 
     public async Task<Course?> GetAsync(long courseId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Courses
             .Where(c => c.Id == courseId)
             .FirstOrDefaultAsync();
@@ -60,7 +60,7 @@ public class CourseService(
 
     public async Task<Course?> GetFromModuleAsync(long moduleId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         return await db.CourseModules
             .Where(m => m.Id == moduleId)
             .Select(m => m.Course)
@@ -69,7 +69,7 @@ public class CourseService(
 
     public async Task<CourseResponse?> GetDtoAsync(long courseId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Courses
             .AsNoTracking()
             .Where(c => c.Id == courseId)
@@ -79,7 +79,7 @@ public class CourseService(
 
     public async Task<List<CourseStudentResponse>> GetStudentCoursesAsync()
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
         var enrolledCourseIds = await db.Enrollments
             .AsNoTracking()
@@ -107,7 +107,7 @@ public class CourseService(
 
     public async Task<List<CourseResponse>> GetInstructorCoursesAsync()
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
 
         return await db.Courses
@@ -119,7 +119,7 @@ public class CourseService(
 
     public async Task<CourseExploreResponse> GetExploreAsync()
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
 
         var featuredCourses = await GetFeaturedCoursesAsync(db);
 
@@ -148,7 +148,7 @@ public class CourseService(
 
     public async Task<PaginatedResponse<CourseResponse>> QueryCoursesAsync(CourseRequest query)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var courses = db.Courses.AsNoTracking().Where(c => c.IsPublished);
 
         if (!string.IsNullOrEmpty(query.Code))
@@ -186,7 +186,7 @@ public class CourseService(
         IFormFile file,
         CancellationToken ct)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         // TODO: Validation
         await using var stream = file.OpenReadStream();
@@ -209,7 +209,7 @@ public class CourseService(
 
     public async Task<CourseSetResponse> CreateCourseAsync(CourseSetRequest request)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var course = new Course
         {
             CreatorId = _currentUserService.UserId,
@@ -226,7 +226,7 @@ public class CourseService(
 
     public async Task<CourseSetResponse> UpdateCourseAsync(Course course, CourseSetRequest request)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
 
         course.Title = request.Title;
         course.Description = request.Description;
@@ -240,7 +240,7 @@ public class CourseService(
 
     public async Task DeleteCourseAsync(Course course)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         db.Courses.Remove(course);
         await db.SaveChangesAsync();
         return;
@@ -248,7 +248,7 @@ public class CourseService(
 
     public async Task SetCoursePublishStatusAsync(Course course, bool value)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         course.IsPublished = value;
         await db.SaveChangesAsync();
         return;

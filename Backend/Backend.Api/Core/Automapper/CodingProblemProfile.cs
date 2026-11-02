@@ -1,6 +1,5 @@
 using AutoMapper;
 using Backend.Api.Core.Types;
-using Backend.Persistence.Common;
 using Backend.Persistence.Entities.Content;
 using Backend.Persistence.Entities.Judge;
 
@@ -13,7 +12,10 @@ public class CodingProblemProfile : Profile
         CreateMap<ProblemTestCase, ProblemTestCaseResponse>()
             .MapSqidId();
 
-        CreateMap<Compiler, CompilerDto>()
+        CreateMap<Compiler, CompilerResponse>()
+            .MapSqidId();
+
+        CreateMap<ProblemSubmission, ProblemSubmissionResponse>()
             .MapSqidId();
     }
 }

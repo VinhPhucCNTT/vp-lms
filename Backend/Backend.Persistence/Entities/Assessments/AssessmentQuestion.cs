@@ -4,7 +4,7 @@ using Backend.Persistence.Entities.Content;
 
 namespace Backend.Persistence.Entities.Assessments;
 
-public class AssessmentQuestion : BaseEntity
+public class AssessmentQuestion : BaseEntity, ISoftDeletable
 {
     public long AssessmentId { get; set; }
     public long? QuestionId { get; set; }
@@ -12,6 +12,9 @@ public class AssessmentQuestion : BaseEntity
     public QuestionType QuestionType { get; set; }
     public string Text { get; set; } = "";
     required public JsonDocument QuestionData { get; set; }
+
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 
     public int OrderIndex { get; set; }
     public decimal Points { get; set; } = 1;

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Backend.Api.Core.Common;
-using Backend.Persistence.Entities.Assessments;
 using Backend.Api.Core.Types;
+using Backend.Persistence.Entities.Assessments;
 
 namespace Backend.Api.Services.Assessments.Validators;
 
@@ -16,8 +16,10 @@ public sealed class ChoiceQuestionValidator
         var model = content.Deserialize<MultipleChoiceQuestion>();
 
         if (model is null)
+        {
             return Result.Failure(
                 QuestionErrors.InvalidContent);
+        }
 
         if (model.Options.Count < 2)
         {

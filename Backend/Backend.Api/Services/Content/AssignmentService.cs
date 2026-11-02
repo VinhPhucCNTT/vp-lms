@@ -1,12 +1,12 @@
-using Backend.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
-using Backend.Api.Core.Types;
-using Backend.Persistence.Entities.Courses;
-using Backend.Persistence.Entities.Content;
 using AutoMapper;
-using Backend.Api.Services.Courses;
 using Backend.Api.Core.Common;
+using Backend.Api.Core.Types;
 using Backend.Api.Services.Common;
+using Backend.Api.Services.Courses;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Content;
+using Backend.Persistence.Entities.Courses;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Content;
 
@@ -36,7 +36,7 @@ public class AssignmentService(
 
     public async Task<AssignmentResponse?> GetDtoByIdAsync(long resourceId, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var userId = _currentUserService.UserId;
         return await db.Assignments
             .AsNoTracking()
@@ -54,7 +54,7 @@ public class AssignmentService(
 
     public async Task<List<StudentAssignmentSummaryResponse>> QueryStudentAsync(CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var userId = _currentUserService.UserId;
 
         var assignments = await db.Assignments
@@ -95,7 +95,7 @@ public class AssignmentService(
 
     public async Task<List<AssignmentResponse>> QueryAsync(CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var assignments = await db.Assignments
             .AsNoTracking()
             .Include(x => x.Resource)
@@ -108,12 +108,16 @@ public class AssignmentService(
 
     public async Task<AssignmentResponse?> CreateAsync(long moduleId, AssignmentRequest request, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         if (request.Info.OpenDate is not null &&
             request.Info.CloseDate is not null &&
             request.Info.OpenDate > request.Info.CloseDate)
+        {
+
             return null;
+        }
+
 
         var resource = await ResourceService.CreateResourceAsync(db, moduleId, request.ResourceInfo, ResourceType.Assignment, ct);
         var assignment = new Assignment
@@ -142,7 +146,7 @@ public class AssignmentService(
 
     public async Task<AssignmentResponse?> UpdateAsync(long resourceId, AssignmentRequest request)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var assignment = await db.Assignments.FirstOrDefaultAsync(a => a.Id == resourceId);
         if (assignment is null)
             return null;
@@ -150,7 +154,11 @@ public class AssignmentService(
         if (request.Info.OpenDate is not null &&
             request.Info.CloseDate is not null &&
             request.Info.OpenDate > request.Info.CloseDate)
+        {
+
             return null;
+        }
+
 
         var resource = await ResourceService.UpdateResourceAsync(db, assignment.ResourceId, request.ResourceInfo);
         assignment.ResourceId = resource.Id;
@@ -172,7 +180,7 @@ public class AssignmentService(
 
     public async Task<Result<bool>> SetPublishStatusAsync(long resourceId, bool isPublished, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Type == ResourceType.Assignment && r.Id == resourceId, ct);
         if (resource is null)
             return Result<bool>.Failure(ResultError.NotFound, "Assignment not found.");

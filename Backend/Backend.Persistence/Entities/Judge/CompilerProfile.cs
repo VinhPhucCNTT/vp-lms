@@ -3,7 +3,7 @@ using Backend.Persistence.Entities.Content;
 
 namespace Backend.Persistence.Entities.Judge;
 
-public class CompilerProfile : BaseEntity
+public class CompilerProfile : BaseEntity, ISoftDeletable
 {
     public long ProblemId { get; set; }
     public long CompilerId { get; set; }
@@ -11,6 +11,9 @@ public class CompilerProfile : BaseEntity
     public string Name { get; set; } = "";
     public string CompileCmd { get; set; } = "";
     public string RunCmd { get; set; } = "";
+
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
     public CodingProblem Problem { get; set; } = default!;

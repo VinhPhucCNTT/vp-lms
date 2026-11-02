@@ -1,6 +1,6 @@
 using AutoMapper;
-using Backend.Persistence.Entities.Content;
 using Backend.Api.Core.Types;
+using Backend.Persistence.Entities.Content;
 
 namespace Backend.Api.Core.Automapper;
 

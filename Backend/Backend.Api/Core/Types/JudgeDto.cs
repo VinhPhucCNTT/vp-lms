@@ -2,21 +2,38 @@ using Backend.Persistence.Entities.Judge;
 
 namespace Backend.Api.Core.Types;
 
-public sealed record JudgeTestRequest(
+public sealed record ProblemSubmissionRequest(
     ProgrammingLanguage Language,
     string SourceCode
 );
 
-public sealed record JudgeResponse(
+public sealed record ProblemSubmissionResponse(
+    string Id,
     int OrderIndex,
     string SubmittedCode,
-    ProgrammingLanguage Language,
     SubmissionStatus Status,
-    double ExecutionTimeMs,
-    int MemoryUsedKb
+    string? CompileError
+) : IEntityResponse;
+
+public sealed record CompilerRequest(
+    string Name,
+    ProgrammingLanguage Language,
+    string SourceFileName,
+    string ApplicationName,
+    string Version
 );
 
-public sealed record CompilerDto(
+public sealed record CompilerQueryRequest(
+    int PageNumber,
+    int PageSize,
+    string? Name,
+    ProgrammingLanguage? Language,
+    string? SourceFileName,
+    string? ApplicationName,
+    string? Version
+);
+
+public sealed record CompilerResponse(
     string Id,
     string Name,
     ProgrammingLanguage Language,
@@ -26,7 +43,7 @@ public sealed record CompilerDto(
 ) : IEntityResponse;
 
 public sealed record CompilerProfileResponse(
-    CompilerDto CompilerInfo,
+    CompilerResponse CompilerInfo,
     string Name,
     string CompileCmd,
     string RunCmd

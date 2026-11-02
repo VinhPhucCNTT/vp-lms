@@ -1,12 +1,12 @@
-using Backend.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
-using Backend.Api.Services.Common;
-using AutoMapper;
-using Backend.Api.Core.Types;
-using Backend.Api.Core.Common;
-using Backend.Persistence.Entities.Assessments;
 using System.Text.Json;
+using AutoMapper;
+using Backend.Api.Core.Common;
+using Backend.Api.Core.Types;
 using Backend.Api.Services.Assessments.Validators;
+using Backend.Api.Services.Common;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Assessments;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Assessments;
 
@@ -78,14 +78,14 @@ public class AssessmentQuestionService(
         AssessmentQuestionInfo request,
         CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var userId = _currentUserService.UserId;
 
         var assessment = await db.Assessments
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == resourceId, ct);
         if (assessment is null)
-            return Result<AssessmentQuestionInfo>.Failure(AssessmentErrors.NotFound);
+            return Result<AssessmentQuestionInfo>.Failure(ResourceErrors.NotFound);
 
         // await EnsureCanModifyQuestionsAsync(
         //     assessment,
@@ -139,8 +139,10 @@ public class AssessmentQuestionService(
             .FirstOrDefaultAsync(x => x.Id == resourceId, ct);
 
         if (assessment is null)
+        {
             return Result<AssessmentQuestionInfo>.Failure(
-                AssessmentErrors.NotFound);
+                ResourceErrors.NotFound);
+        }
 
         if (!await CanModifyQuestionsAsync(db, resourceId, ct))
         {
@@ -153,8 +155,10 @@ public class AssessmentQuestionService(
             .FirstOrDefaultAsync(x => x.Id == questionId, ct);
 
         if (source is null)
+        {
             return Result<AssessmentQuestionInfo>.Failure(
                 QuestionErrors.NotFound);
+        }
 
         var questionData = CloneJson(source.QuestionData);
 
@@ -204,7 +208,7 @@ public class AssessmentQuestionService(
             .FirstOrDefaultAsync(x => x.Id == assessmentId, ct);
 
         if (assessment is null)
-            return Result.Failure(AssessmentErrors.NotFound);
+            return Result.Failure(ResourceErrors.NotFound);
 
         if (!await CanModifyQuestionsAsync(db, assessmentId, ct))
             return Result.Failure(AssessmentErrors.HasAttempts);
@@ -216,10 +220,12 @@ public class AssessmentQuestionService(
                 ct);
 
         if (question is null)
+        {
             return Result.Failure(
                 new Error(
                     "assessment_question.not_found",
                     "Assessment question was not found."));
+        }
 
         var validation = _contentValidator.Validate(
             request.QuestionType,
@@ -249,7 +255,7 @@ public class AssessmentQuestionService(
             .FirstOrDefaultAsync(x => x.Id == assessmentId, ct);
 
         if (assessment is null)
-            return Result.Failure(AssessmentErrors.NotFound);
+            return Result.Failure(ResourceErrors.NotFound);
 
         if (!await CanModifyQuestionsAsync(db, assessmentId, ct))
             return Result.Failure(AssessmentErrors.HasAttempts);
@@ -298,7 +304,7 @@ public class AssessmentQuestionService(
             .FirstOrDefaultAsync(x => x.Id == assessmentId, ct);
 
         if (assessment is null)
-            return Result.Failure(AssessmentErrors.NotFound);
+            return Result.Failure(ResourceErrors.NotFound);
 
         if (!await CanModifyQuestionsAsync(db, assessmentId, ct))
             return Result.Failure(AssessmentErrors.HasAttempts);

@@ -2,13 +2,13 @@ namespace Backend.JudgeWorker.Configuration;
 
 public sealed class RabbitMqOptions
 {
-    public string BrokerUri { get; set; } = "";
+    required public string BrokerUri { get; set; }
 
-    public string ContainerId { get; set; } = "";
+    required public string ContainerId { get; set; }
 
-    public string QueueName { get; set; } = "";
+    required public string QueueName { get; set; }
 
-    public string DeadLetterExchange { get; set; } = "";
+    public string? DeadLetterExchange { get; set; }
 
-    public ushort PrefetchCount { get; set; } = 1;
+    required public ushort PrefetchCount { get; set; }
 }

@@ -1,11 +1,10 @@
+using AutoMapper;
 using Backend.Api.Core.Common;
-using Backend.Persistence.Entities.Users;
 using Backend.Api.Core.Types;
 using Backend.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
-
+using Backend.Persistence.Entities.Users;
 using Isopoh.Cryptography.Argon2;
-using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Users;
 
@@ -15,7 +14,7 @@ public interface IUserService
 
     public Task<UserStatResponse?> GetUserStatAsync(long userId);
 
-    public Task<PaginatedResponse<UserResponse>> QueryUsersAsync(UserRequest query);
+    public Task<PaginatedResponse<UserResponse>> QueryUsersAsync(UserQueryRequest query);
 
     public Task<UserSetResponse> CreateUserAsync(UserCreateRequest dto);
 
@@ -39,7 +38,7 @@ public class UserService(
 
     public async Task<UserDetailResponse?> GetUserByIdAsync(long userId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         return await db.Users
             .AsNoTracking()
             .Where(u => u.Id == userId && u.IsActive)
@@ -49,7 +48,7 @@ public class UserService(
 
     public async Task<UserStatResponse?> GetUserStatAsync(long userId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         return new UserStatResponse(
             await db.Courses
                 .AsNoTracking()
@@ -63,9 +62,9 @@ public class UserService(
         );
     }
 
-    public async Task<PaginatedResponse<UserResponse>> QueryUsersAsync(UserRequest query)
+    public async Task<PaginatedResponse<UserResponse>> QueryUsersAsync(UserQueryRequest query)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var users = db.Users.AsNoTracking().Where(u => u.IsActive);
 
         if (!string.IsNullOrEmpty(query.Username))
@@ -96,7 +95,7 @@ public class UserService(
 
     public async Task<UserSetResponse> CreateUserAsync(UserCreateRequest dto)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var hashedPassword = Argon2.Hash(dto.Password);
         var user = new User
         {
@@ -115,7 +114,7 @@ public class UserService(
 
     public async Task<UserSetResponse?> UpdateUserAsync(long userId, UserUpdateRequest dto)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.Where(u => u.IsActive).FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null) return null;
 
@@ -134,7 +133,7 @@ public class UserService(
 
     public async Task<bool> DeleteUserAsync(long userId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null) return false;
 
@@ -146,14 +145,14 @@ public class UserService(
 
     public async Task<bool> IsUserActiveAsync(long userId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
         return user != null && user.IsActive;
     }
 
     public async Task<bool> DeactivateUserAsync(long userId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.Where(u => u.IsActive).FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null) return false;
 
@@ -165,7 +164,7 @@ public class UserService(
 
     public async Task<bool> ActivateUserAsync(long userId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.Where(u => !u.IsActive).FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null) return false;
 

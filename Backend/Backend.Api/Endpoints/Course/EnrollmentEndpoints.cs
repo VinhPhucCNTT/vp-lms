@@ -1,9 +1,8 @@
-using Microsoft.AspNetCore.Http.HttpResults;
-
 using Backend.Api.Core.Types;
+using Backend.Api.Services.Users;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Sqids;
-using Backend.Api.Services.Users;
 
 namespace Backend.Api.Endpoints.Course;
 

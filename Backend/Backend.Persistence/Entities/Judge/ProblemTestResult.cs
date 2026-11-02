@@ -3,7 +3,7 @@ using Backend.Persistence.Entities.Content;
 
 namespace Backend.Persistence.Entities.Judge;
 
-public class ProblemTestResult : BaseEntity
+public class ProblemTestResult : BaseEntity, ISoftDeletable
 {
     public long SubmissionId { get; set; }
     public long TestCaseId { get; set; }
@@ -15,6 +15,9 @@ public class ProblemTestResult : BaseEntity
 
     public double? ExecutionTimeMs { get; set; }
     public int? MemoryUsedKb { get; set; }
+
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
     public ProblemSubmission Submission { get; set; } = default!;

@@ -7,6 +7,7 @@ using Backend.Persistence.Entities.Assignments;
 using Backend.Persistence.Entities.Judge;
 using Backend.Persistence.Entities.Assessments;
 using Backend.Persistence.Entities.Learning;
+using System.Linq.Expressions;
 
 namespace Backend.Persistence.Data;
 
@@ -61,53 +62,77 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     private static void ConfigureSoftDelete(ModelBuilder builder)
     {
-        // Use anonymous name instead
-        // builder.Entity<User>()
-        //     .HasQueryFilter(u => !u.IsDeleted);
+        foreach (var entityType in builder.Model.GetEntityTypes())
+        {
+            if (!typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType)) continue;
 
-        builder.Entity<Course>()
-            .HasQueryFilter(c => !c.IsDeleted && !c.Creator.IsDeleted);
-        builder.Entity<Enrollment>()
-            .HasQueryFilter(e => !e.IsDeleted && !e.Course.IsDeleted);
-        builder.Entity<CourseModule>()
-            .HasQueryFilter(m => !m.IsDeleted && !m.Course.IsDeleted);
-        builder.Entity<CourseResource>()
-            .HasQueryFilter(r => !r.IsDeleted && !r.Module.IsDeleted);
+            var parameter = Expression.Parameter(entityType.ClrType, "e");
+            var isDeleted = Expression.Property(parameter, nameof(ISoftDeletable.IsDeleted));
+            var condition = Expression.Equal(isDeleted, Expression.Constant(false));
+            var lambda = Expression.Lambda(condition, parameter);
 
-        builder.Entity<Lesson>()
-            .HasQueryFilter(l => !l.IsDeleted && !l.Resource.IsDeleted);
+            builder.Entity(entityType.ClrType).HasQueryFilter("SoftDelete", lambda);
 
-        builder.Entity<Assignment>()
-            .HasQueryFilter(a => !a.IsDeleted && !a.Resource.IsDeleted);
-
-        builder.Entity<Assessment>()
-            .HasQueryFilter(a => !a.IsDeleted && !a.Resource.IsDeleted);
-        builder.Entity<AssessmentQuestion>()
-            .HasQueryFilter(q => !q.Assessment.IsDeleted);
-
-        builder.Entity<CodingProblem>()
-            .HasQueryFilter(j => !j.IsDeleted && !j.Resource.IsDeleted);
-        builder.Entity<CompilerProfile>()
-            .HasQueryFilter(p => !p.Problem.IsDeleted);
-
-        builder.Entity<QuestionBank>()
-            .HasQueryFilter(b => !b.IsDeleted);
-        builder.Entity<Question>()
-            .HasQueryFilter(q => !q.IsDeleted);
-
-        builder.Entity<AssignmentSubmission>()
-            .HasQueryFilter(s => !s.IsDeleted && !s.Assignment.IsDeleted);
-        builder.Entity<AssignmentFile>()
-            .HasQueryFilter(f => !f.Submission.IsDeleted);
-
-        // builder.Entity<AttemptAnswer>()
-        //     .HasQueryFilter(r => !r.Question.IsDeleted);
-
-        // Use anonymous name instead
-        // builder.Entity<ResourceComment>()
-        //     .HasQueryFilter(c => !c.IsDeleted && !c.Resource.IsDeleted);
+            foreach (var index in entityType.GetIndexes().Where(i => i.IsUnique && i.GetFilter() is null))
+            {
+                index.SetFilter("is_deleted = false");
+            }
+        }
     }
 
+    // Old method
+    // private static void ConfigureSoftDelete(ModelBuilder builder)
+    // {
+    //     // Use anonymous name instead
+    //     // builder.Entity<User>()
+    //     //     .HasQueryFilter(u => !u.IsDeleted);
+    //
+    //     builder.Entity<Course>()
+    //         .HasQueryFilter(x => !x.IsDeleted && !x.Creator.IsDeleted);
+    //     builder.Entity<Enrollment>()
+    //         .HasQueryFilter(x => !x.IsDeleted && !x.Course.IsDeleted);
+    //     builder.Entity<CourseModule>()
+    //         .HasQueryFilter(x => !x.IsDeleted && !x.Course.IsDeleted);
+    //     builder.Entity<CourseResource>()
+    //         .HasQueryFilter(x => !x.IsDeleted && !x.Module.IsDeleted);
+    //
+    //     builder.Entity<Lesson>()
+    //         .HasQueryFilter(x => !x.IsDeleted && !x.Resource.IsDeleted);
+    //
+    //     builder.Entity<Assignment>()
+    //         .HasQueryFilter(x => !x.IsDeleted && !x.Resource.IsDeleted);
+    //
+    //     builder.Entity<Assessment>()
+    //         .HasQueryFilter(x => !x.IsDeleted && !x.Resource.IsDeleted);
+    //     builder.Entity<AssessmentQuestion>()
+    //         .HasQueryFilter(x => !x.Assessment.IsDeleted);
+    //     builder.Entity<AttemptQuestion>()
+    //         .HasQueryFilter(x => !x.AssessmentQuestion.Assessment.IsDeleted);
+    //
+    //     builder.Entity<CodingProblem>()
+    //         .HasQueryFilter(x => !x.IsDeleted && !x.Resource.IsDeleted);
+    //     builder.Entity<CompilerProfile>()
+    //         .HasQueryFilter(x => !x.Problem.IsDeleted);
+    //     builder.Entity<ProblemSubmission>()
+    //         .HasQueryFilter(x => !x.Problem.IsDeleted);
+    //
+    //     builder.Entity<QuestionBank>()
+    //         .HasQueryFilter(x => !x.IsDeleted);
+    //     builder.Entity<Question>()
+    //         .HasQueryFilter(x => !x.IsDeleted);
+    //
+    //     builder.Entity<AssignmentSubmission>()
+    //         .HasQueryFilter(x => !x.IsDeleted && !x.Assignment.IsDeleted);
+    //     builder.Entity<AssignmentFile>()
+    //         .HasQueryFilter(x => !x.Submission.IsDeleted);
+    //
+    //     // builder.Entity<AttemptAnswer>()
+    //     //     .HasQueryFilter(r => !r.Question.IsDeleted);
+    //
+    //     // Use anonymous name instead
+    //     // builder.Entity<ResourceComment>()
+    //     //     .HasQueryFilter(c => !c.IsDeleted && !c.Resource.IsDeleted);
+    // }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -155,8 +180,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             // Mark navigation properties as unchanged to avoid cascade issues
             foreach (var navigation in entry.Navigations)
+            {
                 if (!navigation.IsModified)
                     navigation.IsModified = false;
+            }
         }
     }
 }

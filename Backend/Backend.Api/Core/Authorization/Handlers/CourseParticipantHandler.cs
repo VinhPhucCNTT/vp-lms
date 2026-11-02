@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using Backend.Api.Core.Authorization.Requirements;
-using Backend.Persistence.Entities.Users;
 using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,17 +32,25 @@ public sealed class CourseParticipantHandler(
         if (!long.TryParse(
             httpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value,
             out var userId))
+        {
             return;
+        }
+
         if (!long.TryParse(
             httpContext.Request.RouteValues["courseId"]?.ToString(),
             out var courseId))
+        {
             return;
+        }
 
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         if (!await db.Enrollments
                 .AsNoTracking()
                 .AnyAsync(e => e.CourseId == courseId && e.UserId == userId))
+        {
             return;
+        }
+
         context.Succeed(requirement);
     }
 }

@@ -1,7 +1,7 @@
-using Backend.Persistence.Entities.Content;
-using Backend.Persistence.Data;
 using Backend.Api.Services.Common;
 using Backend.Api.Services.Courses;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Content;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Core.Authorization;

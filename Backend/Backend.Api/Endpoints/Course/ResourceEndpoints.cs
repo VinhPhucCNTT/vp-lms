@@ -1,7 +1,6 @@
-using Microsoft.AspNetCore.Http.HttpResults;
-
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Courses;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Sqids;
 

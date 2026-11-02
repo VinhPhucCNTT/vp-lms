@@ -6,9 +6,10 @@ using Microsoft.EntityFrameworkCore;
 var builder =
     Host.CreateApplicationBuilder(args);
 
-builder.Services
-    .Configure<RabbitMqOptions>(
-        builder.Configuration.GetSection("RabbitMq"));
+builder.Services.Configure<RabbitMqOptions>(
+    builder.Configuration.GetSection("RabbitMq"));
+builder.Services.Configure<JudgeOptions>(
+    builder.Configuration.GetSection("JudgeOptions"));
 
 // Database
 builder.Services.AddDbContextFactory<AppDbContext>(options =>

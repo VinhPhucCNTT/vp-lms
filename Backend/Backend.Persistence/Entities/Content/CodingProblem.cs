@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Backend.Persistence.Common;
 using Backend.Persistence.Entities.Courses;
 using Backend.Persistence.Entities.Judge;

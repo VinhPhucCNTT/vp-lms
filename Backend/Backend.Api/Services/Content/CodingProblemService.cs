@@ -26,15 +26,19 @@ public interface ICodingProblemService
             long resourceId,
             CancellationToken ct);
 
+    public Task<Result<IReadOnlyList<ProblemSubmissionResponse>>>
+        GetSubmissionsAsync(long resourceId, CancellationToken ct = default);
+
     public Task<Result<List<CompilerProfileResponse>>>
-        GetLanguageProfilesAsync(
+        GetCompilerProfilesAsync(
             long resourceId,
             CancellationToken ct);
 
     public Task<Result<CompilerProfileResponse>>
-        SetLanguageProfileAsync(
+        SetCompilerProfileAsync(
             long resourceId,
             long compilerId,
+            ProgrammingLanguage language,
             CompilerProfileRequest request,
             CancellationToken ct);
 }
@@ -72,14 +76,18 @@ public sealed class CodingProblemService(
                 ct);
 
         if (module is null)
+        {
             return Result<CodingProblemResponse>.Failure(
                 ResultError.NotFound,
                 "Module not found.");
+        }
 
         if (module.Course.CreatorId != currentUser.UserId)
+        {
             return Result<CodingProblemResponse>.Failure(
                 ResultError.Forbidden,
                 "You do not own this course.");
+        }
 
         await using var transaction =
             await db.Database.BeginTransactionAsync(ct);
@@ -304,11 +312,30 @@ public sealed class CodingProblemService(
             testCases);
     }
 
-    public async Task<Result<List<CompilerProfileResponse>>> GetLanguageProfilesAsync(
+    public async Task<Result<IReadOnlyList<ProblemSubmissionResponse>>>
+        GetSubmissionsAsync(
             long resourceId,
             CancellationToken ct = default)
     {
-        using var db = await dbFactory.CreateDbContextAsync(ct);
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+
+        IReadOnlyList<ProblemSubmissionResponse>? results = [];
+        var problem = await db.CodingProblems.AsNoTracking().FirstOrDefaultAsync(p => p.ResourceId == resourceId);
+        if (problem is null)
+            return Result.Failure(JudgeSubmissionErrors.NotFound, results);
+
+        results = problem.Submissions
+            .Select(s => _mapper.Map<ProblemSubmissionResponse>(s))
+            .ToList();
+
+        return Result.Success(results);
+    }
+
+    public async Task<Result<List<CompilerProfileResponse>>> GetCompilerProfilesAsync(
+            long resourceId,
+            CancellationToken ct = default)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
         var problem = await db.CodingProblems
             .AsNoTracking()
             .Where(p => p.ResourceId == resourceId)
@@ -320,7 +347,7 @@ public sealed class CodingProblemService(
         foreach (var profile in problem.Profiles)
         {
             result.Append(new CompilerProfileResponse(
-                CompilerInfo: _mapper.Map<CompilerDto>(profile.Compiler),
+                CompilerInfo: _mapper.Map<CompilerResponse>(profile.Compiler),
                 Name: profile.Name,
                 CompileCmd: profile.CompileCmd,
                 RunCmd: profile.RunCmd
@@ -330,13 +357,15 @@ public sealed class CodingProblemService(
         return Result.Success(result);
     }
 
-    public async Task<Result<CompilerProfileResponse>> SetLanguageProfileAsync(
+    // NOTE: One profile per language per problem (for now at least)
+    public async Task<Result<CompilerProfileResponse>> SetCompilerProfileAsync(
             long resourceId,
             long compilerId,
+            ProgrammingLanguage language,
             CompilerProfileRequest request,
             CancellationToken ct)
     {
-        using var db = await dbFactory.CreateDbContextAsync(ct);
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
         var problem = await db.CodingProblems
             .AsNoTracking()
             .Where(p => p.ResourceId == resourceId)
@@ -347,21 +376,34 @@ public sealed class CodingProblemService(
         if (!await db.Compilers.AnyAsync(c => c.Id == compilerId))
             return Result<CompilerProfileResponse>.Failure(ResultError.NotFound, "");
 
-        var profile = problem.Profiles.SingleOrDefault(p => p.CompilerId == compilerId);
+        var profile = problem.Profiles.SingleOrDefault(p =>
+                p.CompilerId == compilerId &&
+                p.Compiler.Language == language);
         if (profile is null)
+        {
             profile = new CompilerProfile
             {
                 ProblemId = problem.Id,
-                CompilerId = compilerId
+                CompilerId = compilerId,
+
+                Name = request.Name,
+                CompileCmd = request.CompileCmd,
+                RunCmd = request.RunCmd,
             };
 
-        profile.Name = request.Name;
-        profile.CompileCmd = request.CompileCmd;
-        profile.RunCmd = request.RunCmd;
+            db.CompilerProfiles.Add(profile);
+        }
+        else
+        {
+            profile.Name = request.Name;
+            profile.CompileCmd = request.CompileCmd;
+            profile.RunCmd = request.RunCmd;
+        }
+
 
         await db.SaveChangesAsync(ct);
         return Result.Success(new CompilerProfileResponse(
-            CompilerInfo: _mapper.Map<CompilerDto>(profile.Compiler),
+            CompilerInfo: _mapper.Map<CompilerResponse>(profile.Compiler),
             Name: profile.Name,
             CompileCmd: profile.CompileCmd,
             RunCmd: profile.RunCmd

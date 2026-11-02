@@ -36,11 +36,13 @@ internal sealed class BearerSecuritySchemeTransformer(IAuthenticationSchemeProvi
         foreach (var path in document.Paths.Values)
         {
             if (path.Operations is not null)
+            {
                 foreach (var operation in path.Operations.Values)
                 {
                     operation.Security ??= [];
                     operation.Security.Add(securityRequirement);
                 }
+            }
         }
     }
 }

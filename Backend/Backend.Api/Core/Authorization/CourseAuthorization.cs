@@ -1,6 +1,6 @@
-using Backend.Persistence.Entities.Courses;
-using Backend.Persistence.Data;
 using Backend.Api.Services.Common;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Courses;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Core.Authorization;
@@ -27,7 +27,7 @@ public class CourseAuthorization(
 
     public async Task<bool> IsParticipantAsync(long courseId)
     {
-        using var db = await dbFactory.CreateDbContextAsync();
+        await using var db = await dbFactory.CreateDbContextAsync();
         var userId = currentUserService.UserId;
 
         return await db.Enrollments.AsNoTracking().AnyAsync(e => e.CourseId == courseId && e.UserId == userId);

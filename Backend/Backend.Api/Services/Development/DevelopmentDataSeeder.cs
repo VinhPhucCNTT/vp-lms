@@ -1,11 +1,11 @@
+using System.Text.Json;
 using Backend.Persistence.Data;
-using Backend.Persistence.Entities.Courses;
-using Backend.Persistence.Entities.Content;
 using Backend.Persistence.Entities.Assessments;
+using Backend.Persistence.Entities.Content;
+using Backend.Persistence.Entities.Courses;
 using Backend.Persistence.Entities.Users;
 using Isopoh.Cryptography.Argon2;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace Backend.Api.Services.Development;
 

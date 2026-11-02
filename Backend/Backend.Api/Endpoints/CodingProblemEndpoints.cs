@@ -1,5 +1,6 @@
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Content;
+using Backend.Persistence.Entities.Judge;
 using Sqids;
 
 namespace Backend.Api.Endpoints;
@@ -29,13 +30,17 @@ public static class CodingProblemEndpoints
             "/{resourceId}/test-cases",
             HandleGetTestCases).RequireAuthorization();
 
+        group.MapGet(
+            "/{resourceId}/submissions",
+            HandleGetSubmissions).RequireAuthorization("IsInstructor");
+
         group.MapPut(
-            "/{resourceId}/language-profile/{compilerId}",
-            HandleSetLanguageProfile).RequireAuthorization("IsInstructor");
+            "/{resourceId}/compiler-profile/{compilerId}",
+            HandleSetCompilerProfile).RequireAuthorization("IsInstructor");
 
         group.MapGet(
-            "/{resourceId}/language-profile/",
-            HandleGetLanguageProfiles).RequireAuthorization();
+            "/{resourceId}/compiler-profile/",
+            HandleGetCompilerProfiles).RequireAuthorization();
     }
 
     private static async Task<IResult> HandleCreate(
@@ -107,7 +112,7 @@ public static class CodingProblemEndpoints
         if (decoded.Count != 1)
         {
             return TypedResults.BadRequest(
-                "Invalid problem ID.");
+                "Invalid resource ID.");
         }
 
         var result =
@@ -147,7 +152,7 @@ public static class CodingProblemEndpoints
         if (decoded.Count != 1)
         {
             return TypedResults.BadRequest(
-                "Invalid problem ID.");
+                "Invalid resource ID.");
         }
 
         var result = await problemService.AddTestCaseAsync(
@@ -186,7 +191,7 @@ public static class CodingProblemEndpoints
         if (decoded.Count != 1)
         {
             return TypedResults.BadRequest(
-                "Invalid problem ID.");
+                "Invalid resource ID.");
         }
 
         var result =
@@ -214,9 +219,45 @@ public static class CodingProblemEndpoints
         return TypedResults.Ok(result.Value);
     }
 
-    private static async Task<IResult> HandleSetLanguageProfile(
+    private static async Task<IResult> HandleGetSubmissions(
+        string resourceId,
+        SqidsEncoder<long> sqidsEncoder,
+        ICodingProblemService problemService,
+        CancellationToken ct)
+    {
+        var decoded = sqidsEncoder.Decode(resourceId);
+        if (decoded.Count != 1)
+        {
+            return TypedResults.BadRequest(
+                "Invalid resource ID.");
+        }
+
+        var result =
+            await problemService.GetSubmissionsAsync(
+                decoded[0],
+                ct);
+
+        if (!result.IsSuccess)
+        {
+            return result.Error?.Code switch
+            {
+                "judge_submission.not_found" =>
+                    TypedResults.NotFound(
+                        result.Error.Message),
+
+                _ =>
+                    TypedResults.BadRequest(
+                        result.Error?.Message)
+            };
+        }
+
+        return TypedResults.Ok(result.Value);
+    }
+
+    private static async Task<IResult> HandleSetCompilerProfile(
         string resourceId,
         string compilerId,
+        ProgrammingLanguage language,
         CompilerProfileRequest request,
         SqidsEncoder<long> sqidsEncoder,
         ICodingProblemService problemService,
@@ -227,13 +268,13 @@ public static class CodingProblemEndpoints
         if (rDecoded.Count != 1 || cDecoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var result = await problemService.SetLanguageProfileAsync(rDecoded[0], cDecoded[0], request, ct);
+        var result = await problemService.SetCompilerProfileAsync(rDecoded[0], cDecoded[0], language, request, ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();
     }
 
-    private static async Task<IResult> HandleGetLanguageProfiles(
+    private static async Task<IResult> HandleGetCompilerProfiles(
         string resourceId,
         SqidsEncoder<long> sqidsEncoder,
         ICodingProblemService problemService,
@@ -244,7 +285,7 @@ public static class CodingProblemEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var result = await problemService.GetLanguageProfilesAsync(decoded[0], ct);
+        var result = await problemService.GetCompilerProfilesAsync(decoded[0], ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();

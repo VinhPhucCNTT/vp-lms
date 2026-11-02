@@ -1,6 +1,6 @@
 using AutoMapper;
-using Backend.Persistence.Entities.Users;
 using Backend.Api.Core.Types;
+using Backend.Persistence.Entities.Users;
 
 namespace Backend.Api.Core.Automapper;
 

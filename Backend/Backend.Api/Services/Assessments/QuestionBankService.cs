@@ -1,10 +1,10 @@
-using Backend.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
-using Backend.Api.Services.Common;
 using AutoMapper;
-using Backend.Persistence.Entities.Assessments;
 using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
+using Backend.Api.Services.Common;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Assessments;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Assessments;
 
@@ -50,8 +50,10 @@ public sealed class QuestionBankService(
             .FirstOrDefaultAsync(x => x.Id == bankId, ct);
 
         if (bank is null)
+        {
             return Result<QuestionBankInfo>.Failure(
                 QuestionErrors.NotFound);
+        }
 
         // if (!await CanViewAsync(db, bank, instructorId, ct))
         // {

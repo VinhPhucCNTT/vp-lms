@@ -1,9 +1,9 @@
 using AutoMapper;
+using Backend.Api.Core.Types;
+using Backend.Api.Services.Common;
+using Backend.Persistence.Data;
 using Backend.Persistence.Entities.Courses;
 using Backend.Persistence.Entities.Learning;
-using Backend.Api.Core.Types;
-using Backend.Persistence.Data;
-using Backend.Api.Services.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Courses;
@@ -38,7 +38,7 @@ public class ResourceService(
 
     public async Task<ResourceDetailResponse?> GetResourceByIdAsync(long resourceId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
         return await db.CourseResources
             .AsNoTracking()
@@ -50,7 +50,7 @@ public class ResourceService(
 
     public async Task<List<ResourceResponse>> GetPublishedResourcesAsync(long moduleId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         return await db.CourseResources
             .AsNoTracking()
             .Where(r => r.ModuleId == moduleId && r.IsPublished)
@@ -60,7 +60,7 @@ public class ResourceService(
 
     public async Task<List<ResourceResponse>> GetUnpublishedResourcesAsync(long moduleId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
         return await db.CourseResources
             .AsNoTracking()
@@ -71,7 +71,7 @@ public class ResourceService(
 
     public async Task<ResourceProgressResponse?> GetResourceProgressAsync(long resourceId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var userId = _currentUserService.UserId;
 
         var resourceExists = await db.CourseResources
@@ -94,7 +94,7 @@ public class ResourceService(
 
     public async Task<ResourceProgressResponse?> MarkResourceCompletedAsync(long resourceId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var userId = _currentUserService.UserId;
 
         var resourceExists = await db.CourseResources
@@ -136,7 +136,7 @@ public class ResourceService(
 
     public async Task<bool> DeleteResourceAsync(long resourceId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Id == resourceId);
         if (resource is null)
             return false;
@@ -147,7 +147,7 @@ public class ResourceService(
 
     public async Task<bool> ReorderResourceAsync(long resourceId, int orderIndex)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         await using var transaction = await db.Database.BeginTransactionAsync();
 
         try
@@ -180,7 +180,7 @@ public class ResourceService(
 
     public async Task<bool> CheckOwnerAsync(long resourceId)
     {
-        using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
         return await db.CourseResources
             .AsNoTracking()

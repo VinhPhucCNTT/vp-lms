@@ -1,29 +1,30 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Scalar.AspNetCore;
-using FluentValidation;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
-using Sqids;
-
-using Backend.Persistence.Data;
-using Backend.Api.Endpoints;
-using Backend.Api.Core.Automapper;
-using Backend.Api.Core.Helpers;
 using System.IdentityModel.Tokens.Jwt;
-using Backend.Persistence.Entities.Users;
-using Backend.Api.Services.Assessments.Graders;
-using Backend.Api.Endpoints.Course;
+using System.Security.Claims;
+using System.Text;
+using Backend.Api.Core.Authorization;
+using Backend.Api.Core.Automapper;
+using Backend.Api.Core.Common;
+using Backend.Api.Core.Helpers;
+using Backend.Api.Endpoints;
 using Backend.Api.Endpoints.Assessment;
 using Backend.Api.Endpoints.Assignment;
-using Backend.Api.Services.Development;
-using Backend.Api.Core.Common;
-using Backend.Api.Services.Common;
+using Backend.Api.Endpoints.Course;
+using Backend.Api.Services.Assessments.Graders;
 using Backend.Api.Services.Assessments.Validators;
-using Backend.Api.Core.Authorization;
+using Backend.Api.Services.Common;
+using Backend.Api.Services.Development;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Users;
+using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
+using Sqids;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Console.WriteLine(Directory.GetCurrentDirectory());
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -46,21 +47,18 @@ builder.Services.AddCors(options =>
         });
 });
 
-builder.Services.AddOpenApi(options =>
-{
-    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
-});
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 
 // Authorization
 builder.Services.AddAuthorization();
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("IsStudent", options => {
         options.RequireAuthenticatedUser();
-        options.RequireRole(UserRoles.Student.ToString(), UserRoles.Admin.ToString());
+        options.RequireRole(nameof(UserRoles.Student), nameof(UserRoles.Admin));
     })
     .AddPolicy("IsInstructor", options => {
         options.RequireAuthenticatedUser();
-        options.RequireRole(UserRoles.Instructor.ToString(), UserRoles.Admin.ToString());
+        options.RequireRole(nameof(UserRoles.Instructor), nameof(UserRoles.Admin));
     });
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
@@ -74,7 +72,7 @@ builder.Services.Configure<Backend.Api.Core.Common.FileOptions>(
     builder.Configuration.GetSection("FileStorage"));
 
 var sqidsSettings = builder.Configuration.GetSection("Sqids").Get<Backend.Api.Core.Common.SqidsOptions>();
-builder.Services.AddSingleton(provider =>
+builder.Services.AddSingleton(_ =>
     new SqidsEncoder<long>(new()
     {
         Alphabet = sqidsSettings?.Alphabet!,
@@ -115,14 +113,14 @@ builder.Services.AddAuthentication(options =>
     // DEBUG
     options.Events = new JwtBearerEvents
     {
-        OnTokenValidated = context => Task.CompletedTask
+        OnTokenValidated = _ => Task.CompletedTask
     };
 });
 
 builder.Services.AddHttpContextAccessor();
 // Automapper
 builder.Services.AddTransient<SqidConverter>();
-builder.Services.AddAutoMapper(cfg => { },
+builder.Services.AddAutoMapper(_ => { },
         typeof(CourseProfile),
         typeof(EnrollmentProfile),
         typeof(ModuleProfile),
@@ -199,7 +197,8 @@ app.AddAssignmentEndpoints();
 app.AddFileEndpoints();
 app.AddAssessmentEndpoints();
 app.AddUserEndpoints();
+app.AddCompilerEndpoints();
 app.AddCodingProblemEndpoints();
-app.AddCodingSubmissionEndpoints();
+app.AddJudgeSubmissionEndpoints();
 
 app.Run();

@@ -4,7 +4,7 @@ using Backend.Persistence.Entities.Users;
 
 namespace Backend.Persistence.Entities.Judge;
 
-public class ProblemSubmission : BaseEntity
+public class ProblemSubmission : BaseEntity, ISoftDeletable
 {
     public long ProblemId { get; set; }
     public long UserId { get; set; }
@@ -14,6 +14,9 @@ public class ProblemSubmission : BaseEntity
     public string SubmittedCode { get; set; } = default!;
     public SubmissionStatus Status { get; set; } = SubmissionStatus.Queued;
     public string? CompileError { get; set; }
+
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
     public CodingProblem Problem { get; set; } = default!;

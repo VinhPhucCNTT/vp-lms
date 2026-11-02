@@ -3,11 +3,14 @@ using Backend.Persistence.Entities.Content;
 
 namespace Backend.Persistence.Entities.Assignments;
 
-public class AssignmentFile : BaseEntity
+public class AssignmentFile : BaseEntity, ISoftDeletable
 {
     public long SubmissionId { get; set; }
     public long FileId { get; set; }
     public int OrderIndex { get; set; }
+
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
     public AssignmentSubmission Submission { get; set; } = default!;

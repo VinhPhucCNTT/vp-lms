@@ -1,8 +1,8 @@
 using System.Buffers;
 using System.Security.Cryptography;
-using Backend.Persistence.Entities.Content;
 using Backend.Api.Core.Types;
 using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Content;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -58,7 +58,7 @@ public class FileService(
         string hash;
         await using (var output = File.Create(absolutePath))
         using (var sha = SHA256.Create())
-        using (var crypto = new CryptoStream(output, sha, CryptoStreamMode.Write))
+        await using (var crypto = new CryptoStream(output, sha, CryptoStreamMode.Write))
         {
             var buffer = ArrayPool<byte>.Shared.Rent(81920); // Default buffer size of CopyToAsync()
             int read;
@@ -80,7 +80,7 @@ public class FileService(
             hash = Convert.ToHexString(sha.Hash!);
         }
 
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var file = new FileAsset
         {
             UserId = userId,
@@ -105,7 +105,7 @@ public class FileService(
 
     public async Task<IResult?> GetFileAsync(long fileId, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var file = await db.FileAssets
             .AsNoTracking()
             .FirstOrDefaultAsync(f => f.Id == fileId, ct);
@@ -122,7 +122,7 @@ public class FileService(
 
     public async Task DeleteAsync(long fileId, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var file = await db.FileAssets
             .AsNoTracking()
             .FirstOrDefaultAsync(f => f.Id == fileId, ct);

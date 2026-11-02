@@ -2,14 +2,17 @@ using Backend.Api.Core.Common;
 
 namespace Backend.Api.Core.Types;
 
-public static class AssessmentErrors
+public static class ResourceErrors
 {
     public static readonly Error NotFound =
-        new("assessment.not_found", "Assessment was not found.");
+        new("resource.not_found", "Learning resource was not found.");
 
     public static readonly Error Forbidden =
-        new("assessment.forbidden", "You do not have permission to perform this operation.");
+        new("resource.forbidden", "You do not have permission to perform this operation.");
+}
 
+public static class AssessmentErrors
+{
     public static readonly Error InvalidState =
         new("assessment.invalid_state", "The assessment is in an invalid state.");
 
@@ -34,4 +37,22 @@ public static class QuestionErrors
         new(
             "question.has_attempts",
             "This question has already been used by an assessment attempt.");
+}
+
+public static class JudgeSubmissionErrors
+{
+    public static readonly Error Internal =
+        new("judge_submission.internal", "Internal server error.");
+
+    public static readonly Error NotFound =
+        new("judge_submission.not_found", "Judge submission not found.");
+}
+
+public static class CompilerErrors
+{
+    public static readonly Error Internal =
+        new("compiler.internal", "Internal server error.");
+
+    public static readonly Error NotFound =
+        new("compiler.not_found", "Compiler not found.");
 }

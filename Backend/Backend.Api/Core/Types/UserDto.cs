@@ -18,7 +18,7 @@ public record UserDetailResponse(
     DateTime CreatedAt
 ) : IEntityResponse;
 
-public record UserRequest(
+public record UserQueryRequest(
     int PageNumber,
     int PageSize,
     string? Username,

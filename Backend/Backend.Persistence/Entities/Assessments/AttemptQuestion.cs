@@ -2,13 +2,16 @@ using Backend.Persistence.Common;
 
 namespace Backend.Persistence.Entities.Assessments;
 
-public class AttemptQuestion : BaseEntity
+public class AttemptQuestion : BaseEntity, ISoftDeletable
 {
     public long AttemptId { get; set; }
     public long AssessmentQuestionId { get; set; }
 
     public int OrderIndex { get; set; }
     public decimal Points { get; set; }
+
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 
     public bool IsFlagged { get; set; } = false;
 

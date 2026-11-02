@@ -1,11 +1,10 @@
-using Microsoft.AspNetCore.Http.HttpResults;
-
-using Backend.Api.Core.Types;
+using Backend.Api.Core.Authorization;
 using Backend.Api.Core.Common;
+using Backend.Api.Core.Types;
 using Backend.Api.Services.Courses;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Sqids;
-using Backend.Api.Core.Authorization;
 
 namespace Backend.Api.Endpoints.Course;
 

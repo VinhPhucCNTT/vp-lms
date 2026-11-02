@@ -1,12 +1,12 @@
-using Backend.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
-using Backend.Api.Services.Common;
-using Sqids;
+using System.Text.Json;
 using AutoMapper;
-using Backend.Persistence.Entities.Assessments;
 using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
-using System.Text.Json;
+using Backend.Api.Services.Common;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Assessments;
+using Microsoft.EntityFrameworkCore;
+using Sqids;
 
 namespace Backend.Api.Services.Assessments;
 
@@ -68,7 +68,7 @@ public sealed class AssessmentAttemptService(
             .FirstOrDefaultAsync(x => x.Id == assessmentId, ct);
 
         if (assessment is null)
-            return Result.Failure<AssessmentAttempt>(AssessmentErrors.NotFound);
+            return Result.Failure<AssessmentAttempt>(ResourceErrors.NotFound);
 
         if (!assessment.Resource.IsPublished)
         {

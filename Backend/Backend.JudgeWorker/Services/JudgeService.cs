@@ -1,64 +1,74 @@
+using Backend.Judge.Contracts;
 using Backend.JudgeWorker.Configuration;
 using Backend.JudgeWorker.Types;
+using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Content;
 using Backend.Persistence.Entities.Judge;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace Backend.JudgeWorker.Services;
 
 public interface IJudgeService
 {
-    Task<JudgeResult> JudgeAsync(
+    public Task<JudgeResult> JudgeAsync(
+        AppDbContext db,
         ProblemSubmission submission,
         CancellationToken cancellationToken);
 }
 
 public sealed class JudgeService(
     IDockerRunner dockerRunner,
-    // IDbContextFactory<AppDbContext> dbFactory,
     IOptions<JudgeOptions> options,
     ILogger<JudgeService> logger)
     : IJudgeService
 {
-    // private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
+    private readonly ILogger<JudgeService> logger = logger;
 
     public async Task<JudgeResult> JudgeAsync(
+        AppDbContext db,
         ProblemSubmission submission,
         CancellationToken ct = default)
     {
-        // using var db = await _dbFactory.CreateDbContextAsync(ct);
-        var profile = submission.Profile;
-        var compiler = profile.Compiler;
+        CompilerProfile profile = await db.CompilerProfiles.FirstAsync(p => p.Id == submission.ProfileId, ct);
+        Compiler compiler = await db.Compilers.FirstAsync(c => c.Id == profile.CompilerId, ct);
+        CodingProblem problem = await db.CodingProblems.FirstAsync(p => p.Id == submission.ProblemId, ct);
+
+        var workspaceFullPath = Path.GetFullPath(options.Value.WorkspaceRelativeDir);
         var workspace =
             Path.Combine(
-                options.Value.WorkspaceRelativeDir,
+                workspaceFullPath,
                 "lms-judge",
-                submission.Id.ToString());
+                submission.Id.ToString()).Replace('\\', '/');
         Directory.CreateDirectory(workspace);
 
-        string languageName = profile.Compiler.Language.ToString();
+        string languageName = compiler.Language.ToString();
         string imageName = GetImageName(languageName);
+        await PrepareWorkspaceAsync(
+            submission,
+            profile,
+            compiler.SourceFileName,
+            workspace,
+            ct);
+
         try
         {
-            await PrepareWorkspaceAsync(
-                submission,
-                profile,
-                compiler.SourceFileName,
-                workspace,
-                ct);
-
             if (!string.IsNullOrEmpty(profile.CompileCmd))
             {
-                logger.LogInformation(
-                    "Compiling submission {SubmissionId} using {Language}",
-                    submission.Id,
-                    compiler.Name);
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation(
+                        "Compiling submission {SubmissionId} using {Language}",
+                        submission.Id,
+                        compiler.Name);
+                }
 
-                var compileResult =
+                DockerExecutionResult compileResult =
                     await dockerRunner.CompileAsync(
                         profile,
                         imageName,
                         workspace,
-                        submission.Problem.MemoryLimitMb,
+                        problem.MemoryLimitMb,
                         ct);
 
                 if (compileResult.ExitCode != 0)
@@ -71,22 +81,47 @@ public sealed class JudgeService(
                             compileResult.StandardError);
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Compiliation failed for submission {SubmissionId}.", submission.Id);
 
-            double totalExecutionTime = 0;
-            List<TestCaseResult> testResults = [];
+            return new JudgeResult(
+                SubmissionStatus.SystemError,
+                0);
 
-            var testCases = submission.Problem.TestCases.OrderBy(x => x.OrderIndex);
-            int timeLimitMs = submission.Problem.TimeLimitMs;
-            int memoryLimitMb = submission.Problem.MemoryLimitMb;
+        }
+
+        double totalExecutionTime = 0;
+        List<TestCaseResult> testResults = [];
+
+        try
+        {
+            var testCases = await db.ProblemTestCases
+                .Where(t => t.ProblemId == problem.Id)
+                .OrderBy(x => x.OrderIndex)
+                .ToListAsync(ct);
+
+            if (testCases.Count == 0)
+            {
+                logger.LogWarning("No test case found.");
+                throw new Exception("No test case found.");
+            }
+
+            int timeLimitMs = problem.TimeLimitMs;
+            int memoryLimitMb = problem.MemoryLimitMb;
             foreach (var testCase in testCases)
             {
                 ct.ThrowIfCancellationRequested();
 
-                logger.LogInformation(
-                    "Running submission {SubmissionId}, language {Language}, test #{Test}",
-                    submission.Id,
-                    compiler.Language.ToString(),
-                    testCase.OrderIndex);
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation(
+                        "Running submission {SubmissionId}, language {Language}, test #{Test}",
+                        submission.Id,
+                        compiler.Language.ToString(),
+                        testCase.OrderIndex);
+                }
 
                 var result =
                     await dockerRunner.ExecuteAsync(
@@ -103,7 +138,7 @@ public sealed class JudgeService(
                 if (result.TimedOut)
                 {
                     // TODO: Implement memory
-                    testResults.Append(new TestCaseResult(
+                    testResults.Add(new TestCaseResult(
                         testCase.OrderIndex,
                         false,
                         result.ExecutionTimeMs, 0));
@@ -117,7 +152,7 @@ public sealed class JudgeService(
 
                 if (result.ExitCode != 0)
                 {
-                    testResults.Append(new TestCaseResult(
+                    testResults.Add(new TestCaseResult(
                         testCase.OrderIndex,
                         false,
                         result.ExecutionTimeMs, 0));
@@ -135,7 +170,7 @@ public sealed class JudgeService(
                         result.StandardOutput,
                         testCase.ExpectedOutput))
                 {
-                    testResults.Append(new TestCaseResult(
+                    testResults.Add(new TestCaseResult(
                         testCase.OrderIndex,
                         false,
                         result.ExecutionTimeMs, 0));
@@ -149,7 +184,7 @@ public sealed class JudgeService(
                             result.StandardOutput);
                 }
 
-                testResults.Append(new TestCaseResult(
+                testResults.Add(new TestCaseResult(
                     testCase.OrderIndex,
                     true,
                     result.ExecutionTimeMs, 0));
@@ -228,6 +263,11 @@ public sealed class JudgeService(
             Path.Combine(
                 workspace,
                 sourceFileName);
+
+        // var normalizedCode = submission.SubmittedCode
+        //     .Replace("\r\n", "\n")
+        //     .Replace("\r", "\n")
+        //     .Replace("\n", Environment.NewLine);
 
         await File.WriteAllTextAsync(
             sourcePath,

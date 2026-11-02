@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using AutoMapper;
 using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
@@ -13,24 +14,25 @@ using RabbitMQ.AMQP.Client.Impl;
 
 namespace Backend.Api.Services.Submissions;
 
-public interface IJudgeSubmissionService
+public interface IProblemSubmissionService
 {
-    public Task<JudgeResponse?>
+    public Task<ProblemSubmissionResponse?>
         Get(long submissionId, CancellationToken ct = default);
 
-    public Task<Result<JudgeResponse>>
+    public Task<Result<ProblemSubmissionResponse>>
         Send(long resourceId,
-            JudgeTestRequest request,
+            ProblemSubmissionRequest request,
             CancellationToken ct = default);
 }
 
-public sealed class JudgeSubmissionService(
-    ILogger<JudgeSubmissionService> logger,
+public sealed class ProblemSubmissionService(
+    ILogger<ProblemSubmissionService> logger,
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
     IMapper mapper,
-    IOptions<RabbitMqOptions> options) : IJudgeSubmissionService
+    IOptions<RabbitMqOptions> options) : IProblemSubmissionService
 {
+    private readonly ILogger<ProblemSubmissionService> _logger = logger;
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly IMapper _mapper = mapper;
@@ -38,23 +40,24 @@ public sealed class JudgeSubmissionService(
 
     private IConnection? _connection;
     private IPublisher? _publisher;
+    private IEnvironment? _environment;
 
-    public async Task<JudgeResponse?> Get(long submissionId, CancellationToken ct = default)
+    public async Task<ProblemSubmissionResponse?> Get(long submissionId, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         return await db.ProblemSubmissions
             .AsNoTracking()
             .Where(s => s.Id == submissionId)
-            .Select(s => _mapper.Map<JudgeResponse>(s))
+            .Select(s => _mapper.Map<ProblemSubmissionResponse>(s))
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<Result<JudgeResponse>> Send(long resourceId, JudgeTestRequest request, CancellationToken ct = default)
+    public async Task<Result<ProblemSubmissionResponse>> Send(long resourceId, ProblemSubmissionRequest request, CancellationToken ct = default)
     {
-        using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
-        var problem = await db.CodingProblems.FirstOrDefaultAsync(p => p.ResourceId == resourceId);
-        if (problem is null) return Result<JudgeResponse>.Failure(ResultError.NotFound, "Problem not found.");
+        var problem = await db.CodingProblems.FirstOrDefaultAsync(p => p.ResourceId == resourceId, ct);
+        if (problem is null) return Result<ProblemSubmissionResponse>.Failure(ResultError.NotFound, "Problem not found.");
 
         // TODO: See if this needs to be changed?
         var existing = problem.Submissions
@@ -62,25 +65,33 @@ public sealed class JudgeSubmissionService(
                 s.Status == SubmissionStatus.Queued &&
                 s.Status == SubmissionStatus.Running);
         if (existing.Any())
-            return Result<JudgeResponse>.Failure(ResultError.Forbidden, "Another submission is being processed.");
+            return Result<ProblemSubmissionResponse>.Failure(ResultError.Forbidden, "Another submission is being processed.");
+
+        var profile = db.CompilerProfiles.FirstOrDefaultAsync(p => p.ProblemId == problem.Id && p.Compiler.Language == request.Language, ct);
+        if (profile is null)
+            return Result<ProblemSubmissionResponse>.Failure(ResultError.BadRequest, $"Profile not defined for this language ({request.Language}).");
 
         if (await InitializeConnectionAsync())
-            return Result<JudgeResponse>.Failure(ResultError.Internal, "");
+            return Result<ProblemSubmissionResponse>.Failure(ResultError.Internal, "");
 
         try
         {
-            ProblemSubmission submission = new ProblemSubmission
+            ProblemSubmission submission = new()
             {
-                OrderIndex = problem.Submissions.Where(s => s.UserId == _currentUserService.UserId).Count() - 1,
+                ProblemId = problem.Id,
+                UserId = _currentUserService.UserId,
+                ProfileId = profile.Id,
+
+                OrderIndex = db.ProblemSubmissions.Where(s => s.ProblemId == problem.Id && s.UserId == _currentUserService.UserId).Count(),
                 SubmittedCode = request.SourceCode,
                 Status = SubmissionStatus.Queued
             };
             db.ProblemSubmissions.Add(submission);
             await db.SaveChangesAsync(ct);
 
-            var message = new JudgeSubmissionMessage(submission.Id);
-            var amqpMessage = new AmqpMessage(Encoding.UTF8.GetBytes(message.ToString()));
-            PublishResult pr = await _publisher!.PublishAsync(amqpMessage);
+            var message = JsonSerializer.Serialize(new JudgeSubmissionMessage(submission.Id));
+            var amqpMessage = new AmqpMessage(Encoding.UTF8.GetBytes(message));
+            PublishResult pr = await _publisher!.PublishAsync(amqpMessage, ct);
             if (pr.Outcome.State != OutcomeState.Accepted)
                 throw new Exception($"Unexpected amqp publish outcome: {pr.Outcome.State}.");
 
@@ -92,23 +103,23 @@ public sealed class JudgeSubmissionService(
                     .Where(s => s.Id == submission.Id)
                     .AnyAsync(s =>
                         s.Status != SubmissionStatus.Queued ||
-                        s.Status != SubmissionStatus.Running);
-                if (hasResult == true)
+                        s.Status != SubmissionStatus.Running, ct);
+                if (hasResult)
                     break;
 
-                await Task.Delay(500);
+                await Task.Delay(500, ct);
                 pollingCount--;
             }
 
-            var result = await db.ProblemSubmissions.FirstOrDefaultAsync(s => s.Id == submission.Id);
+            var result = await db.ProblemSubmissions.FirstOrDefaultAsync(s => s.Id == submission.Id, ct);
             System.Diagnostics.Debug.Assert(result is not null);
 
-            return Result<JudgeResponse>.Success(_mapper.Map<JudgeResponse>(result));
+            return Result.Success(_mapper.Map<ProblemSubmissionResponse>(result));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Exception occured when publishing.");
-            return Result<JudgeResponse>.Failure(ResultError.Internal, "");
+            _logger.LogError(ex, "Exception occured when publishing.");
+            return Result<ProblemSubmissionResponse>.Failure(ResultError.Internal, "");
         }
         finally
         {
@@ -116,6 +127,8 @@ public sealed class JudgeSubmissionService(
                 await _connection.CloseAsync();
             if (_publisher is not null)
                 await _publisher.CloseAsync();
+            if (_environment is not null)
+                await _environment.CloseAsync();
         }
     }
 
@@ -128,8 +141,8 @@ public sealed class JudgeSubmissionService(
                 .ContainerId(_options.ContainerId)
                 .Build();
 
-            IEnvironment environment = AmqpEnvironment.Create(settings);
-            _connection = await environment.CreateConnectionAsync();
+            _environment = AmqpEnvironment.Create(settings);
+            _connection = await _environment.CreateConnectionAsync();
 
             IManagement management = _connection.Management();
             IQueueSpecification queueSpec = management.Queue(_options.QueueName).Type(QueueType.QUORUM);
@@ -141,15 +154,12 @@ public sealed class JudgeSubmissionService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Exception occured when creating connection.");
-            return true;
-        }
-        finally
-        {
+            _logger.LogError(ex, "Exception occured when creating connection.");
             if (_connection is not null)
                 await _connection.CloseAsync();
             if (_publisher is not null)
                 await _publisher.CloseAsync();
+            return true;
         }
 
         return false;

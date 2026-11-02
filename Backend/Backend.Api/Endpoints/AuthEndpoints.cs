@@ -1,7 +1,6 @@
-using Microsoft.AspNetCore.Http.HttpResults;
-
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Auth;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Backend.Api.Endpoints;
 
@@ -11,10 +10,14 @@ public static class AuthEndpoints
     {
         var auth = route.MapGroup("/api/auth").WithTags("Authentication");
 
-        auth.MapGet("/", async () => TypedResults.Ok).WithDescription("Authentication check.").RequireAuthorization();
+        auth.MapGet("/", HandleGet).WithDescription("Authentication check.").RequireAuthorization();
         auth.MapPost("login", HandleLogin).WithDescription("Login.");
         auth.MapPost("register", HandleRegister).WithDescription("Create an account.");
     }
+
+    private static async
+        Task<IResult>
+        HandleGet() => TypedResults.Ok();
 
     private static async
         Task<Results<Ok<LoginResponse>, BadRequest>>

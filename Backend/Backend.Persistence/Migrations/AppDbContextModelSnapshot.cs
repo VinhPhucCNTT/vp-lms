@@ -86,7 +86,8 @@ namespace Backend.Persistence.Migrations
 
                     b.HasIndex("AssessmentId", "StudentId", "AttemptNumber")
                         .IsUnique()
-                        .HasDatabaseName("ix_assessment_attempts_assessment_id_student_id_attempt_number");
+                        .HasDatabaseName("ix_assessment_attempts_assessment_id_student_id_attempt_number")
+                        .HasFilter("is_deleted = false");
 
                     b.ToTable("assessment_attempts", (string)null);
                 });
@@ -107,6 +108,14 @@ namespace Backend.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
 
                     b.Property<int>("OrderIndex")
                         .HasColumnType("integer")
@@ -146,7 +155,8 @@ namespace Backend.Persistence.Migrations
 
                     b.HasIndex("AssessmentId", "OrderIndex")
                         .IsUnique()
-                        .HasDatabaseName("ix_assessment_questions_assessment_id_order_index");
+                        .HasDatabaseName("ix_assessment_questions_assessment_id_order_index")
+                        .HasFilter("is_deleted = false");
 
                     b.ToTable("assessment_questions", (string)null);
                 });
@@ -181,6 +191,10 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
                     b.Property<decimal?>("EarnedPoints")
                         .HasColumnType("decimal(5,2)")
                         .HasColumnName("earned_points");
@@ -197,6 +211,10 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_correct");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -209,11 +227,13 @@ namespace Backend.Persistence.Migrations
 
                     b.HasIndex("AttemptQuestionId")
                         .IsUnique()
-                        .HasDatabaseName("ix_attempt_answers_attempt_question_id");
+                        .HasDatabaseName("ix_attempt_answers_attempt_question_id")
+                        .HasFilter("is_deleted = false");
 
                     b.HasIndex("GraderId", "AttemptQuestionId")
                         .IsUnique()
-                        .HasDatabaseName("ix_attempt_answers_grader_id_attempt_question_id");
+                        .HasDatabaseName("ix_attempt_answers_grader_id_attempt_question_id")
+                        .HasFilter("is_deleted = false");
 
                     b.ToTable("attempt_answers", (string)null);
                 });
@@ -238,6 +258,14 @@ namespace Backend.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
 
                     b.Property<bool>("IsFlagged")
                         .HasColumnType("boolean")
@@ -390,9 +418,17 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
                     b.Property<long>("FileId")
                         .HasColumnType("bigint")
                         .HasColumnName("file_id");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
 
                     b.Property<int>("OrderIndex")
                         .HasColumnType("integer")
@@ -414,7 +450,8 @@ namespace Backend.Persistence.Migrations
 
                     b.HasIndex("SubmissionId", "FileId", "OrderIndex")
                         .IsUnique()
-                        .HasDatabaseName("ix_assignment_files_submission_id_file_id_order_index");
+                        .HasDatabaseName("ix_assignment_files_submission_id_file_id_order_index")
+                        .HasFilter("is_deleted = false");
 
                     b.ToTable("assignment_files", (string)null);
                 });
@@ -432,6 +469,10 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
                     b.Property<string>("FeedbackText")
                         .HasColumnType("text")
                         .HasColumnName("feedback_text");
@@ -439,6 +480,10 @@ namespace Backend.Persistence.Migrations
                     b.Property<long>("GraderId")
                         .HasColumnType("bigint")
                         .HasColumnName("grader_id");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
 
                     b.Property<decimal>("Score")
                         .HasColumnType("decimal(5,2)")
@@ -460,7 +505,8 @@ namespace Backend.Persistence.Migrations
 
                     b.HasIndex("SubmissionId")
                         .IsUnique()
-                        .HasDatabaseName("ix_assignment_grades_submission_id");
+                        .HasDatabaseName("ix_assignment_grades_submission_id")
+                        .HasFilter("is_deleted = false");
 
                     b.ToTable("assignment_grades", (string)null);
                 });
@@ -582,7 +628,8 @@ namespace Backend.Persistence.Migrations
 
                     b.HasIndex("ResourceId")
                         .IsUnique()
-                        .HasDatabaseName("ix_assessments_resource_id");
+                        .HasDatabaseName("ix_assessments_resource_id")
+                        .HasFilter("is_deleted = false");
 
                     b.ToTable("assessments", (string)null);
                 });
@@ -667,7 +714,8 @@ namespace Backend.Persistence.Migrations
 
                     b.HasIndex("ResourceId")
                         .IsUnique()
-                        .HasDatabaseName("ix_assignments_resource_id");
+                        .HasDatabaseName("ix_assignments_resource_id")
+                        .HasFilter("is_deleted = false");
 
                     b.ToTable("assignments", null, t =>
                         {
@@ -746,7 +794,8 @@ namespace Backend.Persistence.Migrations
 
                     b.HasIndex("ResourceId")
                         .IsUnique()
-                        .HasDatabaseName("ix_problems_resource_id");
+                        .HasDatabaseName("ix_problems_resource_id")
+                        .HasFilter("is_deleted = false");
 
                     b.ToTable("problems", (string)null);
                 });
@@ -851,7 +900,8 @@ namespace Backend.Persistence.Migrations
 
                     b.HasIndex("ResourceId")
                         .IsUnique()
-                        .HasDatabaseName("ix_lessons_resource_id");
+                        .HasDatabaseName("ix_lessons_resource_id")
+                        .HasFilter("is_deleted = false");
 
                     b.ToTable("lessons", (string)null);
                 });
@@ -869,6 +919,10 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
                     b.Property<string>("ExpectedOutput")
                         .IsRequired()
                         .HasColumnType("text")
@@ -878,6 +932,10 @@ namespace Backend.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("input");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
 
                     b.Property<int>("OrderIndex")
                         .HasColumnType("integer")
@@ -896,7 +954,8 @@ namespace Backend.Persistence.Migrations
 
                     b.HasIndex("ProblemId", "OrderIndex")
                         .IsUnique()
-                        .HasDatabaseName("ix_problem_test_cases_problem_id_order_index");
+                        .HasDatabaseName("ix_problem_test_cases_problem_id_order_index")
+                        .HasFilter("is_deleted = false");
 
                     b.ToTable("problem_test_cases", (string)null);
                 });
@@ -1027,7 +1086,8 @@ namespace Backend.Persistence.Migrations
 
                     b.HasIndex("BackgroundFileId")
                         .IsUnique()
-                        .HasDatabaseName("ix_courses_background_file_id");
+                        .HasDatabaseName("ix_courses_background_file_id")
+                        .HasFilter("is_deleted = false");
 
                     b.HasIndex("DepartmentId")
                         .HasDatabaseName("ix_courses_department_id");
@@ -1425,6 +1485,14 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
@@ -1471,6 +1539,14 @@ namespace Backend.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
 
                     b.Property<int>("OrderIndex")
                         .HasColumnType("integer")
@@ -1531,6 +1607,10 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
                     b.Property<double?>("ExecutionTimeMs")
                         .HasColumnType("double precision")
                         .HasColumnName("execution_time_ms");
@@ -1538,6 +1618,10 @@ namespace Backend.Persistence.Migrations
                     b.Property<bool>("IsAccepted")
                         .HasColumnType("boolean")
                         .HasColumnName("is_accepted");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
 
                     b.Property<int?>("MemoryUsedKb")
                         .HasColumnType("integer")

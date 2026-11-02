@@ -1,6 +1,6 @@
 using AutoMapper;
-using Backend.Persistence.Common;
 using Backend.Api.Core.Types;
+using Backend.Persistence.Common;
 
 namespace Backend.Api.Core.Automapper;
 

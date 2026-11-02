@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using Backend.Judge.Contracts;
-using Backend.Persistence.Common;
 using Backend.Persistence.Entities.Judge;
 
 namespace Backend.JudgeWorker.Services;
@@ -35,7 +34,7 @@ public sealed class DockerRunner(
         int? memoryLimitMb = null,
         CancellationToken ct = default)
     {
-        if (String.IsNullOrEmpty(profile.CompileCmd))
+        if (string.IsNullOrEmpty(profile.CompileCmd))
         {
             logger.LogError("Profile {ProfileName} has no compile cmd defined.", profile.Name);
             return new DockerExecutionResult(
@@ -51,6 +50,9 @@ public sealed class DockerRunner(
             workspace,
             profile.CompileCmd,
             memoryLimitMb);
+
+        if (logger.IsEnabled(LogLevel.Information))
+            logger.LogInformation("Arguments constructed: {Args}", arguments);
 
         return await RunDockerAsync(
             arguments,
@@ -73,6 +75,9 @@ public sealed class DockerRunner(
             workspace,
             profile.RunCmd,
             memoryLimitMb);
+
+        if (logger.IsEnabled(LogLevel.Information))
+            logger.LogInformation("Arguments constructed: {Args}", arguments);
 
         try
         {
@@ -142,11 +147,11 @@ public sealed class DockerRunner(
         return arguments;
     }
 
-    private async Task<DockerExecutionResult> RunDockerAsync(
+    private static async Task<DockerExecutionResult> RunDockerAsync(
         List<string> arguments,
         int timeoutMs,
         string? input,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         var stopwatch =
             Stopwatch.StartNew();
@@ -181,7 +186,7 @@ public sealed class DockerRunner(
 
         using var timeoutCts =
             CancellationTokenSource.CreateLinkedTokenSource(
-                cancellationToken);
+                ct);
         timeoutCts.CancelAfter(timeoutMs);
 
         try
@@ -205,7 +210,7 @@ public sealed class DockerRunner(
             }
 
             // The judge's time limit expired.
-            if (!cancellationToken.IsCancellationRequested)
+            if (!ct.IsCancellationRequested)
             {
                 stopwatch.Stop();
 
@@ -222,10 +227,10 @@ public sealed class DockerRunner(
         }
 
         var stdout =
-            await process.StandardOutput.ReadToEndAsync();
+            await process.StandardOutput.ReadToEndAsync(ct);
 
         var stderr =
-            await process.StandardError.ReadToEndAsync();
+            await process.StandardError.ReadToEndAsync(ct);
 
         stopwatch.Stop();
 

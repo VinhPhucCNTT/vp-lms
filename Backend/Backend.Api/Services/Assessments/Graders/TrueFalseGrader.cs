@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Backend.Api.Core.Common;
-using Backend.Persistence.Entities.Assessments;
 using Backend.Api.Core.Types;
+using Backend.Persistence.Entities.Assessments;
 
 namespace Backend.Api.Services.Assessments.Graders;
 
@@ -22,8 +22,10 @@ public sealed class TrueFalseGrader
             question.QuestionData.Deserialize<TrueFalseQuestion>(JsonOptions);
 
         if (content is null)
+        {
             return Result<GradeResult>.Failure(
                 QuestionErrors.InvalidContent);
+        }
 
         if (answer is null)
         {

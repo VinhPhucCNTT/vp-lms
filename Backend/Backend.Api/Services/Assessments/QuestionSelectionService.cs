@@ -1,7 +1,7 @@
-using Backend.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
 using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
+using Backend.Persistence.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Assessments;
 
@@ -31,7 +31,7 @@ public sealed class QuestionSelectionService(
         if (!exists)
         {
             return Result<IReadOnlyList<SelectedQuestion>>
-                .Failure(AssessmentErrors.NotFound);
+                .Failure(ResourceErrors.NotFound);
         }
 
         var questions = await db.AssessmentQuestions

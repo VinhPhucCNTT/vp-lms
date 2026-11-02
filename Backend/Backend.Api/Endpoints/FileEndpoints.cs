@@ -1,7 +1,6 @@
-using Microsoft.AspNetCore.Http.HttpResults;
-
-using Sqids;
 using Backend.Api.Services.Content;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Sqids;
 
 namespace Backend.Api.Endpoints;
 
