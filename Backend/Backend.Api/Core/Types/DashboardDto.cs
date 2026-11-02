@@ -1,32 +1,17 @@
 namespace Backend.Api.Core.Types;
 
-public record StudentDashboardStats(
+public record StudentDashboardResponse(
     int ActiveCourses,
     int PendingAssign,
-    int PendingAssess,
+    int PendingAssessments,
     int PendingProblems
 );
 
-// public record StudentDashboardResponse(
-//     StudentDashboardStats Stats,
-//     List<CourseStudentResponse> RecentCourses,
-//     List<ICourseActivityResponse> ActivitiesDue,
-//     List<CourseProgressResponse> Progresses,
-//     List<CourseEventResponse> RecentActivities
-// );
-
-public record InstructorDashboardStats(
+public record InstructorDashboardResponse(
     int TotalStudents,
     int CoursesPublished,
     int CoursesTotal,
-    int PendingAssign,
-    int PendingAssess,
-    int PendingProblems
+    int PendingAssign // Assignments with at least 1 un-graded submission(s).
+    // int PendingAssess, // Assessments are automatic only => no manual grading required.
+    // int PendingProblems // Also does not have manual grading
 );
-
-// public record InstructorDashboardResponse(
-//     InstructorDashboardStats Stats,
-//     List<SubmissionResponse> PendingSubmissions,
-//     List<CourseStudentResponse> RecentCourses,
-//     List<AnnouncementResponse> RecentAnnouncements
-// );

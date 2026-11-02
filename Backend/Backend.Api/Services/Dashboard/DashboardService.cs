@@ -1,74 +1,96 @@
-using Backend.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
 using Backend.Api.Core.Types;
+using Backend.Api.Services.Common;
+using Backend.Persistence.Data;
 using Backend.Persistence.Entities.Courses;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Dashboard;
 
 public interface IDashboardService
 {
+    public Task<StudentDashboardResponse> GetStudentDashboardAsync(CancellationToken ct = default);
+    public Task<InstructorDashboardResponse> GetInstructorDashboardAsync(CancellationToken ct = default);
 }
 
 public class DashboardService(
-    IDbContextFactory<AppDbContext> dbFactory) : IDashboardService
+    IDbContextFactory<AppDbContext> dbFactory,
+    CurrentUserService currentUserService) : IDashboardService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
+    private readonly CurrentUserService _currentUserService = currentUserService;
 
-    // public async Task<StudentDashboardResponse?> GetStudentDashboardAsync(long studentUserId)
-    // {
-    //     using var db = await _dbFactory.CreateDbContextAsync();
-    //
-    //     var activeCourses = db.Enrollments
-    //         .AsNoTracking()
-    //         .Where(e => e.UserId == studentUserId)
-    //         .DistinctBy(e => e.CourseId)
-    //         .CountAsync();
-    //     var pendingAssign = CountPendingAssignmentsAsync(db, studentUserId);
-    //     var pendingAssess = CountPendingAssessmentsAsync(db, studentUserId);
-    //     var pendingProblems = CountPendingProblemsAsync(db, studentUserId);
-    //
-    //     var results = await Task.WhenAll(activeCourses, pendingAssign, pendingAssess, pendingProblems);
-    //     var stats = new StudentDashboardStats(results[0], results[1], results[2], results[3]);
-    // }
 
-    // public async Task<InstructorDashboardResponse?> GetInstructorDashboardAsync(long instructorUserId)
-    // {
-    // }
-
-    static private async Task<int> CountPendingAssignmentsAsync(AppDbContext db, long userId)
+    public async Task<StudentDashboardResponse> GetStudentDashboardAsync(CancellationToken ct = default)
     {
-        var assignmentIds = await GetCourseResourceIdsAsync(db, ResourceType.Assignment, userId);
-        return assignmentIds.Count - await db.AssignmentSubmissions
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var currentUserId = _currentUserService.UserId;
+
+        var activeCourses = await db.Enrollments
             .AsNoTracking()
-            .Where(s => s.UserId == userId && assignmentIds.Contains(s.AssignmentId))
+            .Where(e => e.UserId == currentUserId)
+            .DistinctBy(e => e.CourseId)
+            .CountAsync(ct);
+
+        var assignmentIds = await GetCourseResourceIdsAsync(db, ResourceType.Assignment, currentUserId, ct);
+        var pendingAssign = assignmentIds.Count - await db.AssignmentSubmissions
+            .AsNoTracking()
+            .Where(s => s.UserId == currentUserId && assignmentIds.Contains(s.AssignmentId))
             .DistinctBy(s => s.AssignmentId)
-            .CountAsync();
-    }
+            .CountAsync(ct);
 
-    static private async Task<int> CountPendingAssessmentsAsync(AppDbContext db, long userId)
-    {
-        var assessmentIds = await GetCourseResourceIdsAsync(db, ResourceType.Assessment, userId);
-        return assessmentIds.Count - await db.AssessmentAttempts
+        var assessmentIds = await GetCourseResourceIdsAsync(db, ResourceType.Assessment, currentUserId, ct);
+        var pendingAssess = assessmentIds.Count - await db.AssessmentAttempts
             .AsNoTracking()
-            .Where(s => s.StudentId == userId && assessmentIds.Contains(s.AssessmentId))
+            .Where(s => s.StudentId == currentUserId && assessmentIds.Contains(s.AssessmentId))
             .DistinctBy(s => s.AssessmentId)
-            .CountAsync();
+            .CountAsync(ct);
+
+        var problemIds = await GetCourseResourceIdsAsync(db, ResourceType.Problem, currentUserId, ct);
+        var pendingProblems = problemIds.Count - await db.ProblemSubmissions
+            .AsNoTracking()
+            .Where(s => s.UserId == currentUserId && problemIds.Contains(s.ProblemId))
+            .DistinctBy(s => s.ProblemId)
+            .CountAsync(ct);
+
+        return new StudentDashboardResponse(activeCourses, pendingAssign, pendingAssess, pendingProblems);
     }
 
-    static private async Task<int> CountPendingProblemsAsync(AppDbContext db, long userId)
+    public async Task<InstructorDashboardResponse> GetInstructorDashboardAsync(CancellationToken ct = default)
     {
-        var problemIds = await GetCourseResourceIdsAsync(db, ResourceType.Problem, userId);
-        return problemIds.Count - await db.ProblemSubmissions
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var currentUserId = _currentUserService.UserId;
+
+        var totalCourses = db.Courses
             .AsNoTracking()
-            .Where(s => s.UserId == userId && problemIds.Contains(s.ProblemId))
-            .DistinctBy(s => s.ProblemId)
-            .CountAsync();
+            .Where(c => c.CreatorId == currentUserId);
+        var totalCourseIds = totalCourses.Select(c => c.Id);
+
+        // NOTE: Actually total enrollment count, change the name perhaps?
+        var totalStudents = await db.Enrollments
+            .AsNoTracking()
+            .Where(e => totalCourseIds.Contains(e.Id))
+            .CountAsync(ct);
+
+        var totalCourseCount = await totalCourses.CountAsync(ct);
+        var publishedCourseCount = await totalCourses
+            .Where(c => c.IsPublished)
+            .CountAsync(ct);
+
+        var assignmentIds = await GetCourseResourceIdsAsync(db, ResourceType.Assignment, currentUserId, ct);
+        var pendingAssign = await db.AssignmentSubmissions
+            .AsNoTracking()
+            .Where(s => assignmentIds.Contains(s.AssignmentId) && s.Grade == null)
+            .DistinctBy(s => s.AssignmentId)
+            .CountAsync(ct);
+
+        return new InstructorDashboardResponse(totalStudents, publishedCourseCount, totalCourseCount, pendingAssign);
     }
 
     static private async Task<List<long>> GetCourseResourceIdsAsync(
         AppDbContext db,
         ResourceType type,
-        long userId)
+        long userId,
+        CancellationToken ct = default)
     {
         System.Linq.Expressions.Expression<Func<CourseResource, long>> selectExpr;
 
@@ -99,13 +121,13 @@ public class DashboardService(
             .AsNoTracking()
             .Where(m => m.IsPublished && courseIds.Contains(m.CourseId))
             .Select(m => m.Id)
-            .ToListAsync();
+            .ToListAsync(ct);
 
         return await db.CourseResources
             .AsNoTracking()
             .Where(r => r.IsPublished && r.Type == type && moduleIds.Contains(r.ModuleId))
             .Select(selectExpr)
-            .ToListAsync();
+            .ToListAsync(ct);
     }
 
 }

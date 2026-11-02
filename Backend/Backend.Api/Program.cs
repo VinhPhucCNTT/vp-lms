@@ -200,5 +200,6 @@ app.AddUserEndpoints();
 app.AddCompilerEndpoints();
 app.AddCodingProblemEndpoints();
 app.AddJudgeSubmissionEndpoints();
+app.AddDashboardEndpoints();
 
 app.Run();
