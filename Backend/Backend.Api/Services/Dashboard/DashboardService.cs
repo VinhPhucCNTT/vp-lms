@@ -1,3 +1,4 @@
+using Backend.Api.Core.Helpers;
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Common;
 using Backend.Persistence.Data;
@@ -8,8 +9,8 @@ namespace Backend.Api.Services.Dashboard;
 
 public interface IDashboardService
 {
-    public Task<StudentDashboardResponse> GetStudentDashboardAsync(CancellationToken ct = default);
-    public Task<InstructorDashboardResponse> GetInstructorDashboardAsync(CancellationToken ct = default);
+    public Task<StudentStatsResponse> GetStudentDashboardAsync(CancellationToken ct = default);
+    public Task<InstructorStatsResponse> GetInstructorDashboardAsync(CancellationToken ct = default);
 }
 
 public class DashboardService(
@@ -20,7 +21,7 @@ public class DashboardService(
     private readonly CurrentUserService _currentUserService = currentUserService;
 
 
-    public async Task<StudentDashboardResponse> GetStudentDashboardAsync(CancellationToken ct = default)
+    public async Task<StudentStatsResponse> GetStudentDashboardAsync(CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
@@ -52,10 +53,10 @@ public class DashboardService(
             .DistinctBy(s => s.ProblemId)
             .CountAsync(ct);
 
-        return new StudentDashboardResponse(activeCourses, pendingAssign, pendingAssess, pendingProblems);
+        return new StudentStatsResponse(activeCourses, pendingAssign, pendingAssess, pendingProblems);
     }
 
-    public async Task<InstructorDashboardResponse> GetInstructorDashboardAsync(CancellationToken ct = default)
+    public async Task<InstructorStatsResponse> GetInstructorDashboardAsync(CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
@@ -77,13 +78,27 @@ public class DashboardService(
             .CountAsync(ct);
 
         var assignmentIds = await GetCourseResourceIdsAsync(db, ResourceType.Assignment, currentUserId, ct);
-        var pendingAssign = await db.AssignmentSubmissions
+        var pendingSubmissions = db.AssignmentSubmissions
             .AsNoTracking()
-            .Where(s => assignmentIds.Contains(s.AssignmentId) && s.Grade == null)
+            .Where(s => assignmentIds.Contains(s.AssignmentId) && s.Grade == null);
+        var pendingAssign = await pendingSubmissions
             .DistinctBy(s => s.AssignmentId)
             .CountAsync(ct);
 
-        return new InstructorDashboardResponse(totalStudents, publishedCourseCount, totalCourseCount, pendingAssign);
+        var (startOfWeek, endOfWeek) = GetCurrentWeekRange.Get();
+        var gradedThisWeek = await db.AssignmentSubmissions
+            .AsNoTracking()
+            .Where(s => assignmentIds.Contains(s.AssignmentId))
+            .Where(s => s.CreatedAt >= startOfWeek &&
+                        s.CreatedAt < endOfWeek)
+            .CountAsync(ct);
+
+        return new InstructorStatsResponse(totalStudents,
+            publishedCourseCount,
+            totalCourseCount,
+            pendingAssign,
+            await pendingSubmissions.CountAsync(ct),
+            gradedThisWeek);
     }
 
     static private async Task<List<long>> GetCourseResourceIdsAsync(

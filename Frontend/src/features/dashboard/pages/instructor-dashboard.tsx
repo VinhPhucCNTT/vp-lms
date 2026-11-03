@@ -32,7 +32,7 @@ export function InstructorDashboard() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Total Students" value={stats.totalStudents} icon={<UsersIcon className="size-5" />} variant="info" />
-        <StatCard title="Active Courses" value={`${stats.publishedCourses} / ${stats.totalCourses}`} icon={<BookOpenIcon className="size-5" />} variant="success" description="published / total" />
+        <StatCard title="Active Courses" value={`${stats.coursesPublished} / ${stats.coursesTotal}`} icon={<BookOpenIcon className="size-5" />} variant="success" description="published / total" />
         <Card>
           <CardContent className="p-6">
             <div className="flex items-start justify-between">

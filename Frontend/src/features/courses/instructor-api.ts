@@ -3,11 +3,10 @@ import type { Course } from "@/types";
 
 export interface InstructorStatsDto {
   totalStudents: number;
-  publishedCourses: number;
-  totalCourses: number;
-  pendingSubmissions: number;
+  coursesPublished: number;
+  coursesTotal: number;
   pendingAssignments: number;
-  pendingAssessments: number;
+  pendingSubmissions: number;
   gradedThisWeek: number;
 }
 
