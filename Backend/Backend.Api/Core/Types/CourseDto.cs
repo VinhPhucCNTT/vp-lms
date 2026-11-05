@@ -11,6 +11,13 @@ public record CourseResponse(
     int EnrollmentCount
 ) : IEntityResponse;
 
+public record RecentCourseResponse(
+    string CourseId,
+    string CourseName,
+    long BackgroundFileId,
+    DateTime LastAccessedAt
+);
+
 public record CourseProgress(
     int Completed,
     int Total

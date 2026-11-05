@@ -11,6 +11,18 @@ public interface IDashboardService
 {
     public Task<StudentStatsResponse> GetStudentDashboardAsync(CancellationToken ct = default);
     public Task<InstructorStatsResponse> GetInstructorDashboardAsync(CancellationToken ct = default);
+
+    public Task<List<long>> GetStudentResourceIdsAsync(
+        AppDbContext db,
+        ResourceType type,
+        long userId,
+        CancellationToken ct = default);
+
+    public Task<List<long>> GetInstructorResourceIdsAsync(
+        AppDbContext db,
+        ResourceType type,
+        long userId,
+        CancellationToken ct = default);
 }
 
 public class DashboardService(
@@ -29,28 +41,32 @@ public class DashboardService(
         var activeCourses = await db.Enrollments
             .AsNoTracking()
             .Where(e => e.UserId == currentUserId)
-            .DistinctBy(e => e.CourseId)
+            .Select(e => e.CourseId)
+            .Distinct()
             .CountAsync(ct);
 
-        var assignmentIds = await GetCourseResourceIdsAsync(db, ResourceType.Assignment, currentUserId, ct);
+        var assignmentIds = await GetStudentResourceIdsAsync(db, ResourceType.Assignment, currentUserId, ct);
         var pendingAssign = assignmentIds.Count - await db.AssignmentSubmissions
             .AsNoTracking()
             .Where(s => s.UserId == currentUserId && assignmentIds.Contains(s.AssignmentId))
-            .DistinctBy(s => s.AssignmentId)
+            .Select(s => s.AssignmentId)
+            .Distinct()
             .CountAsync(ct);
 
-        var assessmentIds = await GetCourseResourceIdsAsync(db, ResourceType.Assessment, currentUserId, ct);
+        var assessmentIds = await GetStudentResourceIdsAsync(db, ResourceType.Assessment, currentUserId, ct);
         var pendingAssess = assessmentIds.Count - await db.AssessmentAttempts
             .AsNoTracking()
             .Where(s => s.StudentId == currentUserId && assessmentIds.Contains(s.AssessmentId))
-            .DistinctBy(s => s.AssessmentId)
+            .Select(s => s.AssessmentId)
+            .Distinct()
             .CountAsync(ct);
 
-        var problemIds = await GetCourseResourceIdsAsync(db, ResourceType.Problem, currentUserId, ct);
+        var problemIds = await GetStudentResourceIdsAsync(db, ResourceType.Problem, currentUserId, ct);
         var pendingProblems = problemIds.Count - await db.ProblemSubmissions
             .AsNoTracking()
             .Where(s => s.UserId == currentUserId && problemIds.Contains(s.ProblemId))
-            .DistinctBy(s => s.ProblemId)
+            .Select(s => s.ProblemId)
+            .Distinct()
             .CountAsync(ct);
 
         return new StudentStatsResponse(activeCourses, pendingAssign, pendingAssess, pendingProblems);
@@ -77,12 +93,13 @@ public class DashboardService(
             .Where(c => c.IsPublished)
             .CountAsync(ct);
 
-        var assignmentIds = await GetCourseResourceIdsAsync(db, ResourceType.Assignment, currentUserId, ct);
+        var assignmentIds = await GetInstructorResourceIdsAsync(db, ResourceType.Assignment, currentUserId, ct);
         var pendingSubmissions = db.AssignmentSubmissions
             .AsNoTracking()
             .Where(s => assignmentIds.Contains(s.AssignmentId) && s.Grade == null);
         var pendingAssign = await pendingSubmissions
-            .DistinctBy(s => s.AssignmentId)
+            .Select(s => s.AssignmentId)
+            .Distinct()
             .CountAsync(ct);
 
         var (startOfWeek, endOfWeek) = GetCurrentWeekRange.Get();
@@ -101,7 +118,7 @@ public class DashboardService(
             gradedThisWeek);
     }
 
-    static private async Task<List<long>> GetCourseResourceIdsAsync(
+    public async Task<List<long>> GetStudentResourceIdsAsync(
         AppDbContext db,
         ResourceType type,
         long userId,
@@ -130,8 +147,8 @@ public class DashboardService(
         var courseIds = db.Enrollments
             .AsNoTracking()
             .Where(e => e.UserId == userId)
-            .DistinctBy(e => e.CourseId)
-            .Select(e => e.CourseId);
+            .Select(e => e.CourseId)
+            .Distinct();
         var moduleIds = await db.CourseModules
             .AsNoTracking()
             .Where(m => m.IsPublished && courseIds.Contains(m.CourseId))
@@ -145,4 +162,46 @@ public class DashboardService(
             .ToListAsync(ct);
     }
 
+    public async Task<List<long>> GetInstructorResourceIdsAsync(
+        AppDbContext db,
+        ResourceType type,
+        long userId,
+        CancellationToken ct = default)
+    {
+        System.Linq.Expressions.Expression<Func<CourseResource, long>> selectExpr;
+
+        switch (type)
+        {
+            case ResourceType.Lesson:
+                selectExpr = r => r.Lesson!.Id;
+                break;
+            case ResourceType.Assignment:
+                selectExpr = r => r.Assignment!.Id;
+                break;
+            case ResourceType.Assessment:
+                selectExpr = r => r.Assessment!.Id;
+                break;
+            case ResourceType.Problem:
+                selectExpr = r => r.Problem!.Id;
+                break;
+            default:
+                return [];
+        }
+
+        var courseIds = db.Courses
+            .AsNoTracking()
+            .Where(c => c.CreatorId == userId)
+            .Select(c => c.Id);
+        var moduleIds = await db.CourseModules
+            .AsNoTracking()
+            .Where(m => m.IsPublished && courseIds.Contains(m.CourseId))
+            .Select(m => m.Id)
+            .ToListAsync(ct);
+
+        return await db.CourseResources
+            .AsNoTracking()
+            .Where(r => r.IsPublished && r.Type == type && moduleIds.Contains(r.ModuleId))
+            .Select(selectExpr)
+            .ToListAsync(ct);
+    }
 }

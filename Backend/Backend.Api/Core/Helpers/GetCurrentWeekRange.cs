@@ -8,8 +8,8 @@ namespace Backend.Api.Core.Helpers
 
             int diff = (7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7;
 
-            var startOfWeek = today.AddDays(-diff);
-            var endOfWeek = startOfWeek.AddDays(7);
+            var startOfWeek = today.AddDays(-diff).ToUniversalTime();
+            var endOfWeek = startOfWeek.AddDays(7).ToUniversalTime();
 
             return (startOfWeek, endOfWeek);
         }

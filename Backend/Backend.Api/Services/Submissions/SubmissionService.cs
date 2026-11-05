@@ -3,9 +3,11 @@ using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Common;
 using Backend.Api.Services.Content;
+using Backend.Api.Services.Dashboard;
 using Backend.Persistence.Data;
 using Backend.Persistence.Entities.Assignments;
 using Backend.Persistence.Entities.Content;
+using Backend.Persistence.Entities.Courses;
 using ByteSizeLib;
 using Microsoft.EntityFrameworkCore;
 using Sqids;
@@ -32,12 +34,17 @@ public interface ISubmissionService
         CancellationToken ct);
 
     public Task<bool> RemoveAsync(long resourceId, CancellationToken ct = default);
+
+    public Task<List<SubmissionResponse>> GetInstructorUngradedAsync(int count, CancellationToken ct = default);
+
+    public Task<List<SubmissionResponse>> GetStudentPendingAsync(int count, CancellationToken ct = default);
 }
 
 public class SubmissionService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
     IFileService fileService,
+    IDashboardService dashboardService,
     SqidsEncoder<long> sqidsEncoder,
     IMapper mapper) : ISubmissionService
 {
@@ -46,6 +53,9 @@ public class SubmissionService(
     private readonly IFileService _fileService = fileService;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
     private readonly IMapper _mapper = mapper;
+
+    public readonly IDashboardService _dashboardService = dashboardService;
+
 
     public async Task<PaginatedResponse<SubmissionResponse>> GetListAsync(long resourceId, PageRequest page, CancellationToken ct = default)
     {
@@ -308,6 +318,48 @@ public class SubmissionService(
         await db.SaveChangesAsync(ct);
 
         return true;
+    }
+
+    public async Task<List<SubmissionResponse>> GetInstructorUngradedAsync(
+        int count,
+        CancellationToken ct = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var currentUserId = _currentUserService.UserId;
+
+        var assignmentIds = await _dashboardService.GetInstructorResourceIdsAsync(db, ResourceType.Assignment, currentUserId, ct);
+        var submissions = db.AssignmentSubmissions
+            .AsNoTracking()
+            .OrderByDescending(s => s.UpdatedAt)
+            .Where(s => assignmentIds.Contains(s.AssignmentId) && s.Grade == null);
+
+        if (count > 0) // TODO: implement validation (count cannot be too high)
+            submissions = submissions.Take(count);
+
+        return await submissions
+            .Select(s => _mapper.Map<SubmissionResponse>(s))
+            .ToListAsync(ct);
+    }
+
+    public async Task<List<SubmissionResponse>> GetStudentPendingAsync(
+        int count,
+        CancellationToken ct = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var currentUserId = _currentUserService.UserId;
+
+        var assignmentIds = await _dashboardService.GetStudentResourceIdsAsync(db, ResourceType.Assignment, currentUserId, ct);
+        var submissions = db.AssignmentSubmissions
+            .AsNoTracking()
+            .OrderByDescending(s => s.UpdatedAt)
+            .Where(s => s.UserId == currentUserId && assignmentIds.Contains(s.AssignmentId));
+
+        if (count > 0) // TODO: implement validation (count cannot be too high)
+            submissions = submissions.Take(count);
+
+        return await submissions
+            .Select(s => _mapper.Map<SubmissionResponse>(s))
+            .ToListAsync(ct);
     }
 
     private static async Task<AssignmentSubmission> CreateEmptySubmissionAsync(AppDbContext db, long assignmentId, long userId, CancellationToken ct = default)

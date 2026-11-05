@@ -37,14 +37,14 @@ export function InstructorDashboard() {
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Pending Review</p>
+                <p className="text-sm text-muted-foreground">Pending Submissions</p>
                 <p className="text-2xl font-bold">{stats.pendingSubmissions}</p>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="outline" className="text-xs gap-1"><FileTextIcon className="size-3" />{stats.pendingAssignments} assignments</Badge>
-                  <Badge variant="outline" className="text-xs gap-1"><ClipboardCheckIcon className="size-3" />{stats.pendingAssessments} quizzes</Badge>
+                  {/* <Badge variant="outline" className="text-xs gap-1"><ClipboardCheckIcon className="size-3" />{stats.pendingAssessments} quizzes</Badge> */}
                 </div>
               </div>
-              <div className="size-10 rounded-lg bg-warning/10 flex items-center justify-center"><FileTextIcon className="size-5 text-warning-foreground" /></div>
+              <div className="size-10 rounded-lg bg-warning/10 flex items-center justify-center"><FileTextIcon className="size-5 text-warning" /></div>
             </div>
           </CardContent>
         </Card>

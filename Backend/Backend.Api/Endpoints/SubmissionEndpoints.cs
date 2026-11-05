@@ -20,7 +20,10 @@ public static class SubmissionEndpoints
         submission.MapGet("{submissionId}/grade", HandleGetGrade).RequireAuthorization();
         submission.MapPost("{submissionId}/grade", HandleAddGrade).RequireAuthorization("IsInstructor");
         submission.MapPut("{submissionId}/grade", HandleUpdateGrade).RequireAuthorization("IsInstructor");
-        submission.MapDelete("{submissionId}/grade", HandleRemoveGrade).RequireAuthorization("IsStudent");
+        submission.MapDelete("{submissionId}/grade", HandleRemoveGrade).RequireAuthorization("IsStudent"); // TODO: ???
+
+        submission.MapGet("pending/instructor", HandleGetInstructorUngraded).RequireAuthorization("IsInstructor");
+        submission.MapGet("pending/student", HandleGetStudentPending).RequireAuthorization("IsStudent");
     }
 
     private static async
@@ -111,7 +114,7 @@ public static class SubmissionEndpoints
         string submissionId,
         AssignmentGradeRequest request,
         SqidsEncoder<long> sqidsEncoder,
-        AssignmentGradeService gradeService)
+        IAssignmentGradeService gradeService)
     {
         var decoded = sqidsEncoder.Decode(submissionId);
         if (decoded.Count != 1)
@@ -126,7 +129,7 @@ public static class SubmissionEndpoints
     private static async Task<Results<Ok, BadRequest, NotFound<string>>> HandleRemoveGrade(
         string submissionId,
         SqidsEncoder<long> sqidsEncoder,
-        AssignmentGradeService gradeService)
+        IAssignmentGradeService gradeService)
     {
         var decoded = sqidsEncoder.Decode(submissionId);
         if (decoded.Count != 1)
@@ -135,5 +138,23 @@ public static class SubmissionEndpoints
         return await gradeService.RemoveAsync(decoded[0])
             ? TypedResults.Ok()
             : TypedResults.NotFound("Grade not found.");
+    }
+
+    private static async Task<IResult> HandleGetInstructorUngraded(
+        ISubmissionService submissionService,
+        CancellationToken ct,
+        [AsParameters] int count = 10)
+    {
+        var result = await submissionService.GetInstructorUngradedAsync(count, ct);
+        return TypedResults.Ok(result);
+    }
+
+    private static async Task<IResult> HandleGetStudentPending(
+        ISubmissionService submissionService,
+        CancellationToken ct,
+        [AsParameters] int count = 10)
+    {
+        var result = await submissionService.GetStudentPendingAsync(count, ct);
+        return TypedResults.Ok(result);
     }
 }

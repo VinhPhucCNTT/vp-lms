@@ -137,6 +137,7 @@ builder.Services.Scan(scan => scan
             "Backend.Api.Services.Auth",
             "Backend.Api.Services.Content",
             "Backend.Api.Services.Courses",
+            "Backend.Api.Services.Dashboard",
             "Backend.Api.Services.Judge",
             "Backend.Api.Services.Submissions",
             "Backend.Api.Services.Users"
@@ -201,5 +202,6 @@ app.AddCompilerEndpoints();
 app.AddCodingProblemEndpoints();
 app.AddJudgeSubmissionEndpoints();
 app.AddDashboardEndpoints();
+app.AddSubmissionEndpoints();
 
 app.Run();

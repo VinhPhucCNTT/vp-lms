@@ -61,15 +61,15 @@ export interface SubmissionDetailDto {
 
 export const instructorApi = {
   async getStats(): Promise<InstructorStatsDto> {
-    return api.get<InstructorStatsDto>("/api/instructor/stats");
+    return api.get<InstructorStatsDto>("/api/dashboard/instructor");
   },
 
   async getPendingSubmissions(): Promise<PendingSubmissionDto[]> {
-    return api.get<PendingSubmissionDto[]>("/api/instructor/submissions/pending");
+    return api.get<PendingSubmissionDto[]>("/api/assignment-submission/pending/instructor");
   },
 
   async getRecentCourses(): Promise<Course[]> {
-    const dtos = await api.get<Course[]>("/api/courses/instructor");
+    const dtos = await api.get<Course[]>("/api/courses/recent/instructor");
     return dtos;
   },
 

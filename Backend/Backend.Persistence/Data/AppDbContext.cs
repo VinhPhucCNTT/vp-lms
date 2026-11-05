@@ -23,6 +23,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<CourseResource> CourseResources => Set<CourseResource>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<ResourceProgress> ResourceProgress => Set<ResourceProgress>();
+    public DbSet<RecentCourse> RecentCourses => Set<RecentCourse>();
 
     public DbSet<Lesson> Lessons => Set<Lesson>();
 

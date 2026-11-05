@@ -9,7 +9,7 @@ public interface ICourseAuthorization
 {
     public Task<bool> IsCourseOwnerAsync(Course course);
 
-    public Task<bool> IsParticipantAsync(long courseId);
+    public Task<bool> IsParticipantAsync(long courseId, CancellationToken ct = default);
 }
 
 public class CourseAuthorization(
@@ -25,11 +25,11 @@ public class CourseAuthorization(
         return course.CreatorId == userId;
     }
 
-    public async Task<bool> IsParticipantAsync(long courseId)
+    public async Task<bool> IsParticipantAsync(long courseId, CancellationToken ct = default)
     {
-        await using var db = await dbFactory.CreateDbContextAsync();
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
         var userId = currentUserService.UserId;
 
-        return await db.Enrollments.AsNoTracking().AnyAsync(e => e.CourseId == courseId && e.UserId == userId);
+        return await db.Enrollments.AsNoTracking().AnyAsync(e => e.CourseId == courseId && e.UserId == userId, ct);
     }
 }

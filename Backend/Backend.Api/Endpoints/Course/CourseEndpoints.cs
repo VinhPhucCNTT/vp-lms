@@ -19,6 +19,7 @@ public static class CourseEndpoints
         course.MapGet("instructor", HandleGetInstructor).WithDescription("Get current instructor courses.");
         course.MapGet("explore", HandleGetExplore).WithDescription("Get explore page info.");
         course.MapGet("", HandleQuery).WithDescription("Query for courses.");
+        course.MapGet("recent", HandleGetRecent).WithDescription("Get recently accessed courses.");
 
         course.MapGet("{courseId}/modules", HandleGetModules);
         course.MapPost("{courseId}/modules", HandleCreateModule);
@@ -44,7 +45,7 @@ public static class CourseEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var result = await courseService.GetDtoAsync(decoded[0]);
+        var result = await courseService.GetDtoAsync(decoded[0], ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();
@@ -53,52 +54,41 @@ public static class CourseEndpoints
     private static async
         Task<Ok<List<CourseStudentResponse>>>
         HandleGetStudent(ICourseService courseService,
-            CancellationToken ct)
-    {
-        return TypedResults.Ok(
-            await courseService.GetStudentCoursesAsync());
-    }
+            CancellationToken ct) => TypedResults.Ok(
+            await courseService.GetStudentCoursesAsync(ct));
 
     private static async
         Task<Ok<List<CourseResponse>>>
         HandleGetInstructor(ICourseService courseService,
-            CancellationToken ct)
-    {
-        return TypedResults.Ok(
-            await courseService.GetInstructorCoursesAsync());
-    }
+            CancellationToken ct) => TypedResults.Ok(
+            await courseService.GetInstructorCoursesAsync(ct));
 
     private static async
         Task<Ok<CourseExploreResponse>>
         HandleGetExplore(ICourseService courseService,
-            CancellationToken ct)
-    {
-        return TypedResults.Ok(
-            await courseService.GetExploreAsync());
-    }
+            CancellationToken ct) => TypedResults.Ok(
+            await courseService.GetExploreAsync(ct));
 
     private static async
         Task<Ok<PaginatedResponse<CourseResponse>>>
         HandleQuery([AsParameters] CourseRequest query, ICourseService courseService,
-            CancellationToken ct)
-    {
-        return TypedResults.Ok(
-            await courseService.QueryCoursesAsync(query));
-    }
+            CancellationToken ct) => TypedResults.Ok(
+            await courseService.QueryCoursesAsync(query, ct));
 
     private static async
         Task<Results<Ok<List<ModuleResponse>>, BadRequest>>
         HandleGetModules(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
-            IModuleService moduleService)
+            IModuleService moduleService,
+            CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
         return TypedResults.Ok(
-            await moduleService.GetCourseModulesAsync(decoded[0]));
+            await moduleService.GetCourseModulesAsync(decoded[0], ct));
     }
 
     private static async
@@ -120,11 +110,8 @@ public static class CourseEndpoints
     private static async
         Task<Ok<CourseSetResponse>>
         HandleCreate([FromBody] CourseSetRequest request, ICourseService courseService,
-            CancellationToken ct)
-    {
-        return TypedResults.Ok(
-            await courseService.CreateCourseAsync(request));
-    }
+            CancellationToken ct) => TypedResults.Ok(
+            await courseService.CreateCourseAsync(request, ct));
 
     private static async
         Task<Results<Ok<CourseSetResponse>, NotFound, BadRequest>>
@@ -140,11 +127,11 @@ public static class CourseEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var course = await courseService.GetAsync(decoded[0]);
+        var course = await courseService.GetAsync(decoded[0], ct);
         if (course is null || !await auth.IsCourseOwnerAsync(course))
             return TypedResults.NotFound();
 
-        var result = await courseService.UpdateCourseAsync(course, request);
+        var result = await courseService.UpdateCourseAsync(course, request, ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();
@@ -163,11 +150,11 @@ public static class CourseEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var course = await courseService.GetAsync(decoded[0]);
+        var course = await courseService.GetAsync(decoded[0], ct);
         if (course is null || !await auth.IsCourseOwnerAsync(course))
             return TypedResults.NotFound();
 
-        await courseService.DeleteCourseAsync(course);
+        await courseService.DeleteCourseAsync(course, ct);
         return TypedResults.Ok();
     }
 
@@ -185,7 +172,7 @@ public static class CourseEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var course = await courseService.GetAsync(decoded[0]);
+        var course = await courseService.GetAsync(decoded[0], ct);
         if (course is null || !await auth.IsCourseOwnerAsync(course))
             return TypedResults.NotFound();
 
@@ -208,11 +195,11 @@ public static class CourseEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var course = await courseService.GetAsync(decoded[0]);
+        var course = await courseService.GetAsync(decoded[0], ct);
         if (course is null || !await auth.IsCourseOwnerAsync(course))
             return TypedResults.NotFound();
 
-        await courseService.SetCoursePublishStatusAsync(course, true);
+        await courseService.SetCoursePublishStatusAsync(course, true, ct);
         return TypedResults.Ok();
     }
 
@@ -229,11 +216,22 @@ public static class CourseEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var course = await courseService.GetAsync(decoded[0]);
+        var course = await courseService.GetAsync(decoded[0], ct);
         if (course is null || !await auth.IsCourseOwnerAsync(course))
             return TypedResults.NotFound();
 
-        await courseService.SetCoursePublishStatusAsync(course, false);
+        await courseService.SetCoursePublishStatusAsync(course, false, ct);
         return TypedResults.Ok();
+    }
+
+    private static async
+        Task<IResult>
+        HandleGetRecent(
+            ICourseService courseService,
+            CancellationToken ct,
+            [AsParameters] int count = 10)
+    {
+        var result = await courseService.GetRecentAsync(count, ct);
+        return TypedResults.Ok(result);
     }
 }
