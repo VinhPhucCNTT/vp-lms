@@ -1295,6 +1295,32 @@ namespace Backend.Persistence.Migrations
                     b.ToTable("enrollments", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Persistence.Entities.Courses.RecentCourse", b =>
+                {
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id");
+
+                    b.Property<long>("CourseId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTime>("LastAccessedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_accessed_at");
+
+                    b.HasKey("UserId", "CourseId")
+                        .HasName("pk_recent_courses");
+
+                    b.HasIndex("CourseId")
+                        .HasDatabaseName("ix_recent_courses_course_id");
+
+                    b.HasIndex("UserId", "LastAccessedAt")
+                        .HasDatabaseName("ix_recent_courses_user_id_last_accessed_at");
+
+                    b.ToTable("recent_courses", (string)null);
+                });
+
             modelBuilder.Entity("Backend.Persistence.Entities.Courses.TAPermissions", b =>
                 {
                     b.Property<long>("Id")
@@ -2123,6 +2149,27 @@ namespace Backend.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_enrollments_users_user_id");
+
+                    b.Navigation("Course");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Backend.Persistence.Entities.Courses.RecentCourse", b =>
+                {
+                    b.HasOne("Backend.Persistence.Entities.Courses.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_recent_courses_courses_course_id");
+
+                    b.HasOne("Backend.Persistence.Entities.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_recent_courses_users_user_id");
 
                     b.Navigation("Course");
 
