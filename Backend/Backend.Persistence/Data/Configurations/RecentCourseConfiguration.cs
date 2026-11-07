@@ -12,6 +12,8 @@ public class RecentCourseConfiguration : IEntityTypeConfiguration<RecentCourse>
 
         builder.HasKey(x => new { x.UserId, x.CourseId });
 
+        builder.HasQueryFilter("SoftDelete", x => !x.Course.IsDeleted);
+
         builder.Property(x => x.LastAccessedAt)
             .IsRequired();
 

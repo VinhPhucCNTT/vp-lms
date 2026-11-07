@@ -12,8 +12,8 @@ namespace Backend.Api.Services.Auth;
 
 public interface IAuthenticationService
 {
-    public Task<LoginResponse?> LoginAsync(LoginRequest dto);
-    public Task<RegisterResponse?> RegisterAsync(RegisterRequest dto);
+    public Task<LoginResponse?> LoginAsync(LoginRequest dto, CancellationToken ct = default);
+    public Task<RegisterResponse?> RegisterAsync(RegisterRequest dto, IFormFile file, CancellationToken ct = default);
 }
 
 public class AuthenticationService(
@@ -23,11 +23,15 @@ public class AuthenticationService(
     private readonly IConfiguration _config = config;
     private readonly IDbContextFactory<AppDbContext> _contextFactory = contextFactory;
 
-    public async Task<LoginResponse?> LoginAsync(LoginRequest dto)
+    public async
+        Task<LoginResponse?>
+        LoginAsync(
+            LoginRequest dto,
+            CancellationToken ct)
     {
-        await using var dbContext = await _contextFactory.CreateDbContextAsync();
+        await using var dbContext = await _contextFactory.CreateDbContextAsync(ct);
 
-        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == dto.Email, ct);
         if (user is null)
             return null;
 
@@ -37,28 +41,32 @@ public class AuthenticationService(
         return new LoginResponse(user.Email, GenerateToken(user), user.Role);
     }
 
-    public async Task<RegisterResponse?> RegisterAsync(RegisterRequest dto)
+    public async
+        Task<RegisterResponse?>
+        RegisterAsync(
+            RegisterRequest dto,
+            IFormFile file,
+            CancellationToken ct)
     {
-        await using var dbContext = await _contextFactory.CreateDbContextAsync();
+        await using var dbContext = await _contextFactory.CreateDbContextAsync(ct);
 
-        if (await dbContext.Users.AnyAsync(u => u.Email == dto.Email))
+        if (await dbContext.Users.AnyAsync(u => u.Email == dto.Email, ct))
             return null;
 
         var hashedPassword = Argon2.Hash(dto.Password);
         var user = new User
         {
-            Username = dto.Username,
             Email = dto.Email,
-            Fullname = dto.Fullname,
-            AvatarUrl = dto.AvatarUrl,
             PasswordHash = hashedPassword,
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
             Role = dto.Role
         };
 
         dbContext.Users.Add(user);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(ct);
 
-        return new RegisterResponse(user.Username, user.Email, user.Role);
+        return new RegisterResponse(user.Email, user.FirstName, user.LastName, user.Role);
     }
 
     private string GenerateToken(User user)
@@ -71,7 +79,6 @@ public class AuthenticationService(
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
-            new(ClaimTypes.Name, user.Username),
             new(ClaimTypes.Role, user.Role.ToString())
         };
 

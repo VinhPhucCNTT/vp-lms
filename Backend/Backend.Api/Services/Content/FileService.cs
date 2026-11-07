@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Security.Cryptography;
+using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Persistence.Data;
 using Backend.Persistence.Entities.Content;
@@ -10,7 +11,7 @@ namespace Backend.Api.Services.Content;
 
 public interface IFileService
 {
-    public Task<long> UploadAsync(
+    public Task<Result<long>> UploadAsync(
         Stream stream,
         string originalFileName,
         string contentType,
@@ -19,7 +20,7 @@ public interface IFileService
         CancellationToken ct = default);
 
     public Task<IResult?> GetFileAsync(long fileId, CancellationToken ct = default);
-    
+
     public Task DeleteAsync(long fileId, CancellationToken ct = default);
 
     public Task<Stream> ReadAsync(string storagePath);
@@ -27,12 +28,15 @@ public interface IFileService
 
 public class FileService(
     IOptions<Core.Common.FileOptions> fileOptions,
-    IDbContextFactory<AppDbContext> dbFactory) : IFileService
+    IDbContextFactory<AppDbContext> dbFactory,
+    ILogger<FileService> logger) : IFileService
 {
     private readonly string _root = fileOptions.Value.RootPath;
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
 
-    public async Task<long> UploadAsync(
+    public ILogger<FileService> _logger = logger;
+
+    public async Task<Result<long>> UploadAsync(
         Stream stream,
         string originalFileName,
         string contentType,
@@ -49,17 +53,27 @@ public class FileService(
             today.Month.ToString("00"));
         var directory = Path.Combine(_root, relativeDirectory);
 
-        Directory.CreateDirectory(directory);
+        try
+        {
+            Directory.CreateDirectory(directory);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create directory.");
+            return Result<long>.Failure(new Error("file.dir_creation_failed", "Failed to create directory."));
+        }
+
 
         var relativePath = Path.Combine(relativeDirectory, fileName);
         var absolutePath = Path.Combine(_root, relativePath);
         long size = 0;
 
         string hash;
-        await using (var output = File.Create(absolutePath))
-        using (var sha = SHA256.Create())
-        await using (var crypto = new CryptoStream(output, sha, CryptoStreamMode.Write))
+        try
         {
+            await using var output = File.Create(absolutePath);
+            using var sha = SHA256.Create();
+            await using var crypto = new CryptoStream(output, sha, CryptoStreamMode.Write);
             var buffer = ArrayPool<byte>.Shared.Rent(81920); // Default buffer size of CopyToAsync()
             int read;
 
@@ -79,9 +93,15 @@ public class FileService(
             await crypto.FlushFinalBlockAsync(ct);
             hash = Convert.ToHexString(sha.Hash!);
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to write to path {Path}.", absolutePath);
+            return Result<long>.Failure(new Error("file.file_write_error", "Failed to write file."));
+        }
 
+        FileAsset file;
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-        var file = new FileAsset
+        file = new FileAsset
         {
             UserId = userId,
             OriginalFileName = originalFileName,
@@ -91,9 +111,18 @@ public class FileService(
             Sha256Hash = hash
         };
         db.FileAssets.Add(file);
-        await db.SaveChangesAsync(ct);
 
-        return file.Id;
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create file asset entry for {OriginalFileName}.", originalFileName);
+
+        }
+
+        return Result.Success(file.Id);
     }
 
     public Task<Stream> ReadAsync(string storagePath)

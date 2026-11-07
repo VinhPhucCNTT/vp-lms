@@ -27,16 +27,16 @@ public static class DevelopmentDataSeeder
         var instructor = await EnsureUserAsync(
             db,
             InstructorEmail,
-            "dev-instructor",
-            "Development Instructor",
+            "Elton",
+            "John",
             InstructorPassword,
             UserRoles.Instructor);
 
         var student = await EnsureUserAsync(
             db,
             StudentEmail,
-            "dev-student",
-            "Development Student",
+            "Jack",
+            "Walter",
             StudentPassword,
             UserRoles.Student);
 
@@ -282,8 +282,8 @@ public static class DevelopmentDataSeeder
     private static async Task<User> EnsureUserAsync(
         AppDbContext db,
         string email,
-        string username,
-        string fullname,
+        string firstname,
+        string lastname,
         string password,
         UserRoles role)
     {
@@ -302,10 +302,10 @@ public static class DevelopmentDataSeeder
 
         user = new User
         {
-            Username = username,
             Email = email,
             PasswordHash = Argon2.Hash(password),
-            Fullname = fullname,
+            FirstName = firstname,
+            LastName = lastname,
             Role = role,
             IsActive = true
         };

@@ -67,14 +67,14 @@ public class UserService(
         await using var db = await _dbFactory.CreateDbContextAsync();
         var users = db.Users.AsNoTracking().Where(u => u.IsActive);
 
-        if (!string.IsNullOrEmpty(query.Username))
-            users = users.Where(u => u.Username.Contains(query.Username, StringComparison.OrdinalIgnoreCase));
-
         if (!string.IsNullOrEmpty(query.Email))
             users = users.Where(u => u.Email.Contains(query.Email, StringComparison.OrdinalIgnoreCase));
 
-        if (!string.IsNullOrEmpty(query.Fullname))
-            users = users.Where(u => u.Fullname.Contains(query.Fullname, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrEmpty(query.FirstName))
+            users = users.Where(u => u.FirstName.Contains(query.FirstName, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrEmpty(query.LastName))
+            users = users.Where(u => u.LastName.Contains(query.LastName, StringComparison.OrdinalIgnoreCase));
 
         if (query.Role is not null)
             users = users.Where(u => u.Role == query.Role);
@@ -99,11 +99,11 @@ public class UserService(
         var hashedPassword = Argon2.Hash(dto.Password);
         var user = new User
         {
-            Username = dto.Username,
             Email = dto.Email,
             PasswordHash = hashedPassword,
-            Fullname = dto.Fullname,
-            AvatarUrl = dto.AvatarUrl,
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            AvatarFileId = dto.AvatarFileId,
             Role = dto.Role,
             IsActive = true
         };
@@ -119,11 +119,11 @@ public class UserService(
         if (user == null) return null;
 
         var hashedPassword = Argon2.Hash(dto.Password);
-        user.Username = dto.Username;
         user.Email = dto.Email;
         user.PasswordHash = hashedPassword;
-        user.Fullname = dto.Fullname;
-        user.AvatarUrl = dto.AvatarUrl;
+        user.FirstName = dto.FirstName;
+        user.LastName = dto.LastName;
+        user.AvatarFileId = dto.AvatarFileId;
         user.IsActive = true;
 
         db.Users.Update(user);
@@ -147,7 +147,7 @@ public class UserService(
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
-        return user != null && user.IsActive;
+        return user?.IsActive == true;
     }
 
     public async Task<bool> DeactivateUserAsync(long userId)
@@ -178,12 +178,12 @@ public class UserService(
     {
         var anonymizeId = Guid.NewGuid().ToString("N");
 
-        user.Username = $"deleted-{anonymizeId}";
         user.Email = $"deleted-{anonymizeId}@removed.com";
         user.PasswordHash = "";
-        user.Fullname = "[[DELETED USER]]";
+        user.FirstName = "[[DELETED USER]]";
+        user.LastName = "";
         user.IsActive = false;
-        user.AvatarUrl = null;
+        user.AvatarFileId = null;
 
         user.IsDeleted = true;
         user.DeletedAt = DateTime.UtcNow;

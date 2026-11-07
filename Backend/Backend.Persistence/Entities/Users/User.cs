@@ -2,19 +2,18 @@ using Backend.Persistence.Common;
 using Backend.Persistence.Entities.Assessments;
 using Backend.Persistence.Entities.Content;
 using Backend.Persistence.Entities.Courses;
-using Backend.Persistence.Entities.Judge;
 
 namespace Backend.Persistence.Entities.Users;
 
 public class User : BaseEntity
 {
-    public string Username { get; set; } = default!;
-    public string Email { get; set; } = default!;
-    public string PasswordHash { get; set; } = default!;
-    public string Fullname { get; set; } = default!;
-    public string? AvatarUrl { get; set; }
+    public required string Email { get; set; }
+    public required string PasswordHash { get; set; }
+    public required string FirstName { get; set; }
+    public required string LastName { get; set; }
+    public long? AvatarFileId { get; set; }
     public bool IsActive { get; set; } = true;
-    public UserRoles Role { get; set; }
+    public required UserRoles Role { get; set; }
 
     // Soft delete using anonymized name
     public bool IsDeleted { get; set; } = false;
@@ -26,6 +25,7 @@ public class User : BaseEntity
     public ICollection<Comment> Comments { get; set; } = [];
     public ICollection<FileAsset> FileAssets { get; set; } = [];
     public ICollection<QuestionBank> QuestionBanks { get; set; } = [];
+    public ICollection<RecentCourse> RecentCourses { get; set; } = [];
 }
 
 public enum UserRoles {

@@ -15,6 +15,13 @@ export interface CourseDto {
   enrollmentCount: number;
 }
 
+export interface RecentCourseDto {
+    courseId: string;
+    courseName: string;
+    backgroundFileId: number;
+    lastAccessedAt: string;
+}
+
 export interface CourseSetResponseDto {
   id: string;
   creatorId: string;

@@ -25,14 +25,9 @@ public interface ICourseService
 
     public Task<PaginatedResponse<CourseResponse>> QueryCoursesAsync(CourseRequest query, CancellationToken ct = default);
 
-    public Task<long> UploadBackgroundAsync(
-        Course course,
-        IFormFile file,
-        CancellationToken ct = default);
-
     public Task<CourseSetResponse> CreateCourseAsync(CourseSetRequest request, CancellationToken ct = default);
 
-    public Task<CourseSetResponse> UpdateCourseAsync(Course course, CourseSetRequest request, CancellationToken ct = default);
+    public Task<CourseSetResponse?> UpdateCourseAsync(Course course, CourseSetRequest request, IFormFile bgFile, CancellationToken ct = default);
 
     public Task DeleteCourseAsync(Course course, CancellationToken ct = default);
 
@@ -45,12 +40,14 @@ public class CourseService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
     IFileService fileService,
-    IMapper mapper) : ICourseService
+    IMapper mapper,
+    ILogger<CourseService> logger) : ICourseService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly IFileService _fileService = fileService;
     private readonly IMapper _mapper = mapper;
+    private readonly ILogger<CourseService> _logger = logger;
 
     public async Task<Course?> GetAsync(long courseId, CancellationToken ct = default)
     {
@@ -165,11 +162,11 @@ public class CourseService(
         if (!string.IsNullOrEmpty(query.Title))
             courses = courses.Where(c => c.Title.Contains(query.Title, StringComparison.OrdinalIgnoreCase));
 
-        if (!string.IsNullOrEmpty(query.CreatorUsername))
-            courses = courses.Where(c => c.Creator.Username.Contains(query.CreatorUsername, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrEmpty(query.CreatorFirstName))
+            courses = courses.Where(c => c.Creator.FirstName.Contains(query.CreatorFirstName, StringComparison.OrdinalIgnoreCase));
 
-        if (!string.IsNullOrEmpty(query.CreatorFullname))
-            courses = courses.Where(c => c.Creator.Fullname.Contains(query.CreatorFullname, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrEmpty(query.CreatorLastName))
+            courses = courses.Where(c => c.Creator.LastName.Contains(query.CreatorLastName, StringComparison.OrdinalIgnoreCase));
 
         if (query.EnrollmentOpen != null)
             courses = courses.Where(c => c.EnrollmentOpen == query.EnrollmentOpen);
@@ -189,32 +186,6 @@ public class CourseService(
                 list);
     }
 
-    public async Task<long> UploadBackgroundAsync(
-        Course course,
-        IFormFile file,
-        CancellationToken ct)
-    {
-        await using var db = await _dbFactory.CreateDbContextAsync(ct);
-
-        // TODO: Validation
-        await using var stream = file.OpenReadStream();
-        long fileId = await _fileService.UploadAsync(
-            stream,
-            file.FileName,
-            file.ContentType,
-            _currentUserService.UserId,
-            FileCategory.CourseBackground,
-            ct);
-
-        if (course.BackgroundFileId is not null)
-            await _fileService.DeleteAsync((long)course.BackgroundFileId, ct);
-
-        course.BackgroundFileId = fileId;
-        await db.SaveChangesAsync(ct);
-
-        return fileId;
-    }
-
     public async Task<CourseSetResponse> CreateCourseAsync(CourseSetRequest request, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
@@ -232,17 +203,33 @@ public class CourseService(
         return _mapper.Map<CourseSetResponse>(course);
     }
 
-    public async Task<CourseSetResponse> UpdateCourseAsync(Course course, CourseSetRequest request, CancellationToken ct = default)
+    public async Task<CourseSetResponse?> UpdateCourseAsync(
+        Course course,
+        CourseSetRequest request,
+        IFormFile bgFile,
+        CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
 
-        course.Title = request.Title;
-        course.Description = request.Description;
-        course.IsPublished = request.IsPublished;
-        course.EnrollmentOpen = request.EnrollmentOpen;
+        try
+        {
+            course.Title = request.Title;
+            course.Description = request.Description;
+            course.IsPublished = request.IsPublished;
+            course.EnrollmentOpen = request.EnrollmentOpen;
 
-        db.Courses.Update(course);
-        await db.SaveChangesAsync(ct);
+            db.Courses.Update(course);
+            await db.SaveChangesAsync(ct);
+
+            await UploadBackgroundAsync(db, course, bgFile, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception occured when updating course {CourseId}.", course.Id);
+            await transaction.RollbackAsync(ct);
+        }
+
         return _mapper.Map<CourseSetResponse>(course);
     }
 
@@ -315,4 +302,33 @@ public class CourseService(
             .ToListAsync(ct);
     }
 
+    private async Task<long> UploadBackgroundAsync(
+        AppDbContext db,
+        Course course,
+        IFormFile file,
+        CancellationToken ct = default)
+    {
+        // TODO: Validation
+        await using var stream = file.OpenReadStream();
+        var result = await _fileService.UploadAsync(
+            stream,
+            file.FileName,
+            file.ContentType,
+            _currentUserService.UserId,
+            FileCategory.CourseBackground,
+            ct);
+        if (!result.IsSuccess)
+        {
+            _logger.LogError("UploadAsync failed.");
+            throw new Exception();
+        }
+
+        if (course.BackgroundFileId is not null)
+            await _fileService.DeleteAsync((long)course.BackgroundFileId, ct);
+
+        course.BackgroundFileId = result.Value;
+        await db.SaveChangesAsync(ct);
+
+        return result.Value;
+    }
 }

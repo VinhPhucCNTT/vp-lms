@@ -19,20 +19,11 @@ public class CourseProfile : Profile
                 "CreatorId",
                 o => o.MapFrom(x => x.CreatorId))
             .ForCtorParam(
-                "CreatorUsername",
-                o => o.MapFrom(x => x.Creator != null ? x.Creator.Username : ""))
+                "CreatorFirstName",
+                o => o.MapFrom(x => x.Creator != null ? x.Creator.FirstName : ""))
             .ForCtorParam(
-                "CreatorFullname",
-                o => o.MapFrom(x => x.Creator != null ? x.Creator.Fullname : ""))
-            .ForCtorParam(
-                "Code",
-                o => o.MapFrom(x => x.Code))
-            .ForCtorParam(
-                "Title",
-                o => o.MapFrom(x => x.Title))
-            .ForCtorParam(
-                "Description",
-                o => o.MapFrom(x => x.Description))
+                "CreatorLastName",
+                o => o.MapFrom(x => x.Creator != null ? x.Creator.LastName : ""))
             .ForCtorParam(
                 "EnrollmentCount",
                 o => o.MapFrom(x => x.Enrollments.Count));

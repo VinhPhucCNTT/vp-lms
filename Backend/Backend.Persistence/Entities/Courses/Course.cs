@@ -25,4 +25,5 @@ public class Course : BaseEntity, ISoftDeletable
     public ICollection<CourseModule> Modules { get; set; } = [];
     public ICollection<Enrollment> Enrollments { get; set; } = [];
     public FileAsset? BackgroundFile { get; set; }
+    public ICollection<RecentCourse> RecentAccesses { get; set; } = [];
 }

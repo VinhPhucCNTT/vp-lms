@@ -12,10 +12,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Username)
-            .IsRequired()
-            .HasMaxLength(50);
-
         builder.Property(x => x.Email)
             .IsRequired()
             .HasMaxLength(255);
@@ -24,13 +20,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(255);
 
-        builder.Property(x => x.Fullname)
+        builder.Property(x => x.FirstName)
             .IsRequired()
             .HasMaxLength(100);
 
-        builder.Property(x => x.AvatarUrl)
-            .IsRequired(false)
-            .HasMaxLength(500);
+        builder.Property(x => x.LastName)
+            .IsRequired()
+            .HasMaxLength(100);
 
         builder.Property(x => x.Role)
             .IsRequired()
@@ -38,8 +34,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasConversion<string>();
 
         builder.HasIndex(x => x.IsActive);
-        builder.HasIndex(x => x.Username)
-            .IsUnique();
         builder.HasIndex(x => x.Email)
             .IsUnique();
     }

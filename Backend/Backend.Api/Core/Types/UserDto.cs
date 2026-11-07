@@ -4,16 +4,17 @@ namespace Backend.Api.Core.Types;
 
 public record UserResponse(
     string Id,
-    string Username,
+    string FirstName,
+    string LastName,
     UserRoles Role,
-    string? AvatarUrl) : IEntityResponse;
+    long? AvatarFileId) : IEntityResponse;
 
 public record UserDetailResponse(
     string Id,
-    string Username,
     string Email,
-    string Fullname,
-    string? AvatarUrl,
+    string FirstName,
+    string LastName,
+    long? AvatarFileId,
     UserRoles Role,
     DateTime CreatedAt
 ) : IEntityResponse;
@@ -21,9 +22,9 @@ public record UserDetailResponse(
 public record UserQueryRequest(
     int PageNumber,
     int PageSize,
-    string? Username,
     string? Email,
-    string? Fullname,
+    string FirstName,
+    string LastName,
     UserRoles? Role
 );
 
@@ -34,27 +35,27 @@ public record UserStatResponse(
 );
 
 public record UserCreateRequest(
-    string Username,
     string Email,
-    string Fullname,
+    string FirstName,
+    string LastName,
     string Password,
-    string? AvatarUrl,
+    long? AvatarFileId,
     UserRoles Role
 );
 
 public record UserUpdateRequest(
-    string Username,
     string Email,
-    string Fullname,
+    string FirstName,
+    string LastName,
     string Password,
-    string? AvatarUrl
+    long? AvatarFileId
 );
 
 public record UserSetResponse(
     string Id,
-    string Username,
     string Email,
-    string Fullname,
-    string? AvatarUrl,
+    string FirstName,
+    string LastName,
+    long? AvatarFileId,
     UserRoles Role
 ) : IEntityResponse;

@@ -39,6 +39,18 @@ public static class QuestionErrors
             "This question has already been used by an assessment attempt.");
 }
 
+public static class SubmissionErrors
+{
+    public static readonly Error NotFound =
+        new("submission.not_found", "Submission not found.");
+
+    public static readonly Error Internal =
+        new("submission.internal", "Internal server error.");
+
+    public static readonly Error Upload =
+        new("submission.upload", "Failed to upload submission file.");
+}
+
 public static class JudgeSubmissionErrors
 {
     public static readonly Error Internal =

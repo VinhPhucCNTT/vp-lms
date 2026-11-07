@@ -26,7 +26,7 @@ public interface ISubmissionService
 
     public Task<Result<SubmissionDetailResponse>> SubmitAsync(long resourceId, SubmissionRequest request, CancellationToken ct = default);
 
-    public Task<AssignmentFileResponse> UploadFileAsync(AssignmentSubmission submission, IFormFile file, CancellationToken ct);
+    public Task<Result<AssignmentFileResponse>> UploadFileAsync(AssignmentSubmission submission, IFormFile file, CancellationToken ct);
 
     public Task<Result<AssignmentSubmission>> ValidateFileAsync(
         long resourceId,
@@ -46,7 +46,8 @@ public class SubmissionService(
     IFileService fileService,
     IDashboardService dashboardService,
     SqidsEncoder<long> sqidsEncoder,
-    IMapper mapper) : ISubmissionService
+    IMapper mapper,
+    ILogger<SubmissionService> logger) : ISubmissionService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
@@ -56,6 +57,7 @@ public class SubmissionService(
 
     public readonly IDashboardService _dashboardService = dashboardService;
 
+    public ILogger<SubmissionService> _logger = logger;
 
     public async Task<PaginatedResponse<SubmissionResponse>> GetListAsync(long resourceId, PageRequest page, CancellationToken ct = default)
     {
@@ -209,30 +211,45 @@ public class SubmissionService(
             await LoadSubmissionDetailAsync(db, assignment, submission, userId, ct));
     }
 
-    public async Task<AssignmentFileResponse> UploadFileAsync(AssignmentSubmission submission, IFormFile file, CancellationToken ct)
+    public async Task<Result<AssignmentFileResponse>> UploadFileAsync(AssignmentSubmission submission, IFormFile file, CancellationToken ct)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         await using var stream = file.OpenReadStream();
         var userId = _currentUserService.UserId;
 
-        var fileId = await _fileService.UploadAsync(
+        var result = await _fileService.UploadAsync(
             stream,
             file.FileName,
             file.ContentType,
             userId,
             FileCategory.AssignmentSubmission,
             ct);
+        if (!result.IsSuccess)
+        {
+            _logger.LogError("Failed to create file.");
+            return Result<AssignmentFileResponse>.Failure(SubmissionErrors.Upload);
+        }
 
-        int fileCount = await db.AssignmentFiles.AsNoTracking()
+        int fileCount = await db.AssignmentFiles
+            .AsNoTracking()
             .CountAsync(f => f.SubmissionId == submission.Id, ct);
         var assignmentFile = new AssignmentFile
         {
             SubmissionId = submission.Id,
-            FileId = fileId,
+            FileId = result.Value,
             OrderIndex = fileCount
         };
-        db.AssignmentFiles.Add(assignmentFile);
-        await db.SaveChangesAsync(ct);
+
+        try
+        {
+            db.AssignmentFiles.Add(assignmentFile);
+            await db.SaveChangesAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create entry");
+            return Result<AssignmentFileResponse>.Failure(SubmissionErrors.Internal);
+        }
 
         var resourceId = await db.Assignments
             .Where(a => a.Id == submission.AssignmentId)
@@ -241,11 +258,12 @@ public class SubmissionService(
 
         var fileAsset = await db.FileAssets
             .AsNoTracking()
-            .SingleAsync(f => f.Id == fileId, ct);
+            .SingleAsync(f => f.Id == result.Value, ct);
 
-        return new AssignmentFileResponse(
-            _sqidsEncoder.Encode(resourceId),
-            _mapper.Map<FileResponse>(fileAsset));
+        return Result.Success(
+            new AssignmentFileResponse(
+                _sqidsEncoder.Encode(resourceId),
+                _mapper.Map<FileResponse>(fileAsset)));
     }
 
     public async Task<Result<AssignmentSubmission>> ValidateFileAsync(

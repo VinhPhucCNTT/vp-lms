@@ -112,7 +112,7 @@ public static class AssignmentEndpoints
     }
 
     private static async
-        Task<Results<Ok<AssignmentFileResponse>, BadRequest<string>, NotFound>>
+        Task<Results<Ok<AssignmentFileResponse>, BadRequest<string>, NotFound, InternalServerError<string>>>
         HandleUpload(
             string resourceId,
             IFormFile file,
@@ -129,7 +129,10 @@ public static class AssignmentEndpoints
             return TypedResults.BadRequest($"ValidationError: {validationResult.Error!.Type}: {validationResult.Error.Message}");
 
         var result = await submissionService.UploadFileAsync(validationResult.Value!, file, ct);
-        return TypedResults.Ok(result);
+        if (!result.IsSuccess)
+            return TypedResults.InternalServerError(result.Error!.Code);
+
+        return TypedResults.Ok(result.Value);
     }
 
         private static async

@@ -11,10 +11,11 @@ public static class DevelopmentOnlyEndpoints
 {
     public static void AddDevEndpoints(this IEndpointRouteBuilder route)
     {
-        var dev = route.MapGroup("/api/dev");
+        var dev = route.MapGroup("/api/dev").WithTags("Development");
 
         dev.MapGet("users", HandleGetUsers);
         dev.MapPost("judge-test/{resourceId}", HandleTestJudge);
+        dev.MapGet("current-date-utc", HandleGetUtc);
     }
 
     private static async
@@ -53,5 +54,12 @@ public static class DevelopmentOnlyEndpoints
         }
 
         return TypedResults.Ok(result.Value);
+    }
+
+    private static async
+        Task<IResult>
+        HandleGetUtc()
+    {
+        return TypedResults.Ok(DateTime.UtcNow);
     }
 }

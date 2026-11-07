@@ -14,16 +14,16 @@ public record LoginResponse(
 );
 
 public record RegisterRequest(
-    string Username,
     string Email,
     string Password,
-    string Fullname,
-    string? AvatarUrl,
+    string FirstName,
+    string LastName,
     UserRoles Role
 );
 
 public record RegisterResponse(
-    string Username,
     string Email,
+    string FirstName,
+    string LastName,
     UserRoles Role
 );

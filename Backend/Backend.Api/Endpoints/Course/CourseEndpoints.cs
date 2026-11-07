@@ -27,7 +27,6 @@ public static class CourseEndpoints
         course.MapPost("", HandleCreate).RequireAuthorization("IsInstructor");
         course.MapPut("{courseId}", HandleUpdate);
         course.MapDelete("{courseId}", HandleDelete);
-        course.MapPost("{courseId}/upload-background", HandleUploadBackground);
 
         course.MapPost("{courseId}/publish", HandlePublish);
         course.MapPost("{courseId}/unpublish", HandleUnpublish);
@@ -118,6 +117,7 @@ public static class CourseEndpoints
         HandleUpdate(
             string courseId,
             [FromBody] CourseSetRequest request,
+            IFormFile file,
             SqidsEncoder<long> sqidsEncoder,
             ICourseAuthorization auth,
             ICourseService courseService,
@@ -131,7 +131,7 @@ public static class CourseEndpoints
         if (course is null || !await auth.IsCourseOwnerAsync(course))
             return TypedResults.NotFound();
 
-        var result = await courseService.UpdateCourseAsync(course, request, ct);
+        var result = await courseService.UpdateCourseAsync(course, request, file, ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();
@@ -156,30 +156,6 @@ public static class CourseEndpoints
 
         await courseService.DeleteCourseAsync(course, ct);
         return TypedResults.Ok();
-    }
-
-    private static async
-        Task<Results<Ok<string>, BadRequest, NotFound>>
-        HandleUploadBackground(
-            string courseId,
-            IFormFile file,
-            SqidsEncoder<long> sqidsEncoder,
-            ICourseAuthorization auth,
-            ICourseService courseService,
-            CancellationToken ct)
-    {
-        var decoded = sqidsEncoder.Decode(courseId);
-        if (decoded.Count != 1)
-            return TypedResults.BadRequest();
-
-        var course = await courseService.GetAsync(decoded[0], ct);
-        if (course is null || !await auth.IsCourseOwnerAsync(course))
-            return TypedResults.NotFound();
-
-        var fileId = await courseService.UploadBackgroundAsync(course, file, ct);
-
-        return TypedResults.Ok(
-            sqidsEncoder.Encode(fileId));
     }
 
     private static async

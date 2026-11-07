@@ -39,8 +39,8 @@ public record CourseRequest(
     int PageSize = 10,
     string? Code = null,
     string? Title = null,
-    string? CreatorUsername = null,
-    string? CreatorFullname = null,
+    string? CreatorFirstName = null,
+    string? CreatorLastName = null,
     bool? EnrollmentOpen = null
 );
 
