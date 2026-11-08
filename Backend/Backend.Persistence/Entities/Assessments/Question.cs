@@ -8,8 +8,8 @@ public class Question : BaseEntity, ISoftDeletable
     public long QuestionBankId { get; set; }
 
     public QuestionType QuestionType { get; set; }
-    public string Text { get; set; } = default!;
-    public JsonDocument QuestionData { get; set; } = default!;
+    public required string Text { get; set; }
+    public required JsonDocument QuestionData { get; set; }
 
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }

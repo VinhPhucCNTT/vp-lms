@@ -9,7 +9,7 @@ public class QuestionBank : BaseEntity, ISoftDeletable
     public long CourseId { get; set; }
     public long OwnerId { get; set; }
 
-    public string Name { get; set; } = default!;
+    public required string Name { get; set; }
     public string? Description { get; set; }
 
     public bool IsDeleted { get; set; } = false;

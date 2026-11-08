@@ -17,7 +17,7 @@ public class CourseResource : BaseEntity, ISoftDeletable
     public long ModuleId { get; set; }
 
     public ResourceType Type { get; set; }
-    public string Title { get; set; } = default!;
+    public required string Title { get; set; }
     public int OrderIndex { get; set; }
     public bool IsPublished { get; set; } = false;
 

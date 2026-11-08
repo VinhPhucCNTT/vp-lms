@@ -8,7 +8,7 @@ public class LanguageProfileTemplate : BaseEntity
 {
     public long UserId { get; set; }
 
-    public string Name { get; set; } = default!;
+    public required string Name { get; set; }
     // public LanguageProfileStruct[] LanguageProfile { get; set; } = default!;
 
     // Navigation properties

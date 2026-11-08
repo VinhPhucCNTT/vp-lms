@@ -8,7 +8,7 @@ public class Comment : BaseEntity
     public long ActivityId { get; set; }
     public long UserId { get; set; }
     public long? ParentCommentId { get; set; }
-    public string ContentMarkdown { get; set; } = default!;
+    public required string ContentMarkdown { get; set; }
     public bool IsEdited { get; set; } = false;
 
     // Soft delete by anonymization

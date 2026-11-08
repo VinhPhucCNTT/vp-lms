@@ -8,7 +8,7 @@ public class Assignment : BaseEntity, ISoftDeletable
 {
     public long ResourceId { get; set; }
 
-    public string InstructionsMD { get; set; } = default!;
+    public required string InstructionsMD { get; set; }
     public SubmissionType SubmissionType { get; set; } = SubmissionType.Both;
 
     public string[]? AllowedExtensions { get; set; } = [];

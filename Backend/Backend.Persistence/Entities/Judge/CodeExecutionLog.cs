@@ -8,7 +8,7 @@ public class CodeExecutionLog : BaseEntity
 {
     public long UserId { get; set; }
     public long? ProblemId { get; set; }
-    public string Language { get; set; } = default!;
+    public required string Language { get; set; }
     public string? CodeSnippet { get; set; }
     public double? ExecutionTimeMs { get; set; }
     public int? MemoryUsedKb { get; set; }

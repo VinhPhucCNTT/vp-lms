@@ -8,10 +8,10 @@ public class CodingProblem : BaseEntity, ISoftDeletable
 {
     public long ResourceId { get; set; }
 
-    public string ProblemStatementMarkdown { get; set; } = default!;
+    public required string ProblemStatementMarkdown { get; set; }
     public string? ConstraintsMarkdown { get; set; }
 
-    public string FunctionSignature { get; set; } = default!;
+    public required string FunctionSignature { get; set; }
     public int TimeLimitMs { get; set; } = 1000;
     public int MemoryLimitMb { get; set; } = 256;
 

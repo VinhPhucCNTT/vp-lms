@@ -11,7 +11,7 @@ public class ProblemSubmission : BaseEntity, ISoftDeletable
     public long ProfileId { get; set; }
 
     public int OrderIndex { get; set; }
-    public string SubmittedCode { get; set; } = default!;
+    public required string SubmittedCode { get; set; }
     public SubmissionStatus Status { get; set; } = SubmissionStatus.Queued;
     public string? CompileError { get; set; }
 

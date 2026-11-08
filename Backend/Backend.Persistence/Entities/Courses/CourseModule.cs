@@ -5,7 +5,7 @@ namespace Backend.Persistence.Entities.Courses;
 public class CourseModule : BaseEntity, ISoftDeletable
 {
     public long CourseId { get; set; }
-    public string Title { get; set; } = default!;
+    public required string Title { get; set; }
     public string? Description { get; set; }
     public int OrderIndex { get; set; }
     public bool IsPublished { get; set; } = false;
