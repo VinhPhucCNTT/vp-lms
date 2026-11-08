@@ -1305,15 +1305,29 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("course_id");
 
+                    b.Property<long?>("CourseId1")
+                        .HasColumnType("bigint")
+                        .HasColumnName("course_id1");
+
                     b.Property<DateTime>("LastAccessedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_accessed_at");
+
+                    b.Property<long?>("UserId1")
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id1");
 
                     b.HasKey("UserId", "CourseId")
                         .HasName("pk_recent_courses");
 
                     b.HasIndex("CourseId")
                         .HasDatabaseName("ix_recent_courses_course_id");
+
+                    b.HasIndex("CourseId1")
+                        .HasDatabaseName("ix_recent_courses_course_id1");
+
+                    b.HasIndex("UserId1")
+                        .HasDatabaseName("ix_recent_courses_user_id1");
 
                     b.HasIndex("UserId", "LastAccessedAt")
                         .HasDatabaseName("ix_recent_courses_user_id_last_accessed_at");
@@ -1744,10 +1758,9 @@ namespace Backend.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("AvatarUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("avatar_url");
+                    b.Property<long?>("AvatarFileId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("avatar_file_id");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1763,11 +1776,11 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("email");
 
-                    b.Property<string>("Fullname")
+                    b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("fullname");
+                        .HasColumnName("first_name");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -1776,6 +1789,12 @@ namespace Backend.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean")
                         .HasColumnName("is_deleted");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_name");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -1793,12 +1812,6 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("username");
-
                     b.HasKey("Id")
                         .HasName("pk_users");
 
@@ -1808,10 +1821,6 @@ namespace Backend.Persistence.Migrations
 
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_users_is_active");
-
-                    b.HasIndex("Username")
-                        .IsUnique()
-                        .HasDatabaseName("ix_users_username");
 
                     b.ToTable("users", (string)null);
                 });
@@ -2164,12 +2173,22 @@ namespace Backend.Persistence.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_recent_courses_courses_course_id");
 
+                    b.HasOne("Backend.Persistence.Entities.Courses.Course", null)
+                        .WithMany("RecentAccesses")
+                        .HasForeignKey("CourseId1")
+                        .HasConstraintName("fk_recent_courses_courses_course_id1");
+
                     b.HasOne("Backend.Persistence.Entities.Users.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_recent_courses_users_user_id");
+
+                    b.HasOne("Backend.Persistence.Entities.Users.User", null)
+                        .WithMany("RecentCourses")
+                        .HasForeignKey("UserId1")
+                        .HasConstraintName("fk_recent_courses_users_user_id1");
 
                     b.Navigation("Course");
 
@@ -2376,6 +2395,8 @@ namespace Backend.Persistence.Migrations
                     b.Navigation("Enrollments");
 
                     b.Navigation("Modules");
+
+                    b.Navigation("RecentAccesses");
                 });
 
             modelBuilder.Entity("Backend.Persistence.Entities.Courses.CourseModule", b =>
@@ -2419,6 +2440,8 @@ namespace Backend.Persistence.Migrations
                     b.Navigation("FileAssets");
 
                     b.Navigation("QuestionBanks");
+
+                    b.Navigation("RecentCourses");
                 });
 #pragma warning restore 612, 618
         }
