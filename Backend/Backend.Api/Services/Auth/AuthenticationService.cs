@@ -14,7 +14,7 @@ namespace Backend.Api.Services.Auth;
 public interface IAuthenticationService
 {
     public Task<LoginResponse?> LoginAsync(LoginRequest dto, CancellationToken ct = default);
-    public Task<RegisterResponse?> RegisterAsync(RegisterRequest dto, IFormFile file, CancellationToken ct = default);
+    public Task<RegisterResponse?> RegisterAsync(RegisterRequest dto, CancellationToken ct = default);
 }
 
 public class AuthenticationService(
@@ -60,7 +60,6 @@ public class AuthenticationService(
         Task<RegisterResponse?>
         RegisterAsync(
             RegisterRequest dto,
-            IFormFile file,
             CancellationToken ct = default)
     {
         await using var dbContext = await _contextFactory.CreateDbContextAsync(ct);

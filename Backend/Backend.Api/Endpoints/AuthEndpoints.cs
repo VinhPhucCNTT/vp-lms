@@ -32,9 +32,9 @@ public static class AuthEndpoints
 
     private static async
         Task<Results<Ok<RegisterResponse>, BadRequest>>
-        HandleRegister(RegisterRequest dto, IFormFile file, IAuthenticationService authService, CancellationToken ct)
+        HandleRegister(RegisterRequest dto, IAuthenticationService authService, CancellationToken ct)
     {
-        var response = await authService.RegisterAsync(dto, file, ct);
+        var response = await authService.RegisterAsync(dto, ct);
         if (response is null)
             return TypedResults.BadRequest();
 

@@ -18,9 +18,9 @@ public interface IUserService
 
     public Task<PaginatedResponse<UserResponse>> QueryUsersAsync(UserQueryRequest query, CancellationToken ct = default);
 
-    public Task<UserSetResponse> CreateUserAsync(UserCreateRequest dto, CancellationToken ct = default);
+    public Task<UserResponse> CreateUserAsync(UserCreateRequest dto, CancellationToken ct = default);
 
-    public Task<Result<UserPatchResponse>> UpdateUserAsync(long userId, UserPatchRequest dto, CancellationToken ct = default);
+    public Task<Result<UserResponse>> UpdateUserAsync(long userId, UserPatchRequest dto, CancellationToken ct = default);
 
     public Task<bool> DeleteUserAsync(long userId, CancellationToken ct = default);
 
@@ -102,7 +102,7 @@ public class UserService(
             list);
     }
 
-    public async Task<UserSetResponse> CreateUserAsync(UserCreateRequest dto, CancellationToken ct = default)
+    public async Task<UserResponse> CreateUserAsync(UserCreateRequest dto, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var hashedPassword = Argon2.Hash(dto.Password);
@@ -116,15 +116,15 @@ public class UserService(
         };
         db.Users.Add(user);
         await db.SaveChangesAsync(ct);
-        return _mapper.Map<UserSetResponse>(user);
+        return _mapper.Map<UserResponse>(user);
     }
 
-    public async Task<Result<UserPatchResponse>> UpdateUserAsync(long userId, UserPatchRequest dto, CancellationToken ct = default)
+    public async Task<Result<UserResponse>> UpdateUserAsync(long userId, UserPatchRequest dto, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var user = await db.Users.Where(u => u.IsActive).FirstOrDefaultAsync(u => u.Id == userId, cancellationToken: ct);
         if (user == null)
-            return Result<UserPatchResponse>.Failure(UserErrors.NotFound);
+            return Result<UserResponse>.Failure(UserErrors.NotFound);
 
         if (dto.Password is not null)
             user.PasswordHash = Argon2.Hash(dto.Password);
@@ -142,7 +142,7 @@ public class UserService(
         {
             var result = await SaveAvatarAsync(dto.AvatarFile, ct);
             if (!result.IsSuccess)
-                return Result<UserPatchResponse>.Failure(UserErrors.Upload);
+                return Result<UserResponse>.Failure(UserErrors.Upload);
 
             user.AvatarFileId = result.Value;
         }
@@ -151,7 +151,7 @@ public class UserService(
 
         db.Users.Update(user);
         await db.SaveChangesAsync(ct);
-        return Result.Success(_mapper.Map<UserPatchResponse>(user));
+        return Result.Success(_mapper.Map<UserResponse>(user));
     }
 
     public async Task<bool> DeleteUserAsync(long userId, CancellationToken ct = default)

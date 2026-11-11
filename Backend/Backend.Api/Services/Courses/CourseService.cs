@@ -25,9 +25,9 @@ public interface ICourseService
 
     public Task<PaginatedResponse<CourseResponse>> QueryCoursesAsync(CourseRequest query, CancellationToken ct = default);
 
-    public Task<CourseSetResponse> CreateCourseAsync(CourseSetRequest request, CancellationToken ct = default);
+    public Task<CourseSetResponse> CreateCourseAsync(CourseCreateRequest request, CancellationToken ct = default);
 
-    public Task<CourseSetResponse?> UpdateCourseAsync(Course course, CourseSetRequest request, IFormFile bgFile, CancellationToken ct = default);
+    public Task<CourseSetResponse?> UpdateCourseAsync(Course course, CoursePatchRequest request, CancellationToken ct = default);
 
     public Task DeleteCourseAsync(Course course, CancellationToken ct = default);
 
@@ -186,7 +186,7 @@ public class CourseService(
                 list);
     }
 
-    public async Task<CourseSetResponse> CreateCourseAsync(CourseSetRequest request, CancellationToken ct = default)
+    public async Task<CourseSetResponse> CreateCourseAsync(CourseCreateRequest request, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var course = new Course
@@ -205,8 +205,7 @@ public class CourseService(
 
     public async Task<CourseSetResponse?> UpdateCourseAsync(
         Course course,
-        CourseSetRequest request,
-        IFormFile bgFile,
+        CoursePatchRequest request,
         CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
@@ -214,15 +213,24 @@ public class CourseService(
 
         try
         {
-            course.Title = request.Title;
-            course.Description = request.Description;
-            course.IsPublished = request.IsPublished;
-            course.EnrollmentOpen = request.EnrollmentOpen;
+            if (request.Title is not null)
+                course.Title = request.Title;
+
+            if (request.Description is not null)
+                course.Description = request.Description;
+
+            if (request.IsPublished is not null)
+                course.IsPublished = request.IsPublished.Value;
+
+            if (request.EnrollmentOpen is not null)
+                course.EnrollmentOpen = request.EnrollmentOpen.Value;
+
+            if (request.BackgroundFile is not null)
+                await UploadBackgroundAsync(db, course, request.BackgroundFile, ct);
 
             db.Courses.Update(course);
             await db.SaveChangesAsync(ct);
 
-            await UploadBackgroundAsync(db, course, bgFile, ct);
         }
         catch (Exception ex)
         {

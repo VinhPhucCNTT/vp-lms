@@ -71,7 +71,7 @@ public static class UserEndpoints
     }
 
     private static async
-        Task<Ok<UserSetResponse>>
+        Task<Ok<UserResponse>>
         HandleCreate(
             [FromForm] UserCreateRequest request,
             [FromServices] IUserService userService)
@@ -81,7 +81,7 @@ public static class UserEndpoints
     }
 
     private static async
-        Task<Results<Ok<UserPatchResponse>, BadRequest, NotFound, InternalServerError>>
+        Task<Results<Ok<UserResponse>, BadRequest, NotFound, InternalServerError>>
         HandleUpdate(
             string id,
             [FromForm] UserPatchRequest request,
@@ -97,9 +97,9 @@ public static class UserEndpoints
         {
             return result.Error!.Code switch
             {
-                "user.upload" => (Results<Ok<UserPatchResponse>, BadRequest, NotFound, InternalServerError>)TypedResults.InternalServerError(),
+                "user.upload" => (Results<Ok<UserResponse>, BadRequest, NotFound, InternalServerError>)TypedResults.InternalServerError(),
                 // "user.not_found"
-                _ => (Results<Ok<UserPatchResponse>, BadRequest, NotFound, InternalServerError>)TypedResults.NotFound(),
+                _ => (Results<Ok<UserResponse>, BadRequest, NotFound, InternalServerError>)TypedResults.NotFound(),
             };
         }
 

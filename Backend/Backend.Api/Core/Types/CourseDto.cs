@@ -45,12 +45,21 @@ public record CourseRequest(
     bool? EnrollmentOpen = null
 );
 
-public record CourseSetRequest(
+public record CourseCreateRequest(
     string Code,
     string Title,
     string? Description,
     bool IsPublished,
     bool EnrollmentOpen
+);
+
+public record CoursePatchRequest(
+    string? Code,
+    string? Title,
+    string? Description,
+    bool? IsPublished,
+    bool? EnrollmentOpen,
+    IFormFile? BackgroundFile
 );
 
 public record CourseSetResponse(
@@ -60,5 +69,6 @@ public record CourseSetResponse(
     string Title,
     string? Description,
     bool IsPublished,
-    bool EnrollmentOpen
+    bool EnrollmentOpen,
+    string BackgroundFileId
 ) : IEntityResponse;

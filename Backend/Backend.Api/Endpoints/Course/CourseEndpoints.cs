@@ -108,7 +108,7 @@ public static class CourseEndpoints
 
     private static async
         Task<Ok<CourseSetResponse>>
-        HandleCreate([FromBody] CourseSetRequest request, ICourseService courseService,
+        HandleCreate([FromBody] CourseCreateRequest request, ICourseService courseService,
             CancellationToken ct) => TypedResults.Ok(
             await courseService.CreateCourseAsync(request, ct));
 
@@ -116,8 +116,7 @@ public static class CourseEndpoints
         Task<Results<Ok<CourseSetResponse>, NotFound, BadRequest>>
         HandleUpdate(
             string courseId,
-            [FromBody] CourseSetRequest request,
-            IFormFile file,
+            [FromForm] CoursePatchRequest request,
             SqidsEncoder<long> sqidsEncoder,
             ICourseAuthorization auth,
             ICourseService courseService,
@@ -131,7 +130,7 @@ public static class CourseEndpoints
         if (course is null || !await auth.IsCourseOwnerAsync(course))
             return TypedResults.NotFound();
 
-        var result = await courseService.UpdateCourseAsync(course, request, file, ct);
+        var result = await courseService.UpdateCourseAsync(course, request, ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound();

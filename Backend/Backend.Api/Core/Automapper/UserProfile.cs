@@ -19,17 +19,5 @@ public class UserProfile : Profile
             .ForMember(
                 d => d.AvatarFileId,
                 o => o.ConvertUsing<NullableSqidConverter, long?>(x => x.AvatarFileId));
-
-        CreateMap<User, UserSetResponse>()
-            .MapSqidId()
-            .ForMember(
-                d => d.AvatarFileId,
-                o => o.ConvertUsing<NullableSqidConverter, long?>(x => x.AvatarFileId));
-
-        CreateMap<User, UserSetResponse>()
-            .MapSqidId()
-            .ForMember(
-                d => d.AvatarFileId,
-                o => o.ConvertUsing<NullableSqidConverter, long?>(x => x.AvatarFileId));
     }
 }

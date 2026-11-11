@@ -130,7 +130,7 @@ public static class AssignmentEndpoints
 
         var result = await submissionService.UploadFileAsync(validationResult.Value!, file, ct);
         if (!result.IsSuccess)
-            return TypedResults.InternalServerError(result.Error!.Code);
+            return TypedResults.InternalServerError(result.Error.Code);
 
         return TypedResults.Ok(result.Value);
     }

@@ -4,9 +4,10 @@ namespace Backend.Api.Core.Types;
 
 public record UserResponse(
     string Id,
+    UserRoles Role,
+    string Email,
     string FirstName,
     string LastName,
-    UserRoles Role,
     string? AvatarFileId) : IEntityResponse;
 
 public record UserDetailResponse(
@@ -50,21 +51,3 @@ public record UserPatchRequest(
     string? Password,
     IFormFile? AvatarFile
 );
-
-public record UserSetResponse(
-    string Id,
-    string Email,
-    string FirstName,
-    string LastName,
-    string? AvatarFileId,
-    UserRoles Role
-) : IEntityResponse;
-
-public record UserPatchResponse(
-    string Id,
-    string? Email,
-    string? FirstName,
-    string? LastName,
-    string? AvatarFileId,
-    UserRoles Role
-) : IEntityResponse;
