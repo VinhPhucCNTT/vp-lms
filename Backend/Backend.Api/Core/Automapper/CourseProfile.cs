@@ -17,22 +17,25 @@ public class CourseProfile : Profile
                 o => o.MapFrom(x => x.Id))
             .ForCtorParam(
                 "CreatorId",
-                o => o.MapFrom(x => x.CreatorId))
+                o => o.MapFrom(x => x.InstructorId))
             .ForCtorParam(
                 "CreatorFirstName",
-                o => o.MapFrom(x => x.Creator != null ? x.Creator.FirstName : ""))
+                o => o.MapFrom(x => x.Instructor != null ? x.Instructor.FirstName : ""))
             .ForCtorParam(
                 "CreatorLastName",
-                o => o.MapFrom(x => x.Creator != null ? x.Creator.LastName : ""))
+                o => o.MapFrom(x => x.Instructor != null ? x.Instructor.LastName : ""))
             .ForCtorParam(
                 "EnrollmentCount",
-                o => o.MapFrom(x => x.Enrollments.Count));
+                o => o.MapFrom(x => x.Enrollments.Count))
+            .ForMember(
+                d => d.BackgroundFileId,
+                o => o.ConvertUsing<NullableSqidConverter, long?>(x => x.BackgroundFileId));
 
         CreateMap<Course, CourseSetResponse>()
             .MapSqidId()
             .ForMember(
                 d => d.CreatorId,
-                o => o.ConvertUsing<SqidConverter, long>(x => x.CreatorId));
+                o => o.ConvertUsing<SqidConverter, long>(x => x.InstructorId));
 
     }
 }

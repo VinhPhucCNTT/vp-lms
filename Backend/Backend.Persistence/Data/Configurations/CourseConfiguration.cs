@@ -19,11 +19,11 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.Property(x => x.Description)
             .HasColumnType("text");
 
-        builder.HasIndex(x => new { x.CreatorId, x.Title });
+        builder.HasIndex(x => new { x.InstructorId, x.Title });
 
-        builder.HasOne(x => x.Creator)
+        builder.HasOne(x => x.Instructor)
             .WithMany(u => u.Courses)
-            .HasForeignKey(x => x.CreatorId)
+            .HasForeignKey(x => x.InstructorId)
             .OnDelete(DeleteBehavior.Restrict);
             // .IsRequired(false); // Soft delete by anonymization
 

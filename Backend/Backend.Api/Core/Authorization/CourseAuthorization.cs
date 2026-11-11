@@ -22,7 +22,7 @@ public class CourseAuthorization(
     public async Task<bool> IsCourseOwnerAsync(Course course)
     {
         var userId = currentUserService.UserId;
-        return course.CreatorId == userId;
+        return course.InstructorId == userId;
     }
 
     public async Task<bool> IsParticipantAsync(long courseId, CancellationToken ct = default)

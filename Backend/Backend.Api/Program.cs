@@ -1,6 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using Backend.Api.Core.Authorization;
 using Backend.Api.Core.Automapper;
 using Backend.Api.Core.Common;
@@ -86,7 +85,7 @@ builder.Services.Configure<RabbitMqOptions>(
 // [[ AUTHENTICATION ]]
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
+var key = System.Text.Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
 builder.Services.AddAuthentication(options =>
 {

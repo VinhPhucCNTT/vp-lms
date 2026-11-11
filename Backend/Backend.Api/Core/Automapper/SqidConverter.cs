@@ -15,6 +15,20 @@ public class SqidConverter(SqidsEncoder<long> sqids) : IValueConverter<long, str
     }
 }
 
+public class NullableSqidConverter(SqidsEncoder<long> sqids) : IValueConverter<long?, string?>
+{
+    private readonly SqidsEncoder<long> _sqids = sqids;
+
+    public string? Convert(
+        long? sourceMember,
+        ResolutionContext context)
+    {
+        return sourceMember is long id
+            ? _sqids.Encode(id)
+            : null;
+    }
+}
+
 public sealed class SqidTypeConverter(SqidsEncoder<long> sqids)
     : ITypeConverter<long, string>
 {

@@ -70,7 +70,7 @@ public class EnrollmentService(
         var currentUserId = _currentUserService.UserId;
 
         var course = await db.Courses.AsNoTracking().FirstOrDefaultAsync(c => c.Id == courseId);
-        if (course is null || course.CreatorId == currentUserId)
+        if (course is null || course.InstructorId == currentUserId)
             return null;
         var existing = await db.Enrollments.AsNoTracking().FirstOrDefaultAsync(e => e.UserId == currentUserId && e.CourseId == courseId);
         if (existing is not null)
@@ -94,7 +94,7 @@ public class EnrollmentService(
         var currentUserId = _currentUserService.UserId;
 
         var course = await db.Courses.AsNoTracking().FirstOrDefaultAsync(c => c.Id == courseId);
-        if (course is null || course.CreatorId == currentUserId)
+        if (course is null || course.InstructorId == currentUserId)
             return false;
 
         var enrollment = await db.Enrollments.FirstOrDefaultAsync(e => e.CourseId == courseId && e.UserId == currentUserId);
@@ -111,7 +111,7 @@ public class EnrollmentService(
         await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
 
-        var enrollment = await db.Enrollments.FirstOrDefaultAsync(e => e.Id == enrollmentId && e.Course.CreatorId == currentUserId);
+        var enrollment = await db.Enrollments.FirstOrDefaultAsync(e => e.Id == enrollmentId && e.Course.InstructorId == currentUserId);
         if (enrollment is null)
             return null;
 

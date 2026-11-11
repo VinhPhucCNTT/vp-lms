@@ -48,7 +48,7 @@ public static class DevelopmentDataSeeder
         {
             course = new Course
             {
-                CreatorId = instructor.Id,
+                InstructorId = instructor.Id,
                 Code = CourseCode,
                 Title = "Introduction to VP-LMS",
                 Description = "Development course for testing the authenticated student flow.",

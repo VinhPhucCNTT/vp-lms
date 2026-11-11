@@ -5,6 +5,7 @@ public record CourseResponse(
     string CreatorId,
     string CreatorUsername,
     string CreatorFullname,
+    string? BackgroundFileId,
     string Code,
     string Title,
     string? Description,

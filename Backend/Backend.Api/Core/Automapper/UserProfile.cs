@@ -9,12 +9,27 @@ public class UserProfile : Profile
     public UserProfile()
     {
         CreateMap<User, UserResponse>()
-            .MapSqidId();
+            .MapSqidId()
+            .ForMember(
+                d => d.AvatarFileId,
+                o => o.ConvertUsing<NullableSqidConverter, long?>(x => x.AvatarFileId));
 
         CreateMap<User, UserDetailResponse>()
-            .MapSqidId();
+            .MapSqidId()
+            .ForMember(
+                d => d.AvatarFileId,
+                o => o.ConvertUsing<NullableSqidConverter, long?>(x => x.AvatarFileId));
 
         CreateMap<User, UserSetResponse>()
-            .MapSqidId();
+            .MapSqidId()
+            .ForMember(
+                d => d.AvatarFileId,
+                o => o.ConvertUsing<NullableSqidConverter, long?>(x => x.AvatarFileId));
+
+        CreateMap<User, UserSetResponse>()
+            .MapSqidId()
+            .ForMember(
+                d => d.AvatarFileId,
+                o => o.ConvertUsing<NullableSqidConverter, long?>(x => x.AvatarFileId));
     }
 }

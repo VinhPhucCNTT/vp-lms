@@ -18,7 +18,7 @@ public static class UserEndpoints
         user.MapGet("query", HandleQuery).RequireAuthorization();
 
         user.MapPost("", HandleCreate).RequireAuthorization();
-        user.MapPut("{id}", HandleUpdate).RequireAuthorization();
+        user.MapPatch("{id}", HandleUpdate).RequireAuthorization();
         user.MapDelete("{id}", HandleDelete).RequireAuthorization();
 
         user.MapGet("{id}/check", HandleCheckActive).RequireAuthorization();
@@ -73,7 +73,7 @@ public static class UserEndpoints
     private static async
         Task<Ok<UserSetResponse>>
         HandleCreate(
-            [FromBody] UserCreateRequest request,
+            [FromForm] UserCreateRequest request,
             [FromServices] IUserService userService)
     {
         var result = await userService.CreateUserAsync(request);
@@ -81,10 +81,10 @@ public static class UserEndpoints
     }
 
     private static async
-        Task<Results<Ok<UserSetResponse>, BadRequest, NotFound>>
+        Task<Results<Ok<UserPatchResponse>, BadRequest, NotFound, InternalServerError>>
         HandleUpdate(
             string id,
-            [FromBody] UserUpdateRequest request,
+            [FromForm] UserPatchRequest request,
             SqidsEncoder<long> sqidsEncoder,
             [FromServices] IUserService userService)
     {
@@ -93,9 +93,17 @@ public static class UserEndpoints
             return TypedResults.BadRequest();
 
         var result = await userService.UpdateUserAsync(decoded[0], request);
-        return result is not null
-            ? TypedResults.Ok(result)
-            : TypedResults.NotFound();
+        if (!result.IsSuccess)
+        {
+            return result.Error!.Code switch
+            {
+                "user.upload" => (Results<Ok<UserPatchResponse>, BadRequest, NotFound, InternalServerError>)TypedResults.InternalServerError(),
+                // "user.not_found"
+                _ => (Results<Ok<UserPatchResponse>, BadRequest, NotFound, InternalServerError>)TypedResults.NotFound(),
+            };
+        }
+
+        return TypedResults.Ok(result.Value);
     }
 
     private static async

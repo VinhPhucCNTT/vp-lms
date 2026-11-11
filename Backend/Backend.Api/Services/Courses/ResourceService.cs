@@ -43,7 +43,7 @@ public class ResourceService(
         return await db.CourseResources
             .AsNoTracking()
             .Where(r => r.Id == resourceId)
-            .Where(r => r.IsPublished || r.Module.Course.CreatorId == currentUserId)
+            .Where(r => r.IsPublished || r.Module.Course.InstructorId == currentUserId)
             .Select(r => _mapper.Map<ResourceDetailResponse>(r))
             .FirstOrDefaultAsync();
     }
@@ -64,7 +64,7 @@ public class ResourceService(
         var currentUserId = _currentUserService.UserId;
         return await db.CourseResources
             .AsNoTracking()
-            .Where(r => r.ModuleId == moduleId && !r.IsPublished && r.Module.Course.CreatorId == currentUserId)
+            .Where(r => r.ModuleId == moduleId && !r.IsPublished && r.Module.Course.InstructorId == currentUserId)
             .Select(r => _mapper.Map<ResourceResponse>(r))
             .ToListAsync();
     }
@@ -184,7 +184,7 @@ public class ResourceService(
         var currentUserId = _currentUserService.UserId;
         return await db.CourseResources
             .AsNoTracking()
-            .Where(c => c.Id == resourceId && c.Module.Course.CreatorId == currentUserId)
+            .Where(c => c.Id == resourceId && c.Module.Course.InstructorId == currentUserId)
             .AnyAsync();
     }
 

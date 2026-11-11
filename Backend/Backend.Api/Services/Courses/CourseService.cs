@@ -117,7 +117,7 @@ public class CourseService(
 
         return await db.Courses
             .AsNoTracking()
-            .Where(c => c.CreatorId == currentUserId)
+            .Where(c => c.InstructorId == currentUserId)
             .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync(ct);
     }
@@ -163,10 +163,10 @@ public class CourseService(
             courses = courses.Where(c => c.Title.Contains(query.Title, StringComparison.OrdinalIgnoreCase));
 
         if (!string.IsNullOrEmpty(query.CreatorFirstName))
-            courses = courses.Where(c => c.Creator.FirstName.Contains(query.CreatorFirstName, StringComparison.OrdinalIgnoreCase));
+            courses = courses.Where(c => c.Instructor.FirstName.Contains(query.CreatorFirstName, StringComparison.OrdinalIgnoreCase));
 
         if (!string.IsNullOrEmpty(query.CreatorLastName))
-            courses = courses.Where(c => c.Creator.LastName.Contains(query.CreatorLastName, StringComparison.OrdinalIgnoreCase));
+            courses = courses.Where(c => c.Instructor.LastName.Contains(query.CreatorLastName, StringComparison.OrdinalIgnoreCase));
 
         if (query.EnrollmentOpen != null)
             courses = courses.Where(c => c.EnrollmentOpen == query.EnrollmentOpen);
@@ -175,7 +175,7 @@ public class CourseService(
             .OrderBy(c => c.Id)
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
-            .Include(c => c.Creator)
+            .Include(c => c.Instructor)
             .Select(c => _mapper.Map<CourseResponse>(c))
             .ToListAsync(ct);
 
@@ -191,7 +191,7 @@ public class CourseService(
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var course = new Course
         {
-            CreatorId = _currentUserService.UserId,
+            InstructorId = _currentUserService.UserId,
             Code = request.Code,
             Title = request.Title,
             Description = request.Description,

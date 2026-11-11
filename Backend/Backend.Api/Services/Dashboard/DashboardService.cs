@@ -79,7 +79,7 @@ public class DashboardService(
 
         var totalCourses = db.Courses
             .AsNoTracking()
-            .Where(c => c.CreatorId == currentUserId);
+            .Where(c => c.InstructorId == currentUserId);
         var totalCourseIds = totalCourses.Select(c => c.Id);
 
         // NOTE: Actually total enrollment count, change the name perhaps?
@@ -190,7 +190,7 @@ public class DashboardService(
 
         var courseIds = db.Courses
             .AsNoTracking()
-            .Where(c => c.CreatorId == userId)
+            .Where(c => c.InstructorId == userId)
             .Select(c => c.Id);
         var moduleIds = await db.CourseModules
             .AsNoTracking()

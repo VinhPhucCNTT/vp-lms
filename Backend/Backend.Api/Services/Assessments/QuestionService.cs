@@ -7,7 +7,6 @@ using Backend.Api.Services.Common;
 using Backend.Persistence.Data;
 using Backend.Persistence.Entities.Assessments;
 using Microsoft.EntityFrameworkCore;
-using Sqids;
 
 namespace Backend.Api.Services.Assessments;
 
@@ -41,13 +40,11 @@ public sealed class QuestionService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
     IMapper mapper,
-    SqidsEncoder<long> sqidsEncoder,
     IQuestionContentValidator contentValidator) : IQuestionService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly IMapper _mapper = mapper;
-    private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
     private readonly IQuestionContentValidator _contentValidator = contentValidator;
 
     // public async Task<Question?> GetByIdAsync(
@@ -123,10 +120,10 @@ public sealed class QuestionService(
             .Where(x => x.Assessment.ResourceId == resourceId && x.QuestionId != null)
             .Include(x => x.Question)
             .OrderBy(x => x.OrderIndex)
-            .Select(x => x.Question!)
+            .Select(x => x.Question)
             .ToListAsync(ct);
 
-        return questions.Select(_mapper.Map<QuestionResponse>).ToList();
+        return [.. questions.Select(_mapper.Map<QuestionResponse>)];
     }
 
     public async Task<Result> UpdateAsync(
@@ -236,6 +233,7 @@ public sealed class QuestionService(
         {
             QuestionBankId = destinationBankId,
             QuestionType = source.QuestionType,
+            Text = source.Text,
             QuestionData = JsonDocument.Parse(
                 source.QuestionData.RootElement.GetRawText())
         };

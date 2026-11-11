@@ -82,7 +82,7 @@ public sealed class CodingProblemService(
                 "Module not found.");
         }
 
-        if (module.Course.CreatorId != currentUser.UserId)
+        if (module.Course.InstructorId != currentUser.UserId)
         {
             return Result<CodingProblemResponse>.Failure(
                 ResultError.Forbidden,
@@ -173,7 +173,7 @@ public sealed class CodingProblemService(
         var isOwner = await db.CourseResources
             .Where(x => x.Id == resourceId)
             .Where(x =>
-                x.Module.Course.CreatorId ==
+                x.Module.Course.InstructorId ==
                 currentUser.UserId)
             .AnyAsync(ct);
 
@@ -230,7 +230,7 @@ public sealed class CodingProblemService(
                 "Coding problem not found.");
         }
 
-        if (problem.Resource.Module.Course.CreatorId !=
+        if (problem.Resource.Module.Course.InstructorId !=
             currentUser.UserId)
         {
             return Result<ProblemTestCaseResponse>.Failure(
@@ -292,7 +292,7 @@ public sealed class CodingProblemService(
         }
 
         var isOwner =
-            problem.Resource.Module.Course.CreatorId ==
+            problem.Resource.Module.Course.InstructorId ==
             currentUser.UserId;
 
         if (!problem.Resource.IsPublished && !isOwner)

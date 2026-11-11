@@ -10,6 +10,10 @@ public record LoginRequest(
 public record LoginResponse(
     string Email,
     string Token,
+    string FirstName,
+    string LastName,
+    string? AvatarFileId,
+    bool IsActive,
     UserRoles Role
 );
 

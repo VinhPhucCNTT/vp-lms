@@ -6,7 +6,7 @@ namespace Backend.Persistence.Entities.Courses;
 
 public class Course : BaseEntity, ISoftDeletable
 {
-    public long CreatorId { get; set; }
+    public long InstructorId { get; set; }
     public long? DepartmentId { get; set; }
 
     public required string Code { get; set; }
@@ -21,7 +21,7 @@ public class Course : BaseEntity, ISoftDeletable
 
     // Navigation properties
     public Department? Department { get; set; }
-    public User Creator { get; set; } = default!;
+    public User Instructor { get; set; } = default!;
     public ICollection<CourseModule> Modules { get; set; } = [];
     public ICollection<Enrollment> Enrollments { get; set; } = [];
     public FileAsset? BackgroundFile { get; set; }

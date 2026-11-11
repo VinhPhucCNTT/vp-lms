@@ -2,10 +2,22 @@ using Backend.Api.Core.Common;
 
 namespace Backend.Api.Core.Types;
 
+public static class UserErrors
+{
+    public static readonly Error Upload =
+        new("user.upload", "Failed to upload avatar.");
+
+    public static readonly Error NotFound =
+        new("user.not_found", "User not found.");
+
+    public static readonly Error Forbidden =
+        new("user.forbidden", "You do not have permission to perform this operation.");
+}
+
 public static class ResourceErrors
 {
     public static readonly Error NotFound =
-        new("resource.not_found", "Learning resource was not found.");
+        new("resource.not_found", "Learning resource not found.");
 
     public static readonly Error Forbidden =
         new("resource.forbidden", "You do not have permission to perform this operation.");

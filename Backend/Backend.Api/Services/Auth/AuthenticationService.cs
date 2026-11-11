@@ -7,6 +7,7 @@ using Backend.Persistence.Entities.Users;
 using Isopoh.Cryptography.Argon2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Sqids;
 
 namespace Backend.Api.Services.Auth;
 
@@ -18,16 +19,19 @@ public interface IAuthenticationService
 
 public class AuthenticationService(
     IConfiguration config,
-    IDbContextFactory<AppDbContext> contextFactory) : IAuthenticationService
+    IDbContextFactory<AppDbContext> contextFactory,
+    SqidsEncoder<long> sqidsEncoder) : IAuthenticationService
 {
     private readonly IConfiguration _config = config;
     private readonly IDbContextFactory<AppDbContext> _contextFactory = contextFactory;
+
+    public SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
 
     public async
         Task<LoginResponse?>
         LoginAsync(
             LoginRequest dto,
-            CancellationToken ct)
+            CancellationToken ct = default)
     {
         await using var dbContext = await _contextFactory.CreateDbContextAsync(ct);
 
@@ -38,7 +42,18 @@ public class AuthenticationService(
         if (!Argon2.Verify(user.PasswordHash, dto.Password))
             return null;
 
-        return new LoginResponse(user.Email, GenerateToken(user), user.Role);
+        var encodedFileId = user.AvatarFileId is long id
+            ? _sqidsEncoder.Encode(id)
+            : null;
+
+        return new LoginResponse(
+                user.Email,
+                GenerateToken(user),
+                user.FirstName,
+                user.LastName,
+                encodedFileId,
+                user.IsActive,
+                user.Role);
     }
 
     public async
@@ -46,7 +61,7 @@ public class AuthenticationService(
         RegisterAsync(
             RegisterRequest dto,
             IFormFile file,
-            CancellationToken ct)
+            CancellationToken ct = default)
     {
         await using var dbContext = await _contextFactory.CreateDbContextAsync(ct);
 

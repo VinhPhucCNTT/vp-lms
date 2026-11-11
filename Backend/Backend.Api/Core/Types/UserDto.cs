@@ -7,14 +7,14 @@ public record UserResponse(
     string FirstName,
     string LastName,
     UserRoles Role,
-    long? AvatarFileId) : IEntityResponse;
+    string? AvatarFileId) : IEntityResponse;
 
 public record UserDetailResponse(
     string Id,
     string Email,
     string FirstName,
     string LastName,
-    long? AvatarFileId,
+    string? AvatarFileId,
     UserRoles Role,
     DateTime CreatedAt
 ) : IEntityResponse;
@@ -23,8 +23,8 @@ public record UserQueryRequest(
     int PageNumber,
     int PageSize,
     string? Email,
-    string FirstName,
-    string LastName,
+    string? FirstName,
+    string? LastName,
     UserRoles? Role
 );
 
@@ -39,16 +39,16 @@ public record UserCreateRequest(
     string FirstName,
     string LastName,
     string Password,
-    long? AvatarFileId,
+    IFormFile AvatarFile,
     UserRoles Role
 );
 
-public record UserUpdateRequest(
-    string Email,
-    string FirstName,
-    string LastName,
-    string Password,
-    long? AvatarFileId
+public record UserPatchRequest(
+    string? Email,
+    string? FirstName,
+    string? LastName,
+    string? Password,
+    IFormFile? AvatarFile
 );
 
 public record UserSetResponse(
@@ -56,6 +56,15 @@ public record UserSetResponse(
     string Email,
     string FirstName,
     string LastName,
-    long? AvatarFileId,
+    string? AvatarFileId,
+    UserRoles Role
+) : IEntityResponse;
+
+public record UserPatchResponse(
+    string Id,
+    string? Email,
+    string? FirstName,
+    string? LastName,
+    string? AvatarFileId,
     UserRoles Role
 ) : IEntityResponse;
