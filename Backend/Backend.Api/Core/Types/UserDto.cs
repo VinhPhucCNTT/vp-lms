@@ -10,16 +10,6 @@ public record UserResponse(
     string LastName,
     string? AvatarFileId) : IEntityResponse;
 
-public record UserDetailResponse(
-    string Id,
-    string Email,
-    string FirstName,
-    string LastName,
-    string? AvatarFileId,
-    UserRoles Role,
-    DateTime CreatedAt
-) : IEntityResponse;
-
 public record UserQueryRequest(
     int PageNumber,
     int PageSize,
@@ -30,6 +20,7 @@ public record UserQueryRequest(
 );
 
 public record UserStatResponse(
+    DateTime CreatedAt,
     int CourseCreated,
     int CourseEnrolled
 // int CourseCompleted // TODO: Get completed courses

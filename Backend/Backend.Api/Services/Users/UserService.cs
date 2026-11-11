@@ -12,7 +12,7 @@ namespace Backend.Api.Services.Users;
 
 public interface IUserService
 {
-    public Task<UserDetailResponse?> GetUserByIdAsync(long userId, CancellationToken ct = default);
+    public Task<UserResponse?> GetUserByIdAsync(long userId, CancellationToken ct = default);
 
     public Task<UserStatResponse?> GetUserStatAsync(long userId, CancellationToken ct = default);
 
@@ -45,20 +45,26 @@ public class UserService(
 
     private readonly CurrentUserService _currentUserService = currentUserService;
 
-    public async Task<UserDetailResponse?> GetUserByIdAsync(long userId, CancellationToken ct = default)
+    public async Task<UserResponse?> GetUserByIdAsync(long userId, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         return await db.Users
             .AsNoTracking()
             .Where(u => u.Id == userId && u.IsActive)
-            .Select(u => _mapper.Map<UserDetailResponse>(u))
+            .Select(u => _mapper.Map<UserResponse>(u))
             .FirstOrDefaultAsync(cancellationToken: ct);
     }
 
     public async Task<UserStatResponse?> GetUserStatAsync(long userId, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var user = await db.Users.FindAsync([userId], cancellationToken: ct);
+        if (user is null)
+            return null;
+
         return new UserStatResponse(
+            user.CreatedAt,
+
             await db.Courses
                 .AsNoTracking()
                 .Where(c => c.InstructorId == userId)

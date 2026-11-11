@@ -27,7 +27,7 @@ public static class UserEndpoints
     }
 
     private static async
-        Task<Results<Ok<UserDetailResponse>, BadRequest, NotFound>>
+        Task<Results<Ok<UserResponse>, BadRequest, NotFound>>
         HandleGetById(
             string id,
             SqidsEncoder<long> sqidsEncoder,
