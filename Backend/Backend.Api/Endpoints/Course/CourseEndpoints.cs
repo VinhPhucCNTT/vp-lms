@@ -70,7 +70,7 @@ public static class CourseEndpoints
 
     private static async
         Task<Ok<PaginatedResponse<CourseResponse>>>
-        HandleQuery([AsParameters] CourseRequest query, ICourseService courseService,
+        HandleQuery([AsParameters] CourseQueryRequest query, ICourseService courseService,
             CancellationToken ct) => TypedResults.Ok(
             await courseService.QueryCoursesAsync(query, ct));
 

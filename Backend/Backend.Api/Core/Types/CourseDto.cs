@@ -35,7 +35,7 @@ public record CourseExploreResponse(
     List<CourseResponse> Recent
 );
 
-public record CourseRequest(
+public record CourseQueryRequest(
     int PageNumber = 1,
     int PageSize = 10,
     string? Code = null,

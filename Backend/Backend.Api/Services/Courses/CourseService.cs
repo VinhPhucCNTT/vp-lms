@@ -23,7 +23,7 @@ public interface ICourseService
 
     public Task<CourseExploreResponse> GetExploreAsync(CancellationToken ct = default);
 
-    public Task<PaginatedResponse<CourseResponse>> QueryCoursesAsync(CourseRequest query, CancellationToken ct = default);
+    public Task<PaginatedResponse<CourseResponse>> QueryCoursesAsync(CourseQueryRequest query, CancellationToken ct = default);
 
     public Task<CourseSetResponse> CreateCourseAsync(CourseCreateRequest request, CancellationToken ct = default);
 
@@ -151,7 +151,7 @@ public class CourseService(
         return new CourseExploreResponse(featuredCourses, coursesByDepartment, recentlyUpdated);
     }
 
-    public async Task<PaginatedResponse<CourseResponse>> QueryCoursesAsync(CourseRequest query, CancellationToken ct = default)
+    public async Task<PaginatedResponse<CourseResponse>> QueryCoursesAsync(CourseQueryRequest query, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var courses = db.Courses.AsNoTracking().Where(c => c.IsPublished);
