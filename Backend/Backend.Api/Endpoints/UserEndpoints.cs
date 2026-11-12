@@ -17,9 +17,11 @@ public static class UserEndpoints
         user.MapGet("{id}/stat", HandleGetUserStat).RequireAuthorization();
         user.MapGet("query", HandleQuery).RequireAuthorization();
 
-        user.MapPost("", HandleCreate).RequireAuthorization();
+        user.MapPost("", HandleCreate).RequireAuthorization("IsAdmin");
         user.MapPatch("{id}", HandleUpdate).RequireAuthorization();
         user.MapDelete("{id}", HandleDelete).RequireAuthorization();
+
+        user.MapPatch("", HandleUpdateSelf).RequireAuthorization();
 
         user.MapGet("{id}/check", HandleCheckActive).RequireAuthorization();
         user.MapPost("{id}/activate", HandleActivate).RequireAuthorization();
@@ -120,6 +122,19 @@ public static class UserEndpoints
         var result = await userService.DeleteUserAsync(decoded[0]);
         return result
             ? TypedResults.Ok()
+            : TypedResults.NotFound();
+    }
+
+    private static async
+        Task<IResult>
+        HandleUpdateSelf(
+            [FromForm] UserPatchRequest request,
+            [FromServices] IUserService userService,
+            CancellationToken ct)
+    {
+        var result = await userService.UpdateSelfAsync(request, ct);
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
             : TypedResults.NotFound();
     }
 

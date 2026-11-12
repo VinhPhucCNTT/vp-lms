@@ -8,7 +8,8 @@ public record UserResponse(
     string Email,
     string FirstName,
     string LastName,
-    string? AvatarFileId) : IEntityResponse;
+    string? AvatarFileId,
+    DateTime CreatedAt) : IEntityResponse;
 
 public record UserQueryRequest(
     int PageNumber,

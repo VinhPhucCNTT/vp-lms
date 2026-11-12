@@ -22,6 +22,8 @@ public interface IUserService
 
     public Task<Result<UserResponse>> UpdateUserAsync(long userId, UserPatchRequest dto, CancellationToken ct = default);
 
+    public Task<Result<UserResponse>> UpdateSelfAsync(UserPatchRequest dto, CancellationToken ct = default);
+
     public Task<bool> DeleteUserAsync(long userId, CancellationToken ct = default);
 
     public Task<bool> IsUserActiveAsync(long userId, CancellationToken ct = default);
@@ -129,6 +131,42 @@ public class UserService(
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var user = await db.Users.Where(u => u.IsActive).FirstOrDefaultAsync(u => u.Id == userId, cancellationToken: ct);
+        if (user == null)
+            return Result<UserResponse>.Failure(UserErrors.NotFound);
+
+        if (dto.Password is not null)
+            user.PasswordHash = Argon2.Hash(dto.Password);
+
+        if (dto.Email is not null)
+        user.Email = dto.Email;
+
+        if (dto.FirstName is not null)
+        user.FirstName = dto.FirstName;
+
+        if (dto.LastName is not null)
+        user.LastName = dto.LastName;
+
+        if (dto.AvatarFile is not null)
+        {
+            var result = await SaveAvatarAsync(dto.AvatarFile, ct);
+            if (!result.IsSuccess)
+                return Result<UserResponse>.Failure(UserErrors.Upload);
+
+            user.AvatarFileId = result.Value;
+        }
+
+        // user.IsActive = true;
+
+        db.Users.Update(user);
+        await db.SaveChangesAsync(ct);
+        return Result.Success(_mapper.Map<UserResponse>(user));
+    }
+
+    public async Task<Result<UserResponse>> UpdateSelfAsync(UserPatchRequest dto, CancellationToken ct = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var currentUserId = _currentUserService.UserId;
+        var user = await db.Users.Where(u => u.IsActive).FirstOrDefaultAsync(u => u.Id == currentUserId, cancellationToken: ct);
         if (user == null)
             return Result<UserResponse>.Failure(UserErrors.NotFound);
 
