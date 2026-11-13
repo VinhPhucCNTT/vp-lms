@@ -24,6 +24,10 @@ public interface IAssessmentService
     public Task<AssessmentResponse?> UpdateAsync(long assessmentId, AssessmentRequest request, CancellationToken ct = default);
 
     public Task<Result<bool>> SetPublishStatusAsync(long resourceId, bool isPublished, CancellationToken ct = default);
+
+    public Task<Result<string?>> GetPasswordAsync(long resourceId, CancellationToken ct = default);
+
+    public Task<Result<string?>> SetPasswordAsync(long resourceId, string password, CancellationToken ct = default);
 }
 
 public class AssessmentService(
@@ -319,5 +323,28 @@ public class AssessmentService(
         await db.SaveChangesAsync(ct);
 
         return Result<bool>.Success(resource.IsPublished);
+    }
+
+    public async Task<Result<string?>> GetPasswordAsync(long resourceId, CancellationToken ct = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var assessment = await db.Assessments.SingleOrDefaultAsync(a => a.ResourceId == resourceId, ct);
+        if (assessment is null)
+            return Result<string?>.Failure(AssessmentErrors.NotFound);
+
+        return Result.Success(assessment.AccessPassword);
+    }
+
+    public async Task<Result<string?>> SetPasswordAsync(long resourceId, string password, CancellationToken ct = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var assessment = await db.Assessments.SingleOrDefaultAsync(a => a.ResourceId == resourceId, ct);
+        if (assessment is null)
+            return Result<string?>.Failure(AssessmentErrors.NotFound);
+
+        assessment.AccessPassword = string.IsNullOrEmpty(password) ? null : password;
+        await db.SaveChangesAsync(ct);
+
+        return Result.Success(assessment.AccessPassword);
     }
 }

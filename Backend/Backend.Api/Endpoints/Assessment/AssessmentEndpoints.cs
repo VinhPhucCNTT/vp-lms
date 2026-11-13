@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Backend.Api.Core.Authorization;
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Assessments;
@@ -6,7 +5,9 @@ using Backend.Api.Services.Content;
 using Backend.Api.Services.Courses;
 using Backend.Persistence.Entities.Assessments;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Sqids;
+using System.Text.Json;
 
 namespace Backend.Api.Endpoints.Assessment;
 
@@ -45,6 +46,11 @@ public static class AssessmentEndpoints
         assessment.MapPut("{resourceId}", HandleUpdate);
 
         assessment.MapPost("{resourceId}/set-publish", HandleSetPublish);
+
+        assessment.MapGet("{resourceId}/password", HandleGetPassword)
+            .RequireAuthorization("IsInstructor");
+        assessment.MapPost("{resourceId}/password", HandleSetPassword)
+            .RequireAuthorization("IsInstructor");
 
         // assessment.MapPost("{resourceId}/set-answer", HandleSetAnswer);
 
@@ -279,7 +285,7 @@ public static class AssessmentEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var course = await courseService.GetFromModuleAsync(decoded[0]);
+        var course = await courseService.GetFromModuleAsync(decoded[0], ct);
         if (course is null || !await auth.IsCourseOwnerAsync(course))
             return TypedResults.NotFound("Course not found.");
 
@@ -302,11 +308,11 @@ public static class AssessmentEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var course = await courseService.GetFromModuleAsync(decoded[0]);
+        var course = await courseService.GetFromModuleAsync(decoded[0], ct);
         if (course is null || !await auth.IsCourseOwnerAsync(course))
             return TypedResults.NotFound("Course not found.");
 
-        var result = await assessmentService.UpdateAsync(decoded[0], request);
+        var result = await assessmentService.UpdateAsync(decoded[0], request, ct);
         return result is not null
             ? TypedResults.Ok(result)
             : TypedResults.NotFound("Assessment not found.");
@@ -328,11 +334,60 @@ public static class AssessmentEndpoints
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var course = await courseService.GetFromModuleAsync(decoded[0]);
+        var course = await courseService.GetFromModuleAsync(decoded[0], ct);
         if (course is null || !await auth.IsCourseOwnerAsync(course))
             return TypedResults.NotFound("Course not found.");
 
         var result = await assessmentService.SetPublishStatusAsync(decoded[0], isPublished, ct);
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : TypedResults.NotFound(result.Error!.Message);
+    }
+
+    private static async
+        Task<IResult>
+        HandleGetPassword(
+            string resourceId,
+            SqidsEncoder<long> sqidsEncoder,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            IAssessmentService assessmentService,
+            CancellationToken ct)
+    {
+        var decoded = sqidsEncoder.Decode(resourceId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        var course = await courseService.GetFromModuleAsync(decoded[0], ct);
+        if (course is null || !await auth.IsCourseOwnerAsync(course))
+            return TypedResults.NotFound("Course not found.");
+
+        var result = await assessmentService.GetPasswordAsync(decoded[0], ct);
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : TypedResults.NotFound(result.Error!.Message);
+    }
+
+    private static async
+        Task<IResult>
+        HandleSetPassword(
+            string resourceId,
+            [FromBody] string password,
+            SqidsEncoder<long> sqidsEncoder,
+            ICourseService courseService,
+            ICourseAuthorization auth,
+            IAssessmentService assessmentService,
+            CancellationToken ct)
+    {
+        var decoded = sqidsEncoder.Decode(resourceId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        var course = await courseService.GetFromModuleAsync(decoded[0], ct);
+        if (course is null || !await auth.IsCourseOwnerAsync(course))
+            return TypedResults.NotFound("Course not found.");
+
+        var result = await assessmentService.SetPasswordAsync(decoded[0], password, ct);
         return result.IsSuccess
             ? TypedResults.Ok(result.Value)
             : TypedResults.NotFound(result.Error!.Message);
