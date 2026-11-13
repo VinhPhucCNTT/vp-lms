@@ -15,7 +15,6 @@ public static class DevelopmentDataSeeder
     public const string InstructorPassword = "Instructor123!";
     public const string StudentEmail = "dev.student@vp-lms.local";
     public const string StudentPassword = "Student123!";
-    public const string CourseCode = "DEV-INTRO";
 
     public static async Task SeedAsync(IServiceProvider services)
     {
@@ -42,14 +41,13 @@ public static class DevelopmentDataSeeder
 
         var course = await db.Courses
             .IgnoreQueryFilters()
-            .SingleOrDefaultAsync(x => x.Code == CourseCode);
+            .SingleOrDefaultAsync(x => x.Title == "Introduction to VP-LMS");
 
         if (course is null)
         {
             course = new Course
             {
                 InstructorId = instructor.Id,
-                Code = CourseCode,
                 Title = "Introduction to VP-LMS",
                 Description = "Development course for testing the authenticated student flow.",
                 IsPublished = true,

@@ -15,15 +15,15 @@ public interface ICourseService
 
     public Task<Course?> GetFromModuleAsync(long moduleId, CancellationToken ct = default);
 
-    public Task<CourseResponse?> GetDtoAsync(long courseId, CancellationToken ct = default);
+    public Task<CourseDetailResponse?> GetDtoAsync(long courseId, CancellationToken ct = default);
 
-    public Task<List<CourseStudentResponse>> GetStudentCoursesAsync(CancellationToken ct = default);
+    public Task<List<StudentCourseResponse>> GetStudentCoursesAsync(CancellationToken ct = default);
 
-    public Task<List<CourseResponse>> GetInstructorCoursesAsync(CancellationToken ct = default);
+    public Task<List<CourseDetailResponse>> GetInstructorCoursesAsync(CancellationToken ct = default);
 
-    public Task<CourseExploreResponse> GetExploreAsync(CancellationToken ct = default);
+    public Task<ExploreCourseResponse> GetExploreAsync(CancellationToken ct = default);
 
-    public Task<PaginatedResponse<CourseResponse>> QueryCoursesAsync(CourseQueryRequest query, CancellationToken ct = default);
+    public Task<PaginatedResponse<CourseDetailResponse>> QueryCoursesAsync(CourseQueryRequest query, CancellationToken ct = default);
 
     public Task<CourseSetResponse> CreateCourseAsync(CourseCreateRequest request, CancellationToken ct = default);
 
@@ -33,7 +33,7 @@ public interface ICourseService
 
     public Task SetCoursePublishStatusAsync(Course course, bool value, CancellationToken ct = default);
 
-    public Task<List<RecentCourseResponse>> GetRecentAsync(int count, CancellationToken ct = default);
+    public Task<List<CourseResponse>> GetRecentAsync(int count, CancellationToken ct = default);
 }
 
 public class CourseService(
@@ -66,7 +66,7 @@ public class CourseService(
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<CourseResponse?> GetDtoAsync(long courseId, CancellationToken ct = default)
+    public async Task<CourseDetailResponse?> GetDtoAsync(long courseId, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
@@ -79,10 +79,10 @@ public class CourseService(
 
         await SetRecentCourseAsync(db, course, _currentUserService.UserId, ct);
 
-        return _mapper.Map<CourseResponse>(course);
+        return _mapper.Map<CourseDetailResponse>(course);
     }
 
-    public async Task<List<CourseStudentResponse>> GetStudentCoursesAsync(CancellationToken ct = default)
+    public async Task<List<StudentCourseResponse>> GetStudentCoursesAsync(CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
@@ -97,11 +97,11 @@ public class CourseService(
             .Where(c => enrolledCourseIds.Contains(c.Id))
             .ToListAsync(ct);
 
-        List<CourseStudentResponse> list = [];
+        List<StudentCourseResponse> list = [];
         foreach (var course in courses)
         {
-            var item = new CourseStudentResponse(
-                _mapper.Map<CourseResponse>(course),
+            var item = new StudentCourseResponse(
+                _mapper.Map<CourseDetailResponse>(course),
                 await ResourceService.GetCourseProgressAsync(db, course.Id, currentUserId));
 
             list.Add(item);
@@ -110,7 +110,7 @@ public class CourseService(
         return list;
     }
 
-    public async Task<List<CourseResponse>> GetInstructorCoursesAsync(CancellationToken ct = default)
+    public async Task<List<CourseDetailResponse>> GetInstructorCoursesAsync(CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
@@ -118,24 +118,24 @@ public class CourseService(
         return await db.Courses
             .AsNoTracking()
             .Where(c => c.InstructorId == currentUserId)
-            .Select(c => _mapper.Map<CourseResponse>(c))
+            .Select(c => _mapper.Map<CourseDetailResponse>(c))
             .ToListAsync(ct);
     }
 
-    public async Task<CourseExploreResponse> GetExploreAsync(CancellationToken ct = default)
+    public async Task<ExploreCourseResponse> GetExploreAsync(CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         var featuredCourses = await GetFeaturedCoursesAsync(db, ct);
 
         var departments = db.Departments.AsNoTracking();
-        Dictionary<string, List<CourseResponse>> coursesByDepartment = [];
+        Dictionary<string, List<CourseDetailResponse>> coursesByDepartment = [];
         foreach (var department in departments)
         {
             var courses = await db.Courses
                 .AsNoTracking()
                 .Where(c => c.DepartmentId == department.Id)
-                .Select(c => _mapper.Map<CourseResponse>(c))
+                .Select(c => _mapper.Map<CourseDetailResponse>(c))
                 .ToListAsync(ct);
 
             coursesByDepartment.Add(department.Name, courses);
@@ -145,19 +145,16 @@ public class CourseService(
             .AsNoTracking()
             .OrderByDescending(c => c.UpdatedAt)
             .Take(10)
-            .Select(c => _mapper.Map<CourseResponse>(c))
+            .Select(c => _mapper.Map<CourseDetailResponse>(c))
             .ToListAsync(ct);
 
-        return new CourseExploreResponse(featuredCourses, coursesByDepartment, recentlyUpdated);
+        return new ExploreCourseResponse(featuredCourses, coursesByDepartment, recentlyUpdated);
     }
 
-    public async Task<PaginatedResponse<CourseResponse>> QueryCoursesAsync(CourseQueryRequest query, CancellationToken ct = default)
+    public async Task<PaginatedResponse<CourseDetailResponse>> QueryCoursesAsync(CourseQueryRequest query, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var courses = db.Courses.AsNoTracking().Where(c => c.IsPublished);
-
-        if (!string.IsNullOrEmpty(query.Code))
-            courses = courses.Where(c => c.Code.Contains(query.Code, StringComparison.OrdinalIgnoreCase));
 
         if (!string.IsNullOrEmpty(query.Title))
             courses = courses.Where(c => c.Title.Contains(query.Title, StringComparison.OrdinalIgnoreCase));
@@ -176,10 +173,10 @@ public class CourseService(
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
             .Include(c => c.Instructor)
-            .Select(c => _mapper.Map<CourseResponse>(c))
+            .Select(c => _mapper.Map<CourseDetailResponse>(c))
             .ToListAsync(ct);
 
-        return new PaginatedResponse<CourseResponse>(
+        return new PaginatedResponse<CourseDetailResponse>(
                 query.PageNumber,
                 query.PageSize,
                 await courses.CountAsync(ct),
@@ -192,7 +189,6 @@ public class CourseService(
         var course = new Course
         {
             InstructorId = _currentUserService.UserId,
-            Code = request.Code,
             Title = request.Title,
             Description = request.Description,
             IsPublished = request.IsPublished,
@@ -257,7 +253,7 @@ public class CourseService(
         return;
     }
 
-    public async Task<List<RecentCourseResponse>> GetRecentAsync(int count, CancellationToken ct = default)
+    public async Task<List<CourseResponse>> GetRecentAsync(int count, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
@@ -266,7 +262,7 @@ public class CourseService(
             .AsNoTracking()
             .OrderByDescending(r => r.LastAccessedAt)
             .Where(r => r.UserId == currentUserId)
-            .Select(r => _mapper.Map<RecentCourseResponse>(r));
+            .Select(r => _mapper.Map<CourseResponse>(r));
 
         if (count > 0)
             records = records.Take(count);
@@ -300,13 +296,13 @@ public class CourseService(
     }
 
     // Placeholder
-    private async Task<List<CourseResponse>> GetFeaturedCoursesAsync(AppDbContext db, CancellationToken ct = default)
+    private async Task<List<CourseDetailResponse>> GetFeaturedCoursesAsync(AppDbContext db, CancellationToken ct = default)
     {
         return await db.Courses
             .AsNoTracking()
             .OrderByDescending(c => c.Title)
             .Take(10)
-            .Select(c => _mapper.Map<CourseResponse>(c))
+            .Select(c => _mapper.Map<CourseDetailResponse>(c))
             .ToListAsync(ct);
     }
 

@@ -33,7 +33,7 @@ public static class CourseEndpoints
     }
 
     private static async
-        Task<Results<Ok<CourseResponse>, BadRequest, NotFound>>
+        Task<Results<Ok<CourseDetailResponse>, BadRequest, NotFound>>
         HandleGetCourseById(
             string courseId,
             SqidsEncoder<long> sqidsEncoder,
@@ -51,25 +51,25 @@ public static class CourseEndpoints
     }
 
     private static async
-        Task<Ok<List<CourseStudentResponse>>>
+        Task<Ok<List<StudentCourseResponse>>>
         HandleGetStudent(ICourseService courseService,
             CancellationToken ct) => TypedResults.Ok(
             await courseService.GetStudentCoursesAsync(ct));
 
     private static async
-        Task<Ok<List<CourseResponse>>>
+        Task<Ok<List<CourseDetailResponse>>>
         HandleGetInstructor(ICourseService courseService,
             CancellationToken ct) => TypedResults.Ok(
             await courseService.GetInstructorCoursesAsync(ct));
 
     private static async
-        Task<Ok<CourseExploreResponse>>
+        Task<Ok<ExploreCourseResponse>>
         HandleGetExplore(ICourseService courseService,
             CancellationToken ct) => TypedResults.Ok(
             await courseService.GetExploreAsync(ct));
 
     private static async
-        Task<Ok<PaginatedResponse<CourseResponse>>>
+        Task<Ok<PaginatedResponse<CourseDetailResponse>>>
         HandleQuery([AsParameters] CourseQueryRequest query, ICourseService courseService,
             CancellationToken ct) => TypedResults.Ok(
             await courseService.QueryCoursesAsync(query, ct));

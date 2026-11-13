@@ -9,12 +9,20 @@ public record ResourceResponse(
     int OrderIndex
 ) : IEntityResponse;
 
-public record ResourceListResponse(
+public record StudentResourceResponse(
     string Id,
     ResourceType Type,
-    CourseStudentResponse CourseInfo,
-    DateOnly DueDate,
-    bool StatusIsCompleted // false = Pending
+    string Title,
+    int OrderIndex,
+    bool StatusIsCompleted
+) : IEntityResponse;
+
+public record InstructorResourceResponse(
+    string Id,
+    ResourceType Type,
+    string Title,
+    int OrderIndex,
+    bool IsPublished
 ) : IEntityResponse;
 
 public record ResourceDetailResponse(
@@ -38,8 +46,5 @@ public record ResourceRequestInfo
 (
     string Title,
     int OrderIndex,
-    DateTime? AvailableFrom,
-    DateTime? AvailableUntil,
-    bool IsPublished,
-    string? AccessPassword
+    bool IsPublished
 );

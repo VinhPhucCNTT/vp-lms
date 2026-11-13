@@ -15,6 +15,12 @@ public record AssignmentInfo(
     string? GradingSchemaJson
 );
 
+public record AssignmentListInfo(
+    SubmissionType SubmissionType,
+    DateTime? OpenDate,
+    DateTime? CloseDate
+);
+
 public record AssignmentRequest(
     ResourceRequestInfo ResourceInfo,
     AssignmentInfo Info

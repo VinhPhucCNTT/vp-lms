@@ -8,7 +8,7 @@ public class Assessment : BaseEntity, ISoftDeletable
 {
     public long ResourceId { get; set; }
 
-    public string? Description { get; set; }
+    public string Description { get; set; } = "";
     public double TimeLimitMinutes { get; set; }
     public int MaxAttempts { get; set; } = 1;
 
@@ -20,7 +20,7 @@ public class Assessment : BaseEntity, ISoftDeletable
 
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
-
+s
     // Navigation properties
     public CourseResource Resource { get; set; } = default!;
     public ICollection<AssessmentQuestion> Questions { get; set; } = [];

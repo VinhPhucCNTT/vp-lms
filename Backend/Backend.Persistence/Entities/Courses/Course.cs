@@ -9,9 +9,9 @@ public class Course : BaseEntity, ISoftDeletable
     public long InstructorId { get; set; }
     public long? DepartmentId { get; set; }
 
-    public required string Code { get; set; }
+    // public required string Code { get; set; }
     public required string Title { get; set; }
-    public string? Description { get; set; }
+    public string Description { get; set; } = "";
     public bool IsPublished { get; set; } = false;
     public bool EnrollmentOpen { get; set; } = true;
     public long? BackgroundFileId { get; set; }

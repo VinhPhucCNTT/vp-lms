@@ -25,6 +25,9 @@ public static class ResourceErrors
 
 public static class AssessmentErrors
 {
+    public static readonly Error NotFound =
+        new("assessment.not_found", "Assessment not found.");
+
     public static readonly Error InvalidState =
         new("assessment.invalid_state", "The assessment is in an invalid state.");
 

@@ -4,6 +4,7 @@ using Backend.Api.Core.Types;
 using Backend.Api.Services.Common;
 using Backend.Api.Services.Courses;
 using Backend.Persistence.Data;
+using Backend.Persistence.Entities.Assignments;
 using Backend.Persistence.Entities.Content;
 using Backend.Persistence.Entities.Courses;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +37,7 @@ public class AssignmentService(
 
     public async Task<AssignmentResponse?> GetDtoByIdAsync(long resourceId, CancellationToken ct = default)
     {
-        await using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var userId = _currentUserService.UserId;
         return await db.Assignments
             .AsNoTracking()
@@ -70,11 +71,10 @@ public class AssignmentService(
                 .ThenInclude(s => s.Grade)
             .Include(a => a.Submissions.Where(s => s.UserId == userId))
                 .ThenInclude(s => s.Files)
-            .OrderBy(a => a.Resource.Module.Course.Code)
-            .ThenBy(a => a.Resource.OrderIndex)
+            .OrderBy(a => a.Resource.OrderIndex)
             .ToListAsync(ct);
 
-        return assignments.Select(assignment =>
+        return assignments.ConvertAll(assignment =>
         {
             var submission = assignment.Submissions.SingleOrDefault();
             var status = GetStudentStatus(assignment, submission);
@@ -84,13 +84,13 @@ public class AssignmentService(
 
             return new StudentAssignmentSummaryResponse(
                 assignmentResponse,
-                _mapper.Map<CourseResponse>(assignment.Resource.Module.Course),
+                _mapper.Map<CourseDetailResponse>(assignment.Resource.Module.Course),
                 status,
                 submission?.SubmittedOn,
                 submission?.Grade?.Score,
                 submission?.Grade?.FeedbackText,
                 submission?.Files.Count ?? 0);
-        }).ToList();
+        });
     }
 
     public async Task<List<AssignmentResponse>> QueryAsync(CancellationToken ct = default)
@@ -101,9 +101,9 @@ public class AssignmentService(
             .Include(x => x.Resource)
             .ToListAsync(ct);
 
-        return assignments.Select(x => new AssignmentResponse(
+        return assignments.ConvertAll(x => new AssignmentResponse(
             _mapper.Map<ResourceDetailResponse>(x.Resource),
-            _mapper.Map<AssignmentInfo>(x))).ToList();
+            _mapper.Map<AssignmentInfo>(x)));
     }
 
     public async Task<AssignmentResponse?> CreateAsync(long moduleId, AssignmentRequest request, CancellationToken ct = default)
@@ -159,7 +159,6 @@ public class AssignmentService(
             return null;
         }
 
-
         var resource = await ResourceService.UpdateResourceAsync(db, assignment.ResourceId, request.ResourceInfo);
         assignment.ResourceId = resource.Id;
         assignment.InstructionsMD = request.Info.InstructionsMD;
@@ -193,7 +192,7 @@ public class AssignmentService(
 
     private static string GetStudentStatus(
         Assignment assignment,
-        Backend.Persistence.Entities.Assignments.AssignmentSubmission? submission)
+        AssignmentSubmission? submission)
     {
         if (submission?.Grade is not null)
             return "graded";

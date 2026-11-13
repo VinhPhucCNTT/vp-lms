@@ -1,38 +1,38 @@
 namespace Backend.Api.Core.Types;
 
 public record CourseResponse(
-    string Id,
-    string CreatorId,
-    string CreatorUsername,
-    string CreatorFullname,
-    string? BackgroundFileId,
-    string Code,
-    string Title,
-    string? Description,
-    int EnrollmentCount
-) : IEntityResponse;
-
-public record RecentCourseResponse(
     string CourseId,
     string CourseName,
     long BackgroundFileId,
     DateTime LastAccessedAt
 );
 
-public record CourseProgress(
-    int Completed,
-    int Total
-);
+public record CourseDetailResponse(
+    string Id,
+    string CreatorId,
+    string CreatorFirstName,
+    string CreatorLastName,
+    string? BackgroundFileId,
+    // string Code,
+    string Title,
+    string? Description,
+    int EnrollmentCount
+) : IEntityResponse;
 
-public record CourseStudentResponse(
-    CourseResponse Info,
+public record StudentCourseResponse(
+    CourseDetailResponse Info,
     CourseProgress Progress
 );
 
-public record CourseExploreResponse(
-    List<CourseResponse> Featured,
-    Dictionary<string, List<CourseResponse>> ByDepartment,
-    List<CourseResponse> Recent
+public record ExploreCourseResponse(
+    List<CourseDetailResponse> Featured,
+    Dictionary<string, List<CourseDetailResponse>> ByDepartment,
+    List<CourseDetailResponse> Recent
+);
+
+public record CourseProgress(
+    int Completed,
+    int Total
 );
 
 public record CourseQueryRequest(
@@ -46,18 +46,17 @@ public record CourseQueryRequest(
 );
 
 public record CourseCreateRequest(
-    string Code,
+    // string Code,
     string Title,
     string? Description,
-    bool IsPublished,
-    bool EnrollmentOpen
+    bool EnrollmentOpen,
+    IFormFile BackgroundFile
 );
 
 public record CoursePatchRequest(
-    string? Code,
+    // string? Code,
     string? Title,
     string? Description,
-    bool? IsPublished,
     bool? EnrollmentOpen,
     IFormFile? BackgroundFile
 );
@@ -65,10 +64,10 @@ public record CoursePatchRequest(
 public record CourseSetResponse(
     string Id,
     string CreatorId,
-    string Code,
+    // string Code,
     string Title,
     string? Description,
     bool IsPublished,
     bool EnrollmentOpen,
-    string BackgroundFileId
+    string? BackgroundFileId
 ) : IEntityResponse;

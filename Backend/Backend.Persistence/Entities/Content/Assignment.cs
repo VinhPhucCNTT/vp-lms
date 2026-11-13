@@ -9,7 +9,7 @@ public class Assignment : BaseEntity, ISoftDeletable
     public long ResourceId { get; set; }
 
     public required string InstructionsMD { get; set; }
-    public SubmissionType SubmissionType { get; set; } = SubmissionType.Both;
+    public required SubmissionType SubmissionType { get; set; }
 
     public string[]? AllowedExtensions { get; set; } = [];
     public int MaxFileSizeKb { get; set; } = 10;
