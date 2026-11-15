@@ -63,14 +63,14 @@ public sealed class AssessmentAttemptService(
 
         var assessment = await db.Assessments
             .AsNoTracking()
-            .Include(x => x.Resource)
+            .Include(x => x.Activity)
                 .ThenInclude(x => x.Module)
             .FirstOrDefaultAsync(x => x.Id == assessmentId, ct);
 
         if (assessment is null)
-            return Result.Failure<AssessmentAttempt>(ResourceErrors.NotFound);
+            return Result.Failure<AssessmentAttempt>(ActivityErrors.NotFound);
 
-        if (!assessment.Resource.IsPublished)
+        if (!assessment.Activity.IsPublished)
         {
             return Result<AssessmentAttempt>.Failure(
                 new Error(
@@ -80,7 +80,7 @@ public sealed class AssessmentAttemptService(
 
         var enrolled = await db.Enrollments
             .AnyAsync(
-                x => x.CourseId == assessment.Resource.Module.CourseId &&
+                x => x.CourseId == assessment.Activity.Module.CourseId &&
                      x.UserId == studentId,
                 ct);
         if (!enrolled)

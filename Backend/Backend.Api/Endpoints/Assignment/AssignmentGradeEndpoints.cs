@@ -15,16 +15,16 @@ public static class AssignmentGradeEndpoints
     {
         var grading = route.MapGroup("/api/assignment-grade");
 
-        grading.MapGet("{resourceId}", HandleGetById).RequireAuthorization();
+        grading.MapGet("{activityId}", HandleGetById).RequireAuthorization();
     }
 
     private static async Task<Results<Ok<AssignmentGradeResponse>, BadRequest, NotFound<string>>> HandleGetById(
-        string resourceId,
+        string activityId,
         SqidsEncoder<long> sqidsEncoder,
         IAssignmentGradeService assignGradeService,
         CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 

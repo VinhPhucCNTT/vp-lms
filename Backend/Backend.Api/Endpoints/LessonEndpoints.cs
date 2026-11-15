@@ -13,21 +13,21 @@ public static class LessonEndpoints
     {
         var lesson = route.MapGroup("/api/lesson");
 
-        lesson.MapGet("{resourceId}", HandleGetById).RequireAuthorization();
+        lesson.MapGet("{activityId}", HandleGetById).RequireAuthorization();
         lesson.MapPost("{moduleId}", HandleCreate).RequireAuthorization();
-        lesson.MapPut("{resourceId}", HandleUpdate).RequireAuthorization();
+        lesson.MapPut("{activityId}", HandleUpdate).RequireAuthorization();
 
-        lesson.MapPost("{resourceId}/set-publish", HandleSetPublish);
+        lesson.MapPost("{activityId}/set-publish", HandleSetPublish);
     }
 
     private static async
         Task<Results<Ok<LessonResponse>, BadRequest, NotFound>>
         HandleGetById(
-            string resourceId,
+            string activityId,
             SqidsEncoder<long> sqidsEncoder,
             ILessonService lessonService)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -63,14 +63,14 @@ public static class LessonEndpoints
     private static async
         Task<Results<Ok<LessonResponse>, BadRequest, NotFound>>
         HandleUpdate(
-            string resourceId,
+            string activityId,
             LessonRequest request,
             SqidsEncoder<long> sqidsEncoder,
             ICourseService courseService,
             ICourseAuthorization auth,
             ILessonService lessonService)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -87,7 +87,7 @@ public static class LessonEndpoints
     private static async
         Task<Results<Ok<bool>, BadRequest, NotFound<string>>>
         HandleSetPublish(
-            string resourceId,
+            string activityId,
             SqidsEncoder<long> sqidsEncoder,
             ICourseService courseService,
             ICourseAuthorization auth,
@@ -95,7 +95,7 @@ public static class LessonEndpoints
             CancellationToken ct,
             [AsParameters] bool isPublished = true)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 

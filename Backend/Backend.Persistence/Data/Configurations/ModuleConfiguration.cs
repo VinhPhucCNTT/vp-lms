@@ -23,7 +23,7 @@ public class ModuleConfiguration : IEntityTypeConfiguration<CourseModule>
             .HasFilter("is_deleted = false")
             .IsUnique();
 
-        builder.HasMany(x => x.Resources)
+        builder.HasMany(x => x.Activities)
             .WithOne(r => r.Module)
             .HasForeignKey(r => r.ModuleId)
             .OnDelete(DeleteBehavior.Cascade)

@@ -90,67 +90,67 @@ public static class DevelopmentDataSeeder
             await db.SaveChangesAsync();
         }
 
-        var resource = await db.CourseResources
+        var activity = await db.CourseActivities
             .IgnoreQueryFilters()
-            .SingleOrDefaultAsync(x => x.ModuleId == module.Id && x.Type == ResourceType.Lesson && x.OrderIndex == 0);
+            .SingleOrDefaultAsync(x => x.ModuleId == module.Id && x.Type == ActivityType.Lesson && x.OrderIndex == 0);
 
-        if (resource is null)
+        if (activity is null)
         {
-            resource = new CourseResource
+            activity = new CourseActivity
             {
                 ModuleId = module.Id,
-                Type = ResourceType.Lesson,
+                Type = ActivityType.Lesson,
                 Title = "Welcome Lesson",
                 OrderIndex = 0,
                 IsPublished = true
             };
-            db.CourseResources.Add(resource);
+            db.CourseActivities.Add(activity);
             await db.SaveChangesAsync();
         }
 
         var lessonExists = await db.Lessons
             .IgnoreQueryFilters()
-            .AnyAsync(x => x.ResourceId == resource.Id);
+            .AnyAsync(x => x.ActivityId == activity.Id);
 
         if (!lessonExists)
         {
             db.Lessons.Add(new Lesson
             {
-                ResourceId = resource.Id,
+                ActivityId = activity.Id,
                 ContentMarkdown = "# Welcome to VP-LMS\n\nThis is the first lesson in the development course."
             });
         }
 
-        var assignmentResource = await db.CourseResources
+        var assignmentActivity = await db.CourseActivities
             .IgnoreQueryFilters()
             .SingleOrDefaultAsync(x =>
                 x.ModuleId == module.Id &&
-                x.Type == ResourceType.Assignment &&
+                x.Type == ActivityType.Assignment &&
                 x.OrderIndex == 2);
 
-        if (assignmentResource is null)
+        if (assignmentActivity is null)
         {
-            assignmentResource = new CourseResource
+            assignmentActivity = new CourseActivity
             {
                 ModuleId = module.Id,
-                Type = ResourceType.Assignment,
+                Type = ActivityType.Assignment,
                 Title = "Welcome Assignment",
                 OrderIndex = 2,
                 IsPublished = true
             };
-            db.CourseResources.Add(assignmentResource);
+            db.CourseActivities.Add(assignmentActivity);
             await db.SaveChangesAsync();
         }
 
         var assignment = await db.Assignments
             .IgnoreQueryFilters()
-            .SingleOrDefaultAsync(x => x.ResourceId == assignmentResource.Id);
+            .SingleOrDefaultAsync(x => x.ActivityId == assignmentActivity.Id);
 
         if (assignment is null)
         {
             db.Assignments.Add(new Assignment
             {
-                ResourceId = assignmentResource.Id,
+                ActivityId = assignmentActivity.Id,
                 InstructionsMD = "# Welcome Assignment\n\nUpload a short text or PDF file describing what you learned in the welcome lesson.",
                 SubmissionType = SubmissionType.File,
                 AllowedExtensions = [".txt", ".md", ".pdf"],
@@ -161,36 +161,36 @@ public static class DevelopmentDataSeeder
             });
         }
 
-        var assessmentResource = await db.CourseResources
+        var assessmentActivity = await db.CourseActivities
             .IgnoreQueryFilters()
             .SingleOrDefaultAsync(x =>
                 x.ModuleId == module.Id &&
-                x.Type == ResourceType.Assessment &&
+                x.Type == ActivityType.Assessment &&
                 x.OrderIndex == 1);
 
-        if (assessmentResource is null)
+        if (assessmentActivity is null)
         {
-            assessmentResource = new CourseResource
+            assessmentActivity = new CourseActivity
             {
                 ModuleId = module.Id,
-                Type = ResourceType.Assessment,
+                Type = ActivityType.Assessment,
                 Title = "Welcome Quiz",
                 OrderIndex = 1,
                 IsPublished = true
             };
-            db.CourseResources.Add(assessmentResource);
+            db.CourseActivities.Add(assessmentActivity);
             await db.SaveChangesAsync();
         }
 
         var assessment = await db.Assessments
             .IgnoreQueryFilters()
-            .SingleOrDefaultAsync(x => x.ResourceId == assessmentResource.Id);
+            .SingleOrDefaultAsync(x => x.ActivityId == assessmentActivity.Id);
 
         if (assessment is null)
         {
             assessment = new Assessment
             {
-                ResourceId = assessmentResource.Id,
+                ActivityId = assessmentActivity.Id,
                 Description = "A short development assessment used to verify the assessment start flow.",
                 TimeLimitMinutes = 10,
                 MaxAttempts = 1,
@@ -216,36 +216,36 @@ public static class DevelopmentDataSeeder
             });
         }
 
-        var codingResource = await db.CourseResources
+        var codingActivity = await db.CourseActivities
             .IgnoreQueryFilters()
             .SingleOrDefaultAsync(x =>
                 x.ModuleId == module.Id &&
-                x.Type == ResourceType.Problem &&
+                x.Type == ActivityType.Problem &&
                 x.OrderIndex == 3);
 
-        if (codingResource is null)
+        if (codingActivity is null)
         {
-            codingResource = new CourseResource
+            codingActivity = new CourseActivity
             {
                 ModuleId = module.Id,
-                Type = ResourceType.Problem,
+                Type = ActivityType.Problem,
                 Title = "Add Two Numbers",
                 OrderIndex = 3,
                 IsPublished = true
             };
-            db.CourseResources.Add(codingResource);
+            db.CourseActivities.Add(codingActivity);
             await db.SaveChangesAsync();
         }
 
         var codingProblem = await db.CodingProblems
             .IgnoreQueryFilters()
-            .SingleOrDefaultAsync(x => x.ResourceId == codingResource.Id);
+            .SingleOrDefaultAsync(x => x.ActivityId == codingActivity.Id);
 
         if (codingProblem is null)
         {
             codingProblem = new CodingProblem
             {
-                ResourceId = codingResource.Id,
+                ActivityId = codingActivity.Id,
                 ProblemStatementMarkdown = "# Add Two Numbers\n\nRead two integers from standard input and print their sum.",
                 ConstraintsMarkdown = "- The input contains two integers separated by whitespace.\n- The absolute value of each integer is at most 1,000,000.",
                 FunctionSignature = "Read from stdin and write to stdout",

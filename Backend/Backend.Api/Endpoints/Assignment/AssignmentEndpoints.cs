@@ -16,25 +16,25 @@ public static class AssignmentEndpoints
         var assignment = route.MapGroup("/api/assignment");
 
         assignment.MapGet("/", HandleQuery).RequireAuthorization("IsStudent");
-        assignment.MapGet("{resourceId}", HandleGetById).RequireAuthorization("IsStudent");
+        assignment.MapGet("{activityId}", HandleGetById).RequireAuthorization("IsStudent");
         assignment.MapPost("{moduleId}", HandleCreate).RequireAuthorization("IsInstructor");
-        assignment.MapPut("{resourceId}", HandleUpdate).RequireAuthorization("IsInstructor");
+        assignment.MapPut("{activityId}", HandleUpdate).RequireAuthorization("IsInstructor");
 
-        assignment.MapPost("{resourceId}/upload", HandleUpload)
+        assignment.MapPost("{activityId}/upload", HandleUpload)
             .RequireAuthorization("IsStudent")
             .DisableAntiforgery();
-        assignment.MapPost("{resourceId}/submit", HandleSubmit).RequireAuthorization("IsStudent");
-        assignment.MapDelete("{resourceId}/submit", HandleRemoveSelfSubmit).RequireAuthorization("IsStudent");
+        assignment.MapPost("{activityId}/submit", HandleSubmit).RequireAuthorization("IsStudent");
+        assignment.MapDelete("{activityId}/submit", HandleRemoveSelfSubmit).RequireAuthorization("IsStudent");
 
-        assignment.MapGet("{resourceId}/grades/instructor", HandleGetGrades).RequireAuthorization();
-        assignment.MapGet("{resourceId}/grades/", HandleGetGrades).RequireAuthorization();
+        assignment.MapGet("{activityId}/grades/instructor", HandleGetGrades).RequireAuthorization();
+        assignment.MapGet("{activityId}/grades/", HandleGetGrades).RequireAuthorization();
 
-        assignment.MapGet("{resourceId}/submission/student-self", HandleGetOwnSubmit).RequireAuthorization("IsStudent");
-        assignment.MapGet("{resourceId}/submission/instructor-list", HandleGetSubmissions).RequireAuthorization("IsInstructor");
-        assignment.MapGet("{resourceId}/submission/instructor-graded", HandleGetGraded).RequireAuthorization("IsInstructor");
-        assignment.MapGet("{resourceId}/submission/instructor-ungraded", HandleGetUngraded).RequireAuthorization();
+        assignment.MapGet("{activityId}/submission/student-self", HandleGetOwnSubmit).RequireAuthorization("IsStudent");
+        assignment.MapGet("{activityId}/submission/instructor-list", HandleGetSubmissions).RequireAuthorization("IsInstructor");
+        assignment.MapGet("{activityId}/submission/instructor-graded", HandleGetGraded).RequireAuthorization("IsInstructor");
+        assignment.MapGet("{activityId}/submission/instructor-ungraded", HandleGetUngraded).RequireAuthorization();
 
-        assignment.MapPost("{resourceId}/set-publish", HandleSetPublish).RequireAuthorization("IsInstructor");
+        assignment.MapPost("{activityId}/set-publish", HandleSetPublish).RequireAuthorization("IsInstructor");
     }
 
     private static async Task<Ok<List<StudentAssignmentSummaryResponse>>> HandleQuery(
@@ -47,12 +47,12 @@ public static class AssignmentEndpoints
     private static async
         Task<Results<Ok<AssignmentResponse>, BadRequest, NotFound>>
         HandleGetById(
-            string resourceId,
+            string activityId,
             SqidsEncoder<long> sqidsEncoder,
             IAssignmentService assignmentService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -90,14 +90,14 @@ public static class AssignmentEndpoints
     private static async
         Task<Results<Ok<AssignmentResponse>, BadRequest, NotFound>>
         HandleUpdate(
-            string resourceId,
+            string activityId,
             AssignmentRequest request,
             SqidsEncoder<long> sqidsEncoder,
             ICourseService courseService,
             ICourseAuthorization auth,
             IAssignmentService assignmentService)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -114,13 +114,13 @@ public static class AssignmentEndpoints
     private static async
         Task<Results<Ok<AssignmentFileResponse>, BadRequest<string>, NotFound, InternalServerError<string>>>
         HandleUpload(
-            string resourceId,
+            string activityId,
             IFormFile file,
             SqidsEncoder<long> sqidsEncoder,
             ISubmissionService submissionService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest("");
 
@@ -138,13 +138,13 @@ public static class AssignmentEndpoints
         private static async
         Task<Results<Ok<SubmissionDetailResponse>, BadRequest<string>, NotFound<string>>>
         HandleSubmit(
-            string resourceId,
+            string activityId,
             SubmissionRequest request,
             SqidsEncoder<long> sqidsEncoder,
             ISubmissionService submissionService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest("Invalid assignment id.");
 
@@ -160,12 +160,12 @@ public static class AssignmentEndpoints
     private static async
         Task<Results<Ok, BadRequest<string>, NotFound<string>>>
         HandleRemoveSelfSubmit(
-            string resourceId,
+            string activityId,
             SqidsEncoder<long> sqidsEncoder,
             ISubmissionService submissionService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest("");
 
@@ -178,7 +178,7 @@ public static class AssignmentEndpoints
     private static async
         Task<Results<Ok<PaginatedResponse<AssignmentGradeResponse>>, BadRequest, NotFound<string>>>
         HandleGetGrades(
-            string resourceId,
+            string activityId,
             [AsParameters] PageRequest page,
             SqidsEncoder<long> sqidsEncoder,
             ICourseService courseService,
@@ -186,7 +186,7 @@ public static class AssignmentEndpoints
             IAssignmentGradeService assignmentGradeService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -203,12 +203,12 @@ public static class AssignmentEndpoints
     private static async
         Task<Results<Ok<SubmissionDetailResponse>, BadRequest, NotFound<string>>>
         HandleGetOwnSubmit(
-            string resourceId,
+            string activityId,
             SqidsEncoder<long> sqidsEncoder,
             ISubmissionService submissionService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -221,7 +221,7 @@ public static class AssignmentEndpoints
     private static async
         Task<Results<Ok<PaginatedResponse<SubmissionResponse>>, BadRequest, NotFound<string>>>
         HandleGetSubmissions(
-            string resourceId,
+            string activityId,
             [AsParameters] PageRequest page,
             SqidsEncoder<long> sqidsEncoder,
             ICourseService courseService,
@@ -229,7 +229,7 @@ public static class AssignmentEndpoints
             ISubmissionService submissionService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -246,7 +246,7 @@ public static class AssignmentEndpoints
     private static async
         Task<Results<Ok<PaginatedResponse<SubmissionResponse>>, BadRequest, NotFound<string>>>
         HandleGetGraded(
-            string resourceId,
+            string activityId,
             [AsParameters] PageRequest page,
             SqidsEncoder<long> sqidsEncoder,
             ICourseService courseService,
@@ -254,7 +254,7 @@ public static class AssignmentEndpoints
             ISubmissionService submissionService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -269,7 +269,7 @@ public static class AssignmentEndpoints
     private static async
         Task<Results<Ok<PaginatedResponse<SubmissionResponse>>, BadRequest, NotFound<string>>>
         HandleGetUngraded(
-            string resourceId,
+            string activityId,
             [AsParameters] PageRequest page,
             SqidsEncoder<long> sqidsEncoder,
             ICourseService courseService,
@@ -277,7 +277,7 @@ public static class AssignmentEndpoints
             ISubmissionService submissionService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -293,7 +293,7 @@ public static class AssignmentEndpoints
     private static async
         Task<Results<Ok<bool>, BadRequest, NotFound<string>>>
         HandleSetPublish(
-            string resourceId,
+            string activityId,
             SqidsEncoder<long> sqidsEncoder,
             ICourseService courseService,
             ICourseAuthorization auth,
@@ -301,7 +301,7 @@ public static class AssignmentEndpoints
             CancellationToken ct,
             [AsParameters] bool isPublished = true)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 

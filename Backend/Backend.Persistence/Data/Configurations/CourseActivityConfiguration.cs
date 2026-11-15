@@ -5,18 +5,18 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Persistence.Data.Configurations;
 
-public class CourseResourceConfiguration : IEntityTypeConfiguration<CourseResource>
+public class CourseActivityConfiguration : IEntityTypeConfiguration<CourseActivity>
 {
-    public void Configure(EntityTypeBuilder<CourseResource> builder)
+    public void Configure(EntityTypeBuilder<CourseActivity> builder)
     {
         // builder.ToTable(
-        //     "course_resources",
+        //     "course_activities",
         //     t => t.HasCheckConstraint(
-        //         "CK_CourseResources_Polymorphic_ExactlyOne",
+        //         "CK_CourseActivities_Polymorphic_ExactlyOne",
         //         "(\"lesson_id\" IS NOT NULL)::int + (\"assignment_id\" IS NOT NULL)::int + (\"assessment_id\" IS NOT NULL)::int + (\"problem_id\" IS NOT NULL)::int = 1"
         //     )
         // );
-        builder.ToTable("course_resources");
+        builder.ToTable("course_activities");
 
         builder.HasKey(x => x.Id);
 
@@ -30,26 +30,26 @@ public class CourseResourceConfiguration : IEntityTypeConfiguration<CourseResour
             .HasMaxLength(200);
 
         builder.HasOne(x => x.Lesson)
-            .WithOne(l => l.Resource)
-            .HasForeignKey<Lesson>(l => l.ResourceId)
+            .WithOne(l => l.Activity)
+            .HasForeignKey<Lesson>(l => l.ActivityId)
             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
 
         builder.HasOne(x => x.Assignment)
-            .WithOne(a => a.Resource)
-            .HasForeignKey<Assignment>(a => a.ResourceId)
+            .WithOne(a => a.Activity)
+            .HasForeignKey<Assignment>(a => a.ActivityId)
             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
 
         builder.HasOne(x => x.Assessment)
-            .WithOne(a => a.Resource)
-            .HasForeignKey<Assessment>(a => a.ResourceId)
+            .WithOne(a => a.Activity)
+            .HasForeignKey<Assessment>(a => a.ActivityId)
             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
 
         builder.HasOne(x => x.Problem)
-            .WithOne(c => c.Resource)
-            .HasForeignKey<CodingProblem>(c => c.ResourceId)
+            .WithOne(c => c.Activity)
+            .HasForeignKey<CodingProblem>(c => c.ActivityId)
             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
     }

@@ -11,13 +11,13 @@ namespace Backend.Api.Services.Content;
 
 public interface ILessonService
 {
-    public Task<LessonResponse?> GetLessonByIdAsync(long resourceId);
+    public Task<LessonResponse?> GetLessonByIdAsync(long activityId);
 
     public Task<LessonResponse> CreateAsync(long moduleId, LessonRequest request, CancellationToken ct = default);
 
-    public Task<LessonResponse?> UpdateLessonAsync(long resourceId, LessonRequest request);
+    public Task<LessonResponse?> UpdateLessonAsync(long activityId, LessonRequest request);
 
-    public Task<Result<bool>> SetPublishStatusAsync(long resourceId, bool isPublished, CancellationToken ct = default);
+    public Task<Result<bool>> SetPublishStatusAsync(long activityId, bool isPublished, CancellationToken ct = default);
 }
 
 public class LessonService(
@@ -27,29 +27,29 @@ public class LessonService(
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<LessonResponse?> GetLessonByIdAsync(long resourceId)
+    public async Task<LessonResponse?> GetLessonByIdAsync(long activityId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var lesson = await db.Lessons
             .AsNoTracking()
-            .Include(l => l.Resource)
-            .Where(l => l.ResourceId == resourceId)
+            .Include(l => l.Activity)
+            .Where(l => l.ActivityId == activityId)
             .FirstOrDefaultAsync();
 
         return lesson is null
             ? null
             : new LessonResponse(
-                _mapper.Map<ResourceDetailResponse>(lesson.Resource),
+                _mapper.Map<ActivityDetailResponse>(lesson.Activity),
                 new LessonInfo(lesson.ContentMarkdown));
     }
 
     public async Task<LessonResponse> CreateAsync(long moduleId, LessonRequest request, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-        var resource = await ResourceService.CreateResourceAsync(db, moduleId, request.ResourceInfo, ResourceType.Lesson, ct);
+        var activity = await ActivityService.CreateActivityAsync(db, moduleId, request.ActivityInfo, ActivityType.Lesson, ct);
         var lesson = new Lesson
         {
-            ResourceId = resource.Id,
+            ActivityId = activity.Id,
             ContentMarkdown = request.Info.ContentMarkdown
         };
 
@@ -57,40 +57,40 @@ public class LessonService(
         await db.SaveChangesAsync(ct);
 
         return new LessonResponse(
-            _mapper.Map<ResourceDetailResponse>(resource),
+            _mapper.Map<ActivityDetailResponse>(activity),
             new LessonInfo(lesson.ContentMarkdown)
         );
     }
 
-    public async Task<LessonResponse?> UpdateLessonAsync(long resourceId, LessonRequest request)
+    public async Task<LessonResponse?> UpdateLessonAsync(long activityId, LessonRequest request)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var lesson = await db.Lessons
-            .FirstOrDefaultAsync(r => r.ResourceId == resourceId);
+            .FirstOrDefaultAsync(r => r.ActivityId == activityId);
         if (lesson is null)
             return null;
 
-        var resource = await ResourceService.UpdateResourceAsync(db, lesson.ResourceId, request.ResourceInfo);
+        var activity = await ActivityService.UpdateActivityAsync(db, lesson.ActivityId, request.ActivityInfo);
 
         lesson.ContentMarkdown = request.Info.ContentMarkdown;
         db.Lessons.Update(lesson);
         await db.SaveChangesAsync();
 
         return new LessonResponse(
-            _mapper.Map<ResourceDetailResponse>(resource),
+            _mapper.Map<ActivityDetailResponse>(activity),
             new LessonInfo(lesson.ContentMarkdown));
     }
 
-    public async Task<Result<bool>> SetPublishStatusAsync(long resourceId, bool isPublished, CancellationToken ct = default)
+    public async Task<Result<bool>> SetPublishStatusAsync(long activityId, bool isPublished, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-        var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Type == ResourceType.Lesson && r.Id == resourceId, ct);
-        if (resource is null)
+        var activity = await db.CourseActivities.FirstOrDefaultAsync(r => r.Type == ActivityType.Lesson && r.Id == activityId, ct);
+        if (activity is null)
             return Result<bool>.Failure(ResultError.NotFound, "Lesson not found.");
 
-        resource.IsPublished = isPublished;
+        activity.IsPublished = isPublished;
         await db.SaveChangesAsync(ct);
 
-        return Result<bool>.Success(resource.IsPublished);
+        return Result<bool>.Success(activity.IsPublished);
     }
 }

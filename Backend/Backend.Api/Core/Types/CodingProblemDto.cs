@@ -13,12 +13,12 @@ public sealed record CodingProblemInfo(
 );
 
 public sealed record CodingProblemRequest(
-    ResourceRequestInfo ResourceInfo,
+    ActivityRequestInfo ActivityInfo,
     CodingProblemInfo Info
 );
 
 public sealed record CodingProblemResponse(
-    ResourceDetailResponse ResourceInfo,
+    ActivityDetailResponse ActivityInfo,
     CodingProblemInfo Info
 );
 

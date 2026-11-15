@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Persistence.Data.Configurations;
 
-public class ResourceCommentConfiguration : IEntityTypeConfiguration<Comment>
+public class ActivityCommentConfiguration : IEntityTypeConfiguration<Comment>
 {
     public void Configure(EntityTypeBuilder<Comment> builder)
     {
-        builder.ToTable("resource_comments");
+        builder.ToTable("activity_comments");
 
         builder.HasKey(x => x.Id);
 
@@ -16,7 +16,7 @@ public class ResourceCommentConfiguration : IEntityTypeConfiguration<Comment>
             .IsRequired()
             .HasColumnType("text");
 
-        builder.HasOne(x => x.Resource)
+        builder.HasOne(x => x.Activity)
             .WithMany(r => r.Comments)
             .HasForeignKey(x => x.ActivityId)
             .OnDelete(DeleteBehavior.Cascade)

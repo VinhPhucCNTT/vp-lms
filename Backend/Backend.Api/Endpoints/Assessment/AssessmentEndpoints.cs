@@ -22,45 +22,45 @@ public static class AssessmentEndpoints
             HandleQuery).RequireAuthorization("IsStudent");
 
         assessment.MapGet(
-            "{resourceId}",
+            "{activityId}",
             HandleGetById).RequireAuthorization("IsStudent");
 
         assessment.MapPost(
-            "{resourceId}/start",
+            "{activityId}/start",
             HandleStart).RequireAuthorization("IsStudent");
 
         assessment.MapGet(
-            "{resourceId}/attempt/{attemptId}",
+            "{activityId}/attempt/{attemptId}",
             HandleGetAttempt).RequireAuthorization("IsStudent");
 
         assessment.MapPost(
-            "{resourceId}/attempt/{attemptId}/question/{attemptQuestionId}/answer",
+            "{activityId}/attempt/{attemptId}/question/{attemptQuestionId}/answer",
             HandleSaveAnswer).RequireAuthorization("IsStudent");
 
         assessment.MapPost(
-            "{resourceId}/attempt/{attemptId}/submit",
+            "{activityId}/attempt/{attemptId}/submit",
             HandleSubmit).RequireAuthorization("IsStudent");
 
         assessment.MapPost("{moduleId}", HandleCreate);
 
-        assessment.MapPut("{resourceId}", HandleUpdate);
+        assessment.MapPut("{activityId}", HandleUpdate);
 
-        assessment.MapPost("{resourceId}/set-publish", HandleSetPublish);
+        assessment.MapPost("{activityId}/set-publish", HandleSetPublish);
 
-        assessment.MapGet("{resourceId}/password", HandleGetPassword)
+        assessment.MapGet("{activityId}/password", HandleGetPassword)
             .RequireAuthorization("IsInstructor");
-        assessment.MapPost("{resourceId}/password", HandleSetPassword)
+        assessment.MapPost("{activityId}/password", HandleSetPassword)
             .RequireAuthorization("IsInstructor");
 
-        // assessment.MapPost("{resourceId}/set-answer", HandleSetAnswer);
+        // assessment.MapPost("{activityId}/set-answer", HandleSetAnswer);
 
-        // assessment.MapPost("{resourceId}/grade/{answerId}", HandleGrade);
-        // assessment.MapPut("{resourceId}/build/add-question", HandleAddQuestion);
-        // assessment.MapPut("{resourceId}/build/add-question", HandleAddQuestion);
+        // assessment.MapPost("{activityId}/grade/{answerId}", HandleGrade);
+        // assessment.MapPut("{activityId}/build/add-question", HandleAddQuestion);
+        // assessment.MapPut("{activityId}/build/add-question", HandleAddQuestion);
 
-        // assessment.MapGet("{resourceId}/time", HandleGetTime);
-        // assessment.MapGet("{resourceId}/restore", HandleRestore);
-        // assessment.MapGet("{resourceId}/attempt/{attemptId}", HandleGetAttempt);
+        // assessment.MapGet("{activityId}/time", HandleGetTime);
+        // assessment.MapGet("{activityId}/restore", HandleRestore);
+        // assessment.MapGet("{activityId}/attempt/{attemptId}", HandleGetAttempt);
     }
 
     private static async Task<Ok<List<AssessmentListResponse>>> HandleQuery(
@@ -71,13 +71,13 @@ public static class AssessmentEndpoints
     }
 
     private static async Task<IResult> HandleStart(
-        string resourceId,
+        string activityId,
         SqidsEncoder<long> sqidsEncoder,
         IAssessmentService assessmentService,
         IAssessmentAttemptService attemptService,
         CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -107,19 +107,19 @@ public static class AssessmentEndpoints
     }
 
     private static async Task<IResult> HandleGetAttempt(
-        string resourceId,
+        string activityId,
         string attemptId,
         SqidsEncoder<long> sqidsEncoder,
         IAssessmentService assessmentService,
         IAssessmentAttemptService attemptService,
         CancellationToken ct)
     {
-        var resourceDecoded = sqidsEncoder.Decode(resourceId);
+        var activityDecoded = sqidsEncoder.Decode(activityId);
         var attemptDecoded = sqidsEncoder.Decode(attemptId);
-        if (resourceDecoded.Count != 1 || attemptDecoded.Count != 1)
+        if (activityDecoded.Count != 1 || attemptDecoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var assessment = await assessmentService.GetAsync(resourceDecoded[0], ct);
+        var assessment = await assessmentService.GetAsync(activityDecoded[0], ct);
         if (assessment is null)
             return TypedResults.NotFound("Assessment not found.");
 
@@ -131,7 +131,7 @@ public static class AssessmentEndpoints
     }
 
     private static async Task<IResult> HandleSaveAnswer(
-        string resourceId,
+        string activityId,
         string attemptId,
         string attemptQuestionId,
         SaveAttemptAnswerRequest request,
@@ -140,7 +140,7 @@ public static class AssessmentEndpoints
         IAssessmentAttemptService attemptService,
         CancellationToken ct)
     {
-        var rDecoded = sqidsEncoder.Decode(resourceId);
+        var rDecoded = sqidsEncoder.Decode(activityId);
         var aDecoded = sqidsEncoder.Decode(attemptId);
         var aqDecoded = sqidsEncoder.Decode(attemptQuestionId);
         if (rDecoded.Count != 1 ||
@@ -169,19 +169,19 @@ public static class AssessmentEndpoints
     }
 
     private static async Task<IResult> HandleSubmit(
-        string resourceId,
+        string activityId,
         string attemptId,
         SqidsEncoder<long> sqidsEncoder,
         IAssessmentService assessmentService,
         IAssessmentAttemptService attemptService,
         CancellationToken ct)
     {
-        var resourceDecoded = sqidsEncoder.Decode(resourceId);
+        var activityDecoded = sqidsEncoder.Decode(activityId);
         var attemptDecoded = sqidsEncoder.Decode(attemptId);
-        if (resourceDecoded.Count != 1 || attemptDecoded.Count != 1)
+        if (activityDecoded.Count != 1 || attemptDecoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var assessment = await assessmentService.GetAsync(resourceDecoded[0], ct);
+        var assessment = await assessmentService.GetAsync(activityDecoded[0], ct);
         if (assessment is null)
             return TypedResults.NotFound("Assessment not found.");
 
@@ -255,12 +255,12 @@ public static class AssessmentEndpoints
     private static async
         Task<Results<Ok<AssessmentResponse>, BadRequest, NotFound<string>>>
         HandleGetById(
-            string resourceId,
+            string activityId,
             SqidsEncoder<long> sqidsEncoder,
             IAssessmentService assessmentService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -296,7 +296,7 @@ public static class AssessmentEndpoints
     private static async
         Task<Results<Ok<AssessmentResponse>, BadRequest, NotFound<string>>>
         HandleUpdate(
-            string resourceId,
+            string activityId,
             AssessmentRequest request,
             SqidsEncoder<long> sqidsEncoder,
             ICourseService courseService,
@@ -304,7 +304,7 @@ public static class AssessmentEndpoints
             IAssessmentService assessmentService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -322,7 +322,7 @@ public static class AssessmentEndpoints
     private static async
         Task<Results<Ok<bool>, BadRequest, NotFound<string>>>
         HandleSetPublish(
-            string resourceId,
+            string activityId,
             SqidsEncoder<long> sqidsEncoder,
             ICourseService courseService,
             ICourseAuthorization auth,
@@ -330,7 +330,7 @@ public static class AssessmentEndpoints
             CancellationToken ct,
             [AsParameters] bool isPublished = true)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -347,14 +347,14 @@ public static class AssessmentEndpoints
     private static async
         Task<IResult>
         HandleGetPassword(
-            string resourceId,
+            string activityId,
             SqidsEncoder<long> sqidsEncoder,
             ICourseService courseService,
             ICourseAuthorization auth,
             IAssessmentService assessmentService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
@@ -371,7 +371,7 @@ public static class AssessmentEndpoints
     private static async
         Task<IResult>
         HandleSetPassword(
-            string resourceId,
+            string activityId,
             [FromBody] string password,
             SqidsEncoder<long> sqidsEncoder,
             ICourseService courseService,
@@ -379,7 +379,7 @@ public static class AssessmentEndpoints
             IAssessmentService assessmentService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 

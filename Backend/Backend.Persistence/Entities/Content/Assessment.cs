@@ -6,7 +6,7 @@ namespace Backend.Persistence.Entities.Content;
 
 public class Assessment : BaseEntity, ISoftDeletable
 {
-    public long ResourceId { get; set; }
+    public long ActivityId { get; set; }
 
     public string Description { get; set; } = "";
     public double TimeLimitMinutes { get; set; }
@@ -20,9 +20,9 @@ public class Assessment : BaseEntity, ISoftDeletable
 
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
-s
+
     // Navigation properties
-    public CourseResource Resource { get; set; } = default!;
+    public CourseActivity Activity { get; set; } = default!;
     public ICollection<AssessmentQuestion> Questions { get; set; } = [];
     public ICollection<AssessmentAttempt> Attempts { get; set; } = [];
 }

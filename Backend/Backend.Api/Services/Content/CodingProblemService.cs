@@ -16,27 +16,27 @@ public interface ICodingProblemService
         CreateAsync(long moduleId, CodingProblemRequest request, CancellationToken ct);
 
     public Task<Result<CodingProblemResponse>>
-        GetByResourceIdAsync(long resourceId, CancellationToken ct);
+        GetByActivityIdAsync(long activityId, CancellationToken ct);
 
     public Task<Result<ProblemTestCaseResponse>>
-        AddTestCaseAsync(long resourceId, ProblemTestCaseRequest request, CancellationToken ct);
+        AddTestCaseAsync(long activityId, ProblemTestCaseRequest request, CancellationToken ct);
 
     public Task<Result<IReadOnlyList<ProblemTestCaseResponse>>>
         GetTestCasesAsync(
-            long resourceId,
+            long activityId,
             CancellationToken ct);
 
     public Task<Result<IReadOnlyList<ProblemSubmissionResponse>>>
-        GetSubmissionsAsync(long resourceId, CancellationToken ct = default);
+        GetSubmissionsAsync(long activityId, CancellationToken ct = default);
 
     public Task<Result<List<CompilerProfileResponse>>>
         GetCompilerProfilesAsync(
-            long resourceId,
+            long activityId,
             CancellationToken ct);
 
     public Task<Result<CompilerProfileResponse>>
         SetCompilerProfileAsync(
-            long resourceId,
+            long activityId,
             long compilerId,
             ProgrammingLanguage language,
             CompilerProfileRequest request,
@@ -94,20 +94,20 @@ public sealed class CodingProblemService(
 
         try
         {
-            var resource = new CourseResource
+            var activity = new CourseActivity
             {
                 ModuleId = moduleId,
-                Type = ResourceType.Problem,
-                Title = request.ResourceInfo.Title,
-                OrderIndex = request.ResourceInfo.OrderIndex,
-                IsPublished = request.ResourceInfo.IsPublished
+                Type = ActivityType.Problem,
+                Title = request.ActivityInfo.Title,
+                OrderIndex = request.ActivityInfo.OrderIndex,
+                IsPublished = request.ActivityInfo.IsPublished
             };
 
-            db.CourseResources.Add(resource);
+            db.CourseActivities.Add(activity);
 
             // var problem = new CodingProblem
             // {
-            //     Resource = resource,
+            //     Activity = activity,
             //     ProblemStatementMarkdown =
             //         request.Info.ProblemStatementMarkdown,
             //     ConstraintsMarkdown =
@@ -124,7 +124,7 @@ public sealed class CodingProblemService(
             //         request.Info.Difficulty
             // };
             var problem = _mapper.Map<CodingProblem>(request);
-            problem.Resource = resource;
+            problem.Activity = activity;
 
             db.CodingProblems.Add(problem);
 
@@ -132,7 +132,7 @@ public sealed class CodingProblemService(
             await transaction.CommitAsync(ct);
 
             var response = new CodingProblemResponse(
-                _mapper.Map<ResourceDetailResponse>(resource),
+                _mapper.Map<ActivityDetailResponse>(activity),
                 _mapper.Map<CodingProblemInfo>(problem));
 
             return Result.Success(response);
@@ -148,18 +148,18 @@ public sealed class CodingProblemService(
         }
     }
 
-    public async Task<Result<CodingProblemResponse>> GetByResourceIdAsync(
-        long resourceId,
+    public async Task<Result<CodingProblemResponse>> GetByActivityIdAsync(
+        long activityId,
         CancellationToken ct)
     {
         await using var db =
             await dbFactory.CreateDbContextAsync(ct);
 
         var problem = await db.CodingProblems
-            .Include(x => x.Resource)
+            .Include(x => x.Activity)
             .AsNoTracking()
             .SingleOrDefaultAsync(
-                x => x.ResourceId == resourceId &&
+                x => x.ActivityId == activityId &&
                      !x.IsDeleted,
                 ct);
 
@@ -170,14 +170,14 @@ public sealed class CodingProblemService(
                 "Coding problem not found.");
         }
 
-        var isOwner = await db.CourseResources
-            .Where(x => x.Id == resourceId)
+        var isOwner = await db.CourseActivities
+            .Where(x => x.Id == activityId)
             .Where(x =>
                 x.Module.Course.InstructorId ==
                 currentUser.UserId)
             .AnyAsync(ct);
 
-        if (!problem.Resource.IsPublished && !isOwner)
+        if (!problem.Activity.IsPublished && !isOwner)
         {
             return Result<CodingProblemResponse>.Failure(
                 ResultError.NotFound,
@@ -186,14 +186,14 @@ public sealed class CodingProblemService(
 
         return Result<CodingProblemResponse>.Success(
             new CodingProblemResponse(
-                _mapper.Map<ResourceDetailResponse>(
-                    problem.Resource),
+                _mapper.Map<ActivityDetailResponse>(
+                    problem.Activity),
                 _mapper.Map<CodingProblemInfo>(
                     problem)));
     }
 
     public async Task<Result<ProblemTestCaseResponse>> AddTestCaseAsync(
-        long resourceId,
+        long activityId,
         ProblemTestCaseRequest request,
         CancellationToken ct)
     {
@@ -215,11 +215,11 @@ public sealed class CodingProblemService(
             await dbFactory.CreateDbContextAsync(ct);
 
         var problem = await db.CodingProblems
-            .Include(x => x.Resource)
+            .Include(x => x.Activity)
                 .ThenInclude(x => x.Module)
                     .ThenInclude(x => x.Course)
             .SingleOrDefaultAsync(
-                x => x.ResourceId == resourceId &&
+                x => x.ActivityId == activityId &&
                      !x.IsDeleted,
                 ct);
 
@@ -230,7 +230,7 @@ public sealed class CodingProblemService(
                 "Coding problem not found.");
         }
 
-        if (problem.Resource.Module.Course.InstructorId !=
+        if (problem.Activity.Module.Course.InstructorId !=
             currentUser.UserId)
         {
             return Result<ProblemTestCaseResponse>.Failure(
@@ -262,7 +262,7 @@ public sealed class CodingProblemService(
 
     public async Task<Result<IReadOnlyList<ProblemTestCaseResponse>>>
         GetTestCasesAsync(
-            long resourceId,
+            long activityId,
             CancellationToken ct)
     {
         if (!currentUser.IsAuthenticated)
@@ -276,11 +276,11 @@ public sealed class CodingProblemService(
             await dbFactory.CreateDbContextAsync(ct);
 
         var problem = await db.CodingProblems
-            .Include(x => x.Resource)
+            .Include(x => x.Activity)
             .ThenInclude(x => x.Module)
             .ThenInclude(x => x.Course)
             .SingleOrDefaultAsync(
-                x => x.ResourceId == resourceId &&
+                x => x.ActivityId == activityId &&
                      !x.IsDeleted,
                 ct);
 
@@ -292,10 +292,10 @@ public sealed class CodingProblemService(
         }
 
         var isOwner =
-            problem.Resource.Module.Course.InstructorId ==
+            problem.Activity.Module.Course.InstructorId ==
             currentUser.UserId;
 
-        if (!problem.Resource.IsPublished && !isOwner)
+        if (!problem.Activity.IsPublished && !isOwner)
         {
             return Result<IReadOnlyList<ProblemTestCaseResponse>>.Failure(
                 ResultError.NotFound,
@@ -314,13 +314,13 @@ public sealed class CodingProblemService(
 
     public async Task<Result<IReadOnlyList<ProblemSubmissionResponse>>>
         GetSubmissionsAsync(
-            long resourceId,
+            long activityId,
             CancellationToken ct = default)
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct);
 
         IReadOnlyList<ProblemSubmissionResponse>? results = [];
-        var problem = await db.CodingProblems.AsNoTracking().FirstOrDefaultAsync(p => p.ResourceId == resourceId);
+        var problem = await db.CodingProblems.AsNoTracking().FirstOrDefaultAsync(p => p.ActivityId == activityId);
         if (problem is null)
             return Result.Failure(JudgeSubmissionErrors.NotFound, results);
 
@@ -332,13 +332,13 @@ public sealed class CodingProblemService(
     }
 
     public async Task<Result<List<CompilerProfileResponse>>> GetCompilerProfilesAsync(
-            long resourceId,
+            long activityId,
             CancellationToken ct = default)
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct);
         var problem = await db.CodingProblems
             .AsNoTracking()
-            .Where(p => p.ResourceId == resourceId)
+            .Where(p => p.ActivityId == activityId)
             .FirstOrDefaultAsync(ct);
         if (problem is null)
             return Result<List<CompilerProfileResponse>>.Failure(ResultError.NotFound, "");
@@ -359,7 +359,7 @@ public sealed class CodingProblemService(
 
     // NOTE: One profile per language per problem (for now at least)
     public async Task<Result<CompilerProfileResponse>> SetCompilerProfileAsync(
-            long resourceId,
+            long activityId,
             long compilerId,
             ProgrammingLanguage language,
             CompilerProfileRequest request,
@@ -368,7 +368,7 @@ public sealed class CodingProblemService(
         await using var db = await dbFactory.CreateDbContextAsync(ct);
         var problem = await db.CodingProblems
             .AsNoTracking()
-            .Where(p => p.ResourceId == resourceId)
+            .Where(p => p.ActivityId == activityId)
             .FirstOrDefaultAsync(ct);
         if (problem is null)
             return Result<CompilerProfileResponse>.Failure(ResultError.NotFound, "");

@@ -16,7 +16,7 @@ public class Comment : BaseEntity
     public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
-    public CourseResource Resource { get; set; } = default!;
+    public CourseActivity Activity { get; set; } = default!;
     public User User { get; set; } = default!;
     public Comment? ParentComment { get; set; }
     public ICollection<Comment> Replies { get; set; } = [];

@@ -8,116 +8,116 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Services.Courses;
 
-public interface IResourceService
+public interface IActivityService
 {
-    public Task<ResourceDetailResponse?> GetResourceByIdAsync(long resourceId);
+    public Task<ActivityDetailResponse?> GetActivityByIdAsync(long activityId);
 
-    public Task<List<ResourceResponse>> GetPublishedResourcesAsync(long moduleId);
+    public Task<List<ActivityResponse>> GetPublishedActivitiesAsync(long moduleId);
 
-    public Task<List<ResourceResponse>> GetUnpublishedResourcesAsync(long moduleId);
+    public Task<List<ActivityResponse>> GetUnpublishedActivitiesAsync(long moduleId);
 
-    public Task<ResourceProgressResponse?> GetResourceProgressAsync(long resourceId);
+    public Task<ActivityProgressResponse?> GetActivityProgressAsync(long activityId);
 
-    public Task<ResourceProgressResponse?> MarkResourceCompletedAsync(long resourceId);
+    public Task<ActivityProgressResponse?> MarkActivityCompletedAsync(long activityId);
 
-    public Task<bool> DeleteResourceAsync(long resourceId);
+    public Task<bool> DeleteActivityAsync(long activityId);
 
-    public Task<bool> ReorderResourceAsync(long resourceId, int orderIndex);
+    public Task<bool> ReorderActivityAsync(long activityId, int orderIndex);
 
-    public Task<bool> CheckOwnerAsync(long resourceId);
+    public Task<bool> CheckOwnerAsync(long activityId);
 }
 
-public class ResourceService(
+public class ActivityService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
-    IMapper mapper) : IResourceService
+    IMapper mapper) : IActivityService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<ResourceDetailResponse?> GetResourceByIdAsync(long resourceId)
+    public async Task<ActivityDetailResponse?> GetActivityByIdAsync(long activityId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
-        return await db.CourseResources
+        return await db.CourseActivities
             .AsNoTracking()
-            .Where(r => r.Id == resourceId)
+            .Where(r => r.Id == activityId)
             .Where(r => r.IsPublished || r.Module.Course.InstructorId == currentUserId)
-            .Select(r => _mapper.Map<ResourceDetailResponse>(r))
+            .Select(r => _mapper.Map<ActivityDetailResponse>(r))
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<ResourceResponse>> GetPublishedResourcesAsync(long moduleId)
+    public async Task<List<ActivityResponse>> GetPublishedActivitiesAsync(long moduleId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        return await db.CourseResources
+        return await db.CourseActivities
             .AsNoTracking()
             .Where(r => r.ModuleId == moduleId && r.IsPublished)
-            .Select(r => _mapper.Map<ResourceResponse>(r))
+            .Select(r => _mapper.Map<ActivityResponse>(r))
             .ToListAsync();
     }
 
-    public async Task<List<ResourceResponse>> GetUnpublishedResourcesAsync(long moduleId)
+    public async Task<List<ActivityResponse>> GetUnpublishedActivitiesAsync(long moduleId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
-        return await db.CourseResources
+        return await db.CourseActivities
             .AsNoTracking()
             .Where(r => r.ModuleId == moduleId && !r.IsPublished && r.Module.Course.InstructorId == currentUserId)
-            .Select(r => _mapper.Map<ResourceResponse>(r))
+            .Select(r => _mapper.Map<ActivityResponse>(r))
             .ToListAsync();
     }
 
-    public async Task<ResourceProgressResponse?> GetResourceProgressAsync(long resourceId)
+    public async Task<ActivityProgressResponse?> GetActivityProgressAsync(long activityId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var userId = _currentUserService.UserId;
 
-        var resourceExists = await db.CourseResources
+        var activityExists = await db.CourseActivities
             .AsNoTracking()
-            .AnyAsync(r => r.Id == resourceId && r.IsPublished);
-        if (!resourceExists)
+            .AnyAsync(r => r.Id == activityId && r.IsPublished);
+        if (!activityExists)
             return null;
 
-        var progress = await db.ResourceProgress
+        var progress = await db.ActivityProgress
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.ResourceId == resourceId && p.UserId == userId);
+            .FirstOrDefaultAsync(p => p.ActivityId == activityId && p.UserId == userId);
 
         return progress is null
-            ? new ResourceProgressResponse(false, null, null)
-            : new ResourceProgressResponse(
+            ? new ActivityProgressResponse(false, null, null)
+            : new ActivityProgressResponse(
                 progress.IsCompleted,
                 progress.CompletedAt,
                 progress.LastAccessedAt);
     }
 
-    public async Task<ResourceProgressResponse?> MarkResourceCompletedAsync(long resourceId)
+    public async Task<ActivityProgressResponse?> MarkActivityCompletedAsync(long activityId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var userId = _currentUserService.UserId;
 
-        var resourceExists = await db.CourseResources
+        var activityExists = await db.CourseActivities
             .AsNoTracking()
-            .AnyAsync(r => r.Id == resourceId && r.IsPublished);
-        if (!resourceExists)
+            .AnyAsync(r => r.Id == activityId && r.IsPublished);
+        if (!activityExists)
             return null;
 
-        var progress = await db.ResourceProgress
-            .FirstOrDefaultAsync(p => p.ResourceId == resourceId && p.UserId == userId);
+        var progress = await db.ActivityProgress
+            .FirstOrDefaultAsync(p => p.ActivityId == activityId && p.UserId == userId);
         var now = DateTime.UtcNow;
 
         if (progress is null)
         {
-            progress = new ResourceProgress
+            progress = new ActivityProgress
             {
                 UserId = userId,
-                ResourceId = resourceId,
+                ActivityId = activityId,
                 IsCompleted = true,
                 CompletedAt = now,
                 LastAccessedAt = now
             };
-            db.ResourceProgress.Add(progress);
+            db.ActivityProgress.Add(progress);
         }
         else
         {
@@ -128,41 +128,41 @@ public class ResourceService(
 
         await db.SaveChangesAsync();
 
-        return new ResourceProgressResponse(
+        return new ActivityProgressResponse(
             progress.IsCompleted,
             progress.CompletedAt,
             progress.LastAccessedAt);
     }
 
-    public async Task<bool> DeleteResourceAsync(long resourceId)
+    public async Task<bool> DeleteActivityAsync(long activityId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Id == resourceId);
-        if (resource is null)
+        var activity = await db.CourseActivities.FirstOrDefaultAsync(r => r.Id == activityId);
+        if (activity is null)
             return false;
-        db.CourseResources.Remove(resource);
+        db.CourseActivities.Remove(activity);
         await db.SaveChangesAsync();
         return true;
     }
 
-    public async Task<bool> ReorderResourceAsync(long resourceId, int orderIndex)
+    public async Task<bool> ReorderActivityAsync(long activityId, int orderIndex)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         await using var transaction = await db.Database.BeginTransactionAsync();
 
         try
         {
-            var target = await db.CourseResources.FirstOrDefaultAsync(m => m.Id == resourceId);
+            var target = await db.CourseActivities.FirstOrDefaultAsync(m => m.Id == activityId);
             if (target == null) return false;
 
-            var resources = db.CourseResources
+            var activities = db.CourseActivities
                 .Where(m => m.ModuleId == target.ModuleId);
-            var count = await resources.CountAsync();
+            var count = await activities.CountAsync();
 
             if (orderIndex < 0) orderIndex = 0;
             orderIndex = Math.Min(orderIndex, count + 1);
 
-            await resources
+            await activities
                 .Where(m => m.OrderIndex >= orderIndex)
                 .ExecuteUpdateAsync(m => m.SetProperty(m => m.OrderIndex, m => m.OrderIndex + 1));
             target.OrderIndex = orderIndex;
@@ -178,24 +178,24 @@ public class ResourceService(
         return true;
     }
 
-    public async Task<bool> CheckOwnerAsync(long resourceId)
+    public async Task<bool> CheckOwnerAsync(long activityId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var currentUserId = _currentUserService.UserId;
-        return await db.CourseResources
+        return await db.CourseActivities
             .AsNoTracking()
-            .Where(c => c.Id == resourceId && c.Module.Course.InstructorId == currentUserId)
+            .Where(c => c.Id == activityId && c.Module.Course.InstructorId == currentUserId)
             .AnyAsync();
     }
 
-    static public async Task<List<long>> GetCourseResourceIdsAsync(AppDbContext db, long courseId)
+    static public async Task<List<long>> GetCourseActivityIdsAsync(AppDbContext db, long courseId)
     {
         var moduleIds = await db.CourseModules
             .AsNoTracking()
             .Where(m => m.CourseId == courseId)
             .Select(m => m.Id)
             .ToListAsync();
-        return await db.CourseResources
+        return await db.CourseActivities
             .AsNoTracking()
             .Where(r => moduleIds.Contains(r.ModuleId))
             .Select(r => r.Id)
@@ -204,17 +204,17 @@ public class ResourceService(
 
     static public async Task<CourseProgress> GetCourseProgressAsync(AppDbContext db, long courseId, long userId)
     {
-        var resourceIds = await GetCourseResourceIdsAsync(db, courseId);
-        var completed = await db.ResourceProgress
+        var activityIds = await GetCourseActivityIdsAsync(db, courseId);
+        var completed = await db.ActivityProgress
             .AsNoTracking()
-            .Where(r => r.UserId == userId && r.IsCompleted && resourceIds.Contains(r.ResourceId))
+            .Where(r => r.UserId == userId && r.IsCompleted && activityIds.Contains(r.ActivityId))
             .CountAsync();
-        return new CourseProgress(Completed: completed, Total: resourceIds.Count);
+        return new CourseProgress(Completed: completed, Total: activityIds.Count);
     }
 
-    static public async Task<CourseResource> CreateResourceAsync(AppDbContext db, long moduleId, ResourceRequestInfo info, ResourceType type, CancellationToken ct = default)
+    static public async Task<CourseActivity> CreateActivityAsync(AppDbContext db, long moduleId, ActivityRequestInfo info, ActivityType type, CancellationToken ct = default)
     {
-        var resource = new CourseResource
+        var activity = new CourseActivity
         {
             ModuleId = moduleId,
             Type = type,
@@ -223,26 +223,26 @@ public class ResourceService(
             IsPublished = info.IsPublished,
         };
 
-        db.CourseResources.Add(resource);
+        db.CourseActivities.Add(activity);
         await db.SaveChangesAsync(ct);
-        return resource;
+        return activity;
     }
 
-    static public async Task<CourseResource> UpdateResourceAsync(AppDbContext db, long resourceId, ResourceRequestInfo info)
+    static public async Task<CourseActivity> UpdateActivityAsync(AppDbContext db, long activityId, ActivityRequestInfo info)
     {
-        var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Id == resourceId);
-        if (resource is not null)
+        var activity = await db.CourseActivities.FirstOrDefaultAsync(r => r.Id == activityId);
+        if (activity is not null)
         {
-            resource.Title = info.Title;
-            resource.OrderIndex = info.OrderIndex;
-            resource.IsPublished = info.IsPublished;
+            activity.Title = info.Title;
+            activity.OrderIndex = info.OrderIndex;
+            activity.IsPublished = info.IsPublished;
 
-            db.CourseResources.Update(resource);
+            db.CourseActivities.Update(activity);
             await db.SaveChangesAsync();
 
-            return resource;
+            return activity;
         }
 
-        throw new Exception($"UpdateResourceAsync: Resource id {resourceId} does not exist.");
+        throw new Exception($"UpdateActivityAsync: Activity id {activityId} does not exist.");
     }
 }

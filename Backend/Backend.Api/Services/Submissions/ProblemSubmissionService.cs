@@ -20,7 +20,7 @@ public interface IProblemSubmissionService
         Get(long submissionId, CancellationToken ct = default);
 
     public Task<Result<ProblemSubmissionResponse>>
-        Send(long resourceId,
+        Send(long activityId,
             ProblemSubmissionRequest request,
             CancellationToken ct = default);
 }
@@ -52,11 +52,11 @@ public sealed class ProblemSubmissionService(
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<Result<ProblemSubmissionResponse>> Send(long resourceId, ProblemSubmissionRequest request, CancellationToken ct = default)
+    public async Task<Result<ProblemSubmissionResponse>> Send(long activityId, ProblemSubmissionRequest request, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
-        var problem = await db.CodingProblems.FirstOrDefaultAsync(p => p.ResourceId == resourceId, ct);
+        var problem = await db.CodingProblems.FirstOrDefaultAsync(p => p.ActivityId == activityId, ct);
         if (problem is null) return Result<ProblemSubmissionResponse>.Failure(ResultError.NotFound, "Problem not found.");
 
         // TODO: See if this needs to be changed?

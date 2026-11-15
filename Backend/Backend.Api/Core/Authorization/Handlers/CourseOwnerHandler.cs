@@ -7,14 +7,14 @@ using Microsoft.AspNetCore.Authorization;
 namespace Backend.Api.Core.Authorization.Handlers;
 
 public sealed class CourseOwnerHandler(
-    IHttpContextAccessor httpContextAccessor) : AuthorizationHandler<CourseOwnerRequirement, CourseAuthorizationResource>
+    IHttpContextAccessor httpContextAccessor) : AuthorizationHandler<CourseOwnerRequirement, CourseAuthorizationActivity>
 {
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
 
     protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
         CourseOwnerRequirement requirement,
-        CourseAuthorizationResource resource)
+        CourseAuthorizationActivity activity)
     {
         if (context.User.IsInRole(UserRoles.Admin.ToString()))
         {
@@ -33,7 +33,7 @@ public sealed class CourseOwnerHandler(
             return;
         }
 
-        if (resource.CreatorId == userId)
+        if (activity.CreatorId == userId)
             context.Succeed(requirement);
     }
 }

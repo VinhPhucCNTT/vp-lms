@@ -17,12 +17,12 @@ public interface IAssessmentQuestionService
             CancellationToken ct = default);
 
     public Task<Result<AssessmentQuestionInfo>> AddAsync(
-        long resourceId,
+        long activityId,
         AssessmentQuestionInfo request,
         CancellationToken ct = default);
 
     public Task<Result<AssessmentQuestionInfo>> AddFromBankAsync(
-           long resourceId,
+           long activityId,
            long questionId,
            decimal points,
            CancellationToken ct = default);
@@ -74,7 +74,7 @@ public class AssessmentQuestionService(
     }
 
     public async Task<Result<AssessmentQuestionInfo>> AddAsync(
-        long resourceId,
+        long activityId,
         AssessmentQuestionInfo request,
         CancellationToken ct = default)
     {
@@ -83,9 +83,9 @@ public class AssessmentQuestionService(
 
         var assessment = await db.Assessments
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == resourceId, ct);
+            .FirstOrDefaultAsync(x => x.Id == activityId, ct);
         if (assessment is null)
-            return Result<AssessmentQuestionInfo>.Failure(ResourceErrors.NotFound);
+            return Result<AssessmentQuestionInfo>.Failure(ActivityErrors.NotFound);
 
         // await EnsureCanModifyQuestionsAsync(
         //     assessment,
@@ -126,7 +126,7 @@ public class AssessmentQuestionService(
     }
 
     public async Task<Result<AssessmentQuestionInfo>> AddFromBankAsync(
-           long resourceId,
+           long activityId,
            long questionId,
            decimal points,
            CancellationToken ct = default)
@@ -136,15 +136,15 @@ public class AssessmentQuestionService(
 
         var assessment = await db.Assessments
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == resourceId, ct);
+            .FirstOrDefaultAsync(x => x.Id == activityId, ct);
 
         if (assessment is null)
         {
             return Result<AssessmentQuestionInfo>.Failure(
-                ResourceErrors.NotFound);
+                ActivityErrors.NotFound);
         }
 
-        if (!await CanModifyQuestionsAsync(db, resourceId, ct))
+        if (!await CanModifyQuestionsAsync(db, activityId, ct))
         {
             return Result<AssessmentQuestionInfo>.Failure(
                 AssessmentErrors.HasAttempts);
@@ -170,13 +170,13 @@ public class AssessmentQuestionService(
             return Result<AssessmentQuestionInfo>.Failure(validation.Error!);
 
         var nextIndex = await db.AssessmentQuestions
-            .Where(x => x.AssessmentId == resourceId)
+            .Where(x => x.AssessmentId == activityId)
             .Select(x => (int?)x.OrderIndex)
             .MaxAsync(ct) ?? -1;
 
         var assessmentQuestion = new AssessmentQuestion
         {
-            AssessmentId = resourceId,
+            AssessmentId = activityId,
             QuestionId = source.Id,
 
             // Snapshot of the bank question.
@@ -208,7 +208,7 @@ public class AssessmentQuestionService(
             .FirstOrDefaultAsync(x => x.Id == assessmentId, ct);
 
         if (assessment is null)
-            return Result.Failure(ResourceErrors.NotFound);
+            return Result.Failure(ActivityErrors.NotFound);
 
         if (!await CanModifyQuestionsAsync(db, assessmentId, ct))
             return Result.Failure(AssessmentErrors.HasAttempts);
@@ -255,7 +255,7 @@ public class AssessmentQuestionService(
             .FirstOrDefaultAsync(x => x.Id == assessmentId, ct);
 
         if (assessment is null)
-            return Result.Failure(ResourceErrors.NotFound);
+            return Result.Failure(ActivityErrors.NotFound);
 
         if (!await CanModifyQuestionsAsync(db, assessmentId, ct))
             return Result.Failure(AssessmentErrors.HasAttempts);
@@ -304,7 +304,7 @@ public class AssessmentQuestionService(
             .FirstOrDefaultAsync(x => x.Id == assessmentId, ct);
 
         if (assessment is null)
-            return Result.Failure(ResourceErrors.NotFound);
+            return Result.Failure(ActivityErrors.NotFound);
 
         if (!await CanModifyQuestionsAsync(db, assessmentId, ct))
             return Result.Failure(AssessmentErrors.HasAttempts);

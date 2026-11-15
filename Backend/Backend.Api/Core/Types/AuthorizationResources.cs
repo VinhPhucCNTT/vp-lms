@@ -1,6 +1,6 @@
 namespace Backend.Api.Core.Types;
 
-public record CourseAuthorizationResource(
+public record CourseAuthorizationActivity(
     long CourseId,
     long CreatorId
 );

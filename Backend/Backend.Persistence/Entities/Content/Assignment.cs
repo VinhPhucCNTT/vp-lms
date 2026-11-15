@@ -6,7 +6,7 @@ namespace Backend.Persistence.Entities.Content;
 
 public class Assignment : BaseEntity, ISoftDeletable
 {
-    public long ResourceId { get; set; }
+    public long ActivityId { get; set; }
 
     public required string InstructionsMD { get; set; }
     public required SubmissionType SubmissionType { get; set; }
@@ -26,7 +26,7 @@ public class Assignment : BaseEntity, ISoftDeletable
     public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
-    public CourseResource Resource { get; set; } = default!;
+    public CourseActivity Activity { get; set; } = default!;
     public ICollection<AssignmentSubmission> Submissions { get; set; } = [];
 }
 

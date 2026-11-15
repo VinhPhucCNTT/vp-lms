@@ -18,7 +18,7 @@ public interface IQuestionService
         CancellationToken ct = default);
 
     public Task<List<QuestionResponse>> GetForAssessmentAsync(
-        long resourceId,
+        long activityId,
         CancellationToken ct = default);
 
     public Task<Result> UpdateAsync(
@@ -111,13 +111,13 @@ public sealed class QuestionService(
     }
 
     public async Task<List<QuestionResponse>> GetForAssessmentAsync(
-        long resourceId,
+        long activityId,
         CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var questions = await db.AssessmentQuestions
             .AsNoTracking()
-            .Where(x => x.Assessment.ResourceId == resourceId && x.QuestionId != null)
+            .Where(x => x.Assessment.ActivityId == activityId && x.QuestionId != null)
             .Include(x => x.Question)
             .OrderBy(x => x.OrderIndex)
             .Select(x => x.Question)

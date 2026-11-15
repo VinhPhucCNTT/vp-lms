@@ -6,7 +6,7 @@ namespace Backend.Persistence.Entities.Content;
 
 public class CodingProblem : BaseEntity, ISoftDeletable
 {
-    public long ResourceId { get; set; }
+    public long ActivityId { get; set; }
 
     public required string ProblemStatementMarkdown { get; set; }
     public string? ConstraintsMarkdown { get; set; }
@@ -22,7 +22,7 @@ public class CodingProblem : BaseEntity, ISoftDeletable
     public DateTime? DeletedAt { get; set; }
 
     // Navigation properties
-    public CourseResource Resource { get; set; } = default!;
+    public CourseActivity Activity { get; set; } = default!;
     public ICollection<ProblemTestCase> TestCases { get; set; } = [];
     public ICollection<ProblemSubmission> Submissions { get; set; } = [];
     public ICollection<CompilerProfile> Profiles { get; set; } = [];

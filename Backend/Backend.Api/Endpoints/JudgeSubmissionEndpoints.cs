@@ -14,7 +14,7 @@ public static class JudgeSubmissionEndpoints
                 .WithTags("Coding Submissions");
 
         group.MapPost(
-            "/{resourceId}",
+            "/{activityId}",
             HandleSend)
         .RequireAuthorization("IsStudent");
 
@@ -25,19 +25,19 @@ public static class JudgeSubmissionEndpoints
     }
 
     private static async Task<IResult> HandleSend(
-        string resourceId,
+        string activityId,
         ProblemSubmissionRequest request,
         SqidsEncoder<long> sqidsEncoder,
         IProblemSubmissionService judgeSubmissionService,
         CancellationToken ct)
     {
         var decoded =
-            sqidsEncoder.Decode(resourceId);
+            sqidsEncoder.Decode(activityId);
 
         if (decoded.Count != 1)
         {
             return TypedResults.BadRequest(
-                "Invalid resource ID.");
+                "Invalid activity ID.");
         }
 
         var result = await judgeSubmissionService.Send(decoded[0], request, ct);

@@ -12,15 +12,15 @@ public interface IDashboardService
     public Task<StudentStatsResponse> GetStudentDashboardAsync(CancellationToken ct = default);
     public Task<InstructorStatsResponse> GetInstructorDashboardAsync(CancellationToken ct = default);
 
-    public Task<List<long>> GetStudentResourceIdsAsync(
+    public Task<List<long>> GetStudentActivityIdsAsync(
         AppDbContext db,
-        ResourceType type,
+        ActivityType type,
         long userId,
         CancellationToken ct = default);
 
-    public Task<List<long>> GetInstructorResourceIdsAsync(
+    public Task<List<long>> GetInstructorActivityIdsAsync(
         AppDbContext db,
-        ResourceType type,
+        ActivityType type,
         long userId,
         CancellationToken ct = default);
 }
@@ -45,7 +45,7 @@ public class DashboardService(
             .Distinct()
             .CountAsync(ct);
 
-        var assignmentIds = await GetStudentResourceIdsAsync(db, ResourceType.Assignment, currentUserId, ct);
+        var assignmentIds = await GetStudentActivityIdsAsync(db, ActivityType.Assignment, currentUserId, ct);
         var pendingAssign = assignmentIds.Count - await db.AssignmentSubmissions
             .AsNoTracking()
             .Where(s => s.UserId == currentUserId && assignmentIds.Contains(s.AssignmentId))
@@ -53,7 +53,7 @@ public class DashboardService(
             .Distinct()
             .CountAsync(ct);
 
-        var assessmentIds = await GetStudentResourceIdsAsync(db, ResourceType.Assessment, currentUserId, ct);
+        var assessmentIds = await GetStudentActivityIdsAsync(db, ActivityType.Assessment, currentUserId, ct);
         var pendingAssess = assessmentIds.Count - await db.AssessmentAttempts
             .AsNoTracking()
             .Where(s => s.StudentId == currentUserId && assessmentIds.Contains(s.AssessmentId))
@@ -61,7 +61,7 @@ public class DashboardService(
             .Distinct()
             .CountAsync(ct);
 
-        var problemIds = await GetStudentResourceIdsAsync(db, ResourceType.Problem, currentUserId, ct);
+        var problemIds = await GetStudentActivityIdsAsync(db, ActivityType.Problem, currentUserId, ct);
         var pendingProblems = problemIds.Count - await db.ProblemSubmissions
             .AsNoTracking()
             .Where(s => s.UserId == currentUserId && problemIds.Contains(s.ProblemId))
@@ -93,7 +93,7 @@ public class DashboardService(
             .Where(c => c.IsPublished)
             .CountAsync(ct);
 
-        var assignmentIds = await GetInstructorResourceIdsAsync(db, ResourceType.Assignment, currentUserId, ct);
+        var assignmentIds = await GetInstructorActivityIdsAsync(db, ActivityType.Assignment, currentUserId, ct);
         var pendingSubmissions = db.AssignmentSubmissions
             .AsNoTracking()
             .Where(s => assignmentIds.Contains(s.AssignmentId) && s.Grade == null);
@@ -118,26 +118,26 @@ public class DashboardService(
             gradedThisWeek);
     }
 
-    public async Task<List<long>> GetStudentResourceIdsAsync(
+    public async Task<List<long>> GetStudentActivityIdsAsync(
         AppDbContext db,
-        ResourceType type,
+        ActivityType type,
         long userId,
         CancellationToken ct = default)
     {
-        System.Linq.Expressions.Expression<Func<CourseResource, long>> selectExpr;
+        System.Linq.Expressions.Expression<Func<CourseActivity, long>> selectExpr;
 
         switch (type)
         {
-            case ResourceType.Lesson:
+            case ActivityType.Lesson:
                 selectExpr = r => r.Lesson!.Id;
                 break;
-            case ResourceType.Assignment:
+            case ActivityType.Assignment:
                 selectExpr = r => r.Assignment!.Id;
                 break;
-            case ResourceType.Assessment:
+            case ActivityType.Assessment:
                 selectExpr = r => r.Assessment!.Id;
                 break;
-            case ResourceType.Problem:
+            case ActivityType.Problem:
                 selectExpr = r => r.Problem!.Id;
                 break;
             default:
@@ -155,33 +155,33 @@ public class DashboardService(
             .Select(m => m.Id)
             .ToListAsync(ct);
 
-        return await db.CourseResources
+        return await db.CourseActivities
             .AsNoTracking()
             .Where(r => r.IsPublished && r.Type == type && moduleIds.Contains(r.ModuleId))
             .Select(selectExpr)
             .ToListAsync(ct);
     }
 
-    public async Task<List<long>> GetInstructorResourceIdsAsync(
+    public async Task<List<long>> GetInstructorActivityIdsAsync(
         AppDbContext db,
-        ResourceType type,
+        ActivityType type,
         long userId,
         CancellationToken ct = default)
     {
-        System.Linq.Expressions.Expression<Func<CourseResource, long>> selectExpr;
+        System.Linq.Expressions.Expression<Func<CourseActivity, long>> selectExpr;
 
         switch (type)
         {
-            case ResourceType.Lesson:
+            case ActivityType.Lesson:
                 selectExpr = r => r.Lesson!.Id;
                 break;
-            case ResourceType.Assignment:
+            case ActivityType.Assignment:
                 selectExpr = r => r.Assignment!.Id;
                 break;
-            case ResourceType.Assessment:
+            case ActivityType.Assessment:
                 selectExpr = r => r.Assessment!.Id;
                 break;
-            case ResourceType.Problem:
+            case ActivityType.Problem:
                 selectExpr = r => r.Problem!.Id;
                 break;
             default:
@@ -198,7 +198,7 @@ public class DashboardService(
             .Select(m => m.Id)
             .ToListAsync(ct);
 
-        return await db.CourseResources
+        return await db.CourseActivities
             .AsNoTracking()
             .Where(r => r.IsPublished && r.Type == type && moduleIds.Contains(r.ModuleId))
             .Select(selectExpr)

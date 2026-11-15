@@ -3,12 +3,12 @@ using FluentValidation;
 
 namespace Backend.Api.Core.Validators;
 
-public class ResourceRequestInfoValidator : AbstractValidator<ResourceRequestInfo>
+public class ActivityRequestInfoValidator : AbstractValidator<ActivityRequestInfo>
 {
-    public ResourceRequestInfoValidator()
+    public ActivityRequestInfoValidator()
     {
         RuleFor(x => x.Title)
-            .NotEmpty().WithMessage("Resource must be assigned a name.");
+            .NotEmpty().WithMessage("Activity must be assigned a name.");
 
         RuleFor(x => x.OrderIndex)
             .GreaterThanOrEqualTo(0).WithMessage("Invalid index value.");

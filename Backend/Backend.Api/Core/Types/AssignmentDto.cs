@@ -22,12 +22,12 @@ public record AssignmentListInfo(
 );
 
 public record AssignmentRequest(
-    ResourceRequestInfo ResourceInfo,
+    ActivityRequestInfo ActivityInfo,
     AssignmentInfo Info
 );
 
 public record AssignmentResponse(
-    ResourceDetailResponse ResourceInfo,
+    ActivityDetailResponse ActivityInfo,
     AssignmentInfo Info
 );
 
@@ -42,7 +42,7 @@ public record StudentAssignmentSummaryResponse(
 );
 
 public record AssignmentFileResponse(
-    string ResourceId,
+    string ActivityId,
     FileResponse FileInfo
 );
 

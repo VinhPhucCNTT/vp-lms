@@ -2,32 +2,32 @@ using Backend.Persistence.Entities.Courses;
 
 namespace Backend.Api.Core.Types;
 
-public record ResourceResponse(
+public record ActivityResponse(
     string Id,
-    ResourceType Type,
+    ActivityType Type,
     string Title,
     int OrderIndex
 ) : IEntityResponse;
 
-public record StudentResourceResponse(
+public record StudentActivityResponse(
     string Id,
-    ResourceType Type,
+    ActivityType Type,
     string Title,
     int OrderIndex,
     bool StatusIsCompleted
 ) : IEntityResponse;
 
-public record InstructorResourceResponse(
+public record InstructorActivityResponse(
     string Id,
-    ResourceType Type,
+    ActivityType Type,
     string Title,
     int OrderIndex,
     bool IsPublished
 ) : IEntityResponse;
 
-public record ResourceDetailResponse(
+public record ActivityDetailResponse(
     string Id,
-    ResourceType Type,
+    ActivityType Type,
     string Title,
     int OrderIndex,
     DateTime? AvailableFrom,
@@ -36,13 +36,13 @@ public record ResourceDetailResponse(
     DateTime UpdatedAt
 ) : IEntityResponse;
 
-public record ResourceProgressResponse(
+public record ActivityProgressResponse(
     bool IsCompleted,
     DateTime? CompletedAt,
     DateTime? LastAccessedAt
 );
 
-public record ResourceRequestInfo
+public record ActivityRequestInfo
 (
     string Title,
     int OrderIndex,

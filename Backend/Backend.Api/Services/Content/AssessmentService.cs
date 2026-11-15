@@ -13,9 +13,9 @@ namespace Backend.Api.Services.Content;
 
 public interface IAssessmentService
 {
-    public Task<Assessment?> GetAsync(long resourceId, CancellationToken ct = default);
+    public Task<Assessment?> GetAsync(long activityId, CancellationToken ct = default);
 
-    public Task<AssessmentResponse?> GetDtoByIdAsync(long resourceId, CancellationToken ct = default);
+    public Task<AssessmentResponse?> GetDtoByIdAsync(long activityId, CancellationToken ct = default);
 
     public Task<List<AssessmentListResponse>> QueryAsync(CancellationToken ct = default);
 
@@ -23,11 +23,11 @@ public interface IAssessmentService
 
     public Task<AssessmentResponse?> UpdateAsync(long assessmentId, AssessmentRequest request, CancellationToken ct = default);
 
-    public Task<Result<bool>> SetPublishStatusAsync(long resourceId, bool isPublished, CancellationToken ct = default);
+    public Task<Result<bool>> SetPublishStatusAsync(long activityId, bool isPublished, CancellationToken ct = default);
 
-    public Task<Result<string?>> GetPasswordAsync(long resourceId, CancellationToken ct = default);
+    public Task<Result<string?>> GetPasswordAsync(long activityId, CancellationToken ct = default);
 
-    public Task<Result<string?>> SetPasswordAsync(long resourceId, string password, CancellationToken ct = default);
+    public Task<Result<string?>> SetPasswordAsync(long activityId, string password, CancellationToken ct = default);
 }
 
 public class AssessmentService(
@@ -41,32 +41,32 @@ public class AssessmentService(
     private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
 
-    public async Task<Assessment?> GetAsync(long resourceId, CancellationToken ct = default)
+    public async Task<Assessment?> GetAsync(long activityId, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         return await db.Assessments
-            .Where(a => a.ResourceId == resourceId)
+            .Where(a => a.ActivityId == activityId)
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<AssessmentResponse?> GetDtoByIdAsync(long resourceId, CancellationToken ct = default)
+    public async Task<AssessmentResponse?> GetDtoByIdAsync(long activityId, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var userId = _currentUserService.UserId;
         var assessment = await db.Assessments
             .AsNoTracking()
-            .Where(a => a.ResourceId == resourceId)
-            .Where(a => a.Resource.IsPublished)
+            .Where(a => a.ActivityId == activityId)
+            .Where(a => a.Activity.IsPublished)
             .Where(a => db.Enrollments.Any(e =>
-                e.CourseId == a.Resource.Module.CourseId &&
+                e.CourseId == a.Activity.Module.CourseId &&
                 e.UserId == userId))
-            .Include(a => a.Resource)
+            .Include(a => a.Activity)
             .FirstOrDefaultAsync(ct);
 
         return assessment is null
             ? null
             : new AssessmentResponse(
-                _mapper.Map<ResourceDetailResponse>(assessment.Resource),
+                _mapper.Map<ActivityDetailResponse>(assessment.Activity),
                 ToInfo(assessment));
     }
 
@@ -76,11 +76,11 @@ public class AssessmentService(
         var userId = _currentUserService.UserId;
         var assessments = await db.Assessments
             .AsNoTracking()
-            .Where(a => a.Resource.IsPublished)
+            .Where(a => a.Activity.IsPublished)
             .Where(a => db.Enrollments.Any(e =>
-                e.CourseId == a.Resource.Module.CourseId &&
+                e.CourseId == a.Activity.Module.CourseId &&
                 e.UserId == userId))
-            .Include(x => x.Resource)
+            .Include(x => x.Activity)
             .ToListAsync(ct);
 
         var result = new List<AssessmentListResponse>(assessments.Count);
@@ -104,7 +104,7 @@ public class AssessmentService(
                 .FirstOrDefault();
 
             result.Add(new AssessmentListResponse(
-                _mapper.Map<ResourceResponse>(assessment.Resource),
+                _mapper.Map<ActivityResponse>(assessment.Activity),
                 ToInfo(assessment),
                 questionCount,
                 attempts.Count,
@@ -134,11 +134,11 @@ public class AssessmentService(
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
-        var resource = await ResourceService.CreateResourceAsync(db, moduleId, request.ResourceInfo, ResourceType.Assessment, ct);
+        var activity = await ActivityService.CreateActivityAsync(db, moduleId, request.ActivityInfo, ActivityType.Assessment, ct);
         var assessment = new Assessment
         {
-            ResourceId = resource.Id,
-            Description = request.Info.Description,
+            ActivityId = activity.Id,
+            Description = request.Info.Description ?? "",
             TimeLimitMinutes = request.Info.TimeLimitMinutes ?? 0,
             MaxAttempts = request.Info.MaxAttempts,
             AvailableFrom = request.Info.AvailableFrom,
@@ -149,7 +149,7 @@ public class AssessmentService(
         db.Assessments.Add(assessment);
         await db.SaveChangesAsync(ct);
         return new AssessmentResponse(
-            _mapper.Map<ResourceDetailResponse>(resource),
+            _mapper.Map<ActivityDetailResponse>(activity),
             _mapper.Map<AssessmentInfo>(assessment)
         );
     }
@@ -161,9 +161,9 @@ public class AssessmentService(
         if (assessment is null)
             return null;
 
-        var resource = await ResourceService.UpdateResourceAsync(db, assessment.ResourceId, request.ResourceInfo);
+        var activity = await ActivityService.UpdateActivityAsync(db, assessment.ActivityId, request.ActivityInfo);
 
-        assessment.Description = request.Info.Description;
+        assessment.Description = request.Info.Description ?? "";
         assessment.TimeLimitMinutes = request.Info.TimeLimitMinutes ?? 0;
         assessment.MaxAttempts = request.Info.MaxAttempts;
         assessment.AvailableFrom = request.Info.AvailableFrom;
@@ -173,7 +173,7 @@ public class AssessmentService(
         db.Assessments.Update(assessment);
         await db.SaveChangesAsync(ct);
         return new AssessmentResponse(
-            _mapper.Map<ResourceDetailResponse>(resource),
+            _mapper.Map<ActivityDetailResponse>(activity),
             _mapper.Map<AssessmentInfo>(assessment)
         );
     }
@@ -312,33 +312,33 @@ public class AssessmentService(
 
     // public async Task GetAssessmentStatsAsync() { }
 
-    public async Task<Result<bool>> SetPublishStatusAsync(long resourceId, bool isPublished, CancellationToken ct = default)
+    public async Task<Result<bool>> SetPublishStatusAsync(long activityId, bool isPublished, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-        var resource = await db.CourseResources.FirstOrDefaultAsync(r => r.Type == ResourceType.Assessment && r.Id == resourceId, ct);
-        if (resource is null)
-            return Result<bool>.Failure(ResourceErrors.NotFound);
+        var activity = await db.CourseActivities.FirstOrDefaultAsync(r => r.Type == ActivityType.Assessment && r.Id == activityId, ct);
+        if (activity is null)
+            return Result<bool>.Failure(ActivityErrors.NotFound);
 
-        resource.IsPublished = isPublished;
+        activity.IsPublished = isPublished;
         await db.SaveChangesAsync(ct);
 
-        return Result<bool>.Success(resource.IsPublished);
+        return Result<bool>.Success(activity.IsPublished);
     }
 
-    public async Task<Result<string?>> GetPasswordAsync(long resourceId, CancellationToken ct = default)
+    public async Task<Result<string?>> GetPasswordAsync(long activityId, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-        var assessment = await db.Assessments.SingleOrDefaultAsync(a => a.ResourceId == resourceId, ct);
+        var assessment = await db.Assessments.SingleOrDefaultAsync(a => a.ActivityId == activityId, ct);
         if (assessment is null)
             return Result<string?>.Failure(AssessmentErrors.NotFound);
 
         return Result.Success(assessment.AccessPassword);
     }
 
-    public async Task<Result<string?>> SetPasswordAsync(long resourceId, string password, CancellationToken ct = default)
+    public async Task<Result<string?>> SetPasswordAsync(long activityId, string password, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-        var assessment = await db.Assessments.SingleOrDefaultAsync(a => a.ResourceId == resourceId, ct);
+        var assessment = await db.Assessments.SingleOrDefaultAsync(a => a.ActivityId == activityId, ct);
         if (assessment is null)
             return Result<string?>.Failure(AssessmentErrors.NotFound);
 

@@ -13,17 +13,17 @@ public record AssessmentInfo(
 );
 
 public record AssessmentRequest(
-    ResourceRequestInfo ResourceInfo,
+    ActivityRequestInfo ActivityInfo,
     AssessmentInfo Info
 );
 
 public record AssessmentResponse(
-    ResourceDetailResponse ResourceInfo,
+    ActivityDetailResponse ActivityInfo,
     AssessmentInfo Info
 );
 
 public record AssessmentListResponse(
-    ResourceResponse ResourceInfo,
+    ActivityResponse ActivityInfo,
     AssessmentInfo Info,
     int QuestionCount,
     int AttemptsUsed,

@@ -19,27 +19,27 @@ public static class CodingProblemEndpoints
             HandleCreate).RequireAuthorization("IsInstructor");
 
         group.MapGet(
-            "/{resourceId}",
+            "/{activityId}",
             HandleGetById).RequireAuthorization();
 
         group.MapPost(
-            "/{resourceId}/test-cases",
+            "/{activityId}/test-cases",
             HandleAddTestCase).RequireAuthorization("IsInstructor");
 
         group.MapGet(
-            "/{resourceId}/test-cases",
+            "/{activityId}/test-cases",
             HandleGetTestCases).RequireAuthorization();
 
         group.MapGet(
-            "/{resourceId}/submissions",
+            "/{activityId}/submissions",
             HandleGetSubmissions).RequireAuthorization("IsInstructor");
 
         group.MapPut(
-            "/{resourceId}/compiler-profile/{compilerId}",
+            "/{activityId}/compiler-profile/{compilerId}",
             HandleSetCompilerProfile).RequireAuthorization("IsInstructor");
 
         group.MapGet(
-            "/{resourceId}/compiler-profile/",
+            "/{activityId}/compiler-profile/",
             HandleGetCompilerProfiles).RequireAuthorization();
     }
 
@@ -67,20 +67,20 @@ public static class CodingProblemEndpoints
         {
             var response = result.Value!;
 
-            // Re-map the numeric resource ID to Sqid.
-            var resource = response.ResourceInfo;
+            // Re-map the numeric activity ID to Sqid.
+            var activity = response.ActivityInfo;
 
-            var encodedResourceId =
+            var encodedActivityId =
                 sqidsEncoder.Encode(
-                    sqidsEncoder.Decode(resource.Id)[0]);
+                    sqidsEncoder.Decode(activity.Id)[0]);
 
             return TypedResults.Ok(
                 response with
                 {
-                    ResourceInfo =
-                        resource with
+                    ActivityInfo =
+                        activity with
                         {
-                            Id = encodedResourceId
+                            Id = encodedActivityId
                         }
                 });
         }
@@ -102,21 +102,21 @@ public static class CodingProblemEndpoints
     }
 
     private static async Task<IResult> HandleGetById(
-        string resourceId,
+        string activityId,
         SqidsEncoder<long> sqidsEncoder,
         ICodingProblemService problemService,
         CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
 
         if (decoded.Count != 1)
         {
             return TypedResults.BadRequest(
-                "Invalid resource ID.");
+                "Invalid activity ID.");
         }
 
         var result =
-            await problemService.GetByResourceIdAsync(
+            await problemService.GetByActivityIdAsync(
                 decoded[0],
                 ct);
 
@@ -141,18 +141,18 @@ public static class CodingProblemEndpoints
     }
 
     private static async Task<IResult> HandleAddTestCase(
-        string resourceId,
+        string activityId,
         ProblemTestCaseRequest request,
         SqidsEncoder<long> sqidsEncoder,
         ICodingProblemService problemService,
         CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
 
         if (decoded.Count != 1)
         {
             return TypedResults.BadRequest(
-                "Invalid resource ID.");
+                "Invalid activity ID.");
         }
 
         var result = await problemService.AddTestCaseAsync(
@@ -181,17 +181,17 @@ public static class CodingProblemEndpoints
     }
 
     private static async Task<IResult> HandleGetTestCases(
-        string resourceId,
+        string activityId,
         SqidsEncoder<long> sqidsEncoder,
         ICodingProblemService problemService,
         CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
 
         if (decoded.Count != 1)
         {
             return TypedResults.BadRequest(
-                "Invalid resource ID.");
+                "Invalid activity ID.");
         }
 
         var result =
@@ -220,16 +220,16 @@ public static class CodingProblemEndpoints
     }
 
     private static async Task<IResult> HandleGetSubmissions(
-        string resourceId,
+        string activityId,
         SqidsEncoder<long> sqidsEncoder,
         ICodingProblemService problemService,
         CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
         {
             return TypedResults.BadRequest(
-                "Invalid resource ID.");
+                "Invalid activity ID.");
         }
 
         var result =
@@ -255,7 +255,7 @@ public static class CodingProblemEndpoints
     }
 
     private static async Task<IResult> HandleSetCompilerProfile(
-        string resourceId,
+        string activityId,
         string compilerId,
         ProgrammingLanguage language,
         CompilerProfileRequest request,
@@ -263,7 +263,7 @@ public static class CodingProblemEndpoints
         ICodingProblemService problemService,
         CancellationToken ct)
     {
-        var rDecoded = sqidsEncoder.Decode(resourceId);
+        var rDecoded = sqidsEncoder.Decode(activityId);
         var cDecoded = sqidsEncoder.Decode(compilerId);
         if (rDecoded.Count != 1 || cDecoded.Count != 1)
             return TypedResults.BadRequest();
@@ -275,12 +275,12 @@ public static class CodingProblemEndpoints
     }
 
     private static async Task<IResult> HandleGetCompilerProfiles(
-        string resourceId,
+        string activityId,
         SqidsEncoder<long> sqidsEncoder,
         ICodingProblemService problemService,
         CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
 
         if (decoded.Count != 1)
             return TypedResults.BadRequest();

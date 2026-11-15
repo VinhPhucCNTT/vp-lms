@@ -6,69 +6,69 @@ using Sqids;
 
 namespace Backend.Api.Endpoints.Course;
 
-public static class ResourceEndpoints
+public static class ActivityEndpoints
 {
-    public static void AddResourceEndpoints(this IEndpointRouteBuilder route)
+    public static void AddActivityEndpoints(this IEndpointRouteBuilder route)
     {
-        var resource = route.MapGroup("/api/resource").WithTags("Resources");
+        var activity = route.MapGroup("/api/activity").WithTags("Activities");
 
-        resource.MapGet("module/{moduleId}", HandleGetByModule)
+        activity.MapGet("module/{moduleId}", HandleGetByModule)
             .RequireAuthorization();
-        resource.MapGet("{resourceId}/progress", HandleGetProgress)
+        activity.MapGet("{activityId}/progress", HandleGetProgress)
             .RequireAuthorization("IsStudent");
-        resource.MapPost("{resourceId}/complete", HandleComplete)
+        activity.MapPost("{activityId}/complete", HandleComplete)
             .RequireAuthorization("IsStudent");
 
-        resource.MapDelete("{resourceId}", HandleDelete).RequireAuthorization();
-        // resource.MapPost("{moduleId}/publish/{resourceId}", HandlePublish).RequireAuthorization();
-        // resource.MapPost("{moduleId}/unpublish/{resourceId}", HandleUnpublish).RequireAuthorization();
-        resource.MapPost("{resourceId}/reorder", HandleReorder).RequireAuthorization();
+        activity.MapDelete("{activityId}", HandleDelete).RequireAuthorization();
+        // activity.MapPost("{moduleId}/publish/{activityId}", HandlePublish).RequireAuthorization();
+        // activity.MapPost("{moduleId}/unpublish/{activityId}", HandleUnpublish).RequireAuthorization();
+        activity.MapPost("{activityId}/reorder", HandleReorder).RequireAuthorization();
     }
 
     private static async
-        Task<Results<Ok<List<ResourceResponse>>, BadRequest>>
+        Task<Results<Ok<List<ActivityResponse>>, BadRequest>>
         HandleGetByModule(
             string moduleId,
             SqidsEncoder<long> sqidsEncoder,
-            IResourceService resourceService)
+            IActivityService activityService)
     {
         var decoded = sqidsEncoder.Decode(moduleId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
         return TypedResults.Ok(
-            await resourceService.GetPublishedResourcesAsync(decoded[0]));
+            await activityService.GetPublishedActivitiesAsync(decoded[0]));
     }
 
     private static async
-        Task<Results<Ok<ResourceProgressResponse>, BadRequest, NotFound>>
+        Task<Results<Ok<ActivityProgressResponse>, BadRequest, NotFound>>
         HandleGetProgress(
-            string resourceId,
+            string activityId,
             SqidsEncoder<long> sqidsEncoder,
-            IResourceService resourceService)
+            IActivityService activityService)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var progress = await resourceService.GetResourceProgressAsync(decoded[0]);
+        var progress = await activityService.GetActivityProgressAsync(decoded[0]);
         return progress is null
             ? TypedResults.NotFound()
             : TypedResults.Ok(progress);
     }
 
     private static async
-        Task<Results<Ok<ResourceProgressResponse>, BadRequest, NotFound>>
+        Task<Results<Ok<ActivityProgressResponse>, BadRequest, NotFound>>
         HandleComplete(
-            string resourceId,
+            string activityId,
             SqidsEncoder<long> sqidsEncoder,
-            IResourceService resourceService)
+            IActivityService activityService)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        var progress = await resourceService.MarkResourceCompletedAsync(decoded[0]);
+        var progress = await activityService.MarkActivityCompletedAsync(decoded[0]);
         return progress is null
             ? TypedResults.NotFound()
             : TypedResults.Ok(progress);
@@ -77,18 +77,18 @@ public static class ResourceEndpoints
     private static async
         Task<Results<Ok, NotFound, BadRequest, UnauthorizedHttpResult>>
         HandleDelete(
-            string resourceId,
+            string activityId,
             SqidsEncoder<long> sqidsEncoder,
-            IResourceService resourceService)
+            IActivityService activityService)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        if (!await resourceService.CheckOwnerAsync(decoded[0]))
+        if (!await activityService.CheckOwnerAsync(decoded[0]))
             return TypedResults.Unauthorized();
 
-        return await resourceService.DeleteResourceAsync(decoded[0])
+        return await activityService.DeleteActivityAsync(decoded[0])
             ? TypedResults.Ok()
             : TypedResults.NotFound();
     }
@@ -96,19 +96,19 @@ public static class ResourceEndpoints
     private static async
         Task<Results<Ok, NotFound, BadRequest, UnauthorizedHttpResult>>
         HandleReorder(
-            string resourceId,
+            string activityId,
             [FromQuery] int orderIndex,
             SqidsEncoder<long> sqidsEncoder,
-            IResourceService resourceService)
+            IActivityService activityService)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 
-        if (!await resourceService.CheckOwnerAsync(decoded[0]))
+        if (!await activityService.CheckOwnerAsync(decoded[0]))
             return TypedResults.Unauthorized();
 
-        return await resourceService.ReorderResourceAsync(decoded[0], orderIndex)
+        return await activityService.ReorderActivityAsync(decoded[0], orderIndex)
             ? TypedResults.Ok()
             : TypedResults.NotFound();
     }

@@ -11,6 +11,9 @@ public class CourseProfile : Profile
         CreateMap<long, string>()
             .ConvertUsing<SqidTypeConverter>();
 
+        CreateMap<Course, CourseResponse>()
+            .MapSqidId();
+
         CreateMap<Course, CourseDetailResponse>()
             .ForCtorParam(
                 "Id",

@@ -5,11 +5,11 @@ public record LessonInfo(
 );
 
 public record LessonRequest(
-    ResourceRequestInfo ResourceInfo,
+    ActivityRequestInfo ActivityInfo,
     LessonInfo Info
 );
 
 public record LessonResponse(
-    ResourceDetailResponse ResourceInfo,
+    ActivityDetailResponse ActivityInfo,
     LessonInfo Info
 );

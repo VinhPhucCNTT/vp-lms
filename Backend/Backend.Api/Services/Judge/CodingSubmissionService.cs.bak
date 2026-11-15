@@ -13,7 +13,7 @@ public sealed class CodingSubmissionService(
     RabbitMqJudgePublisher publisher)
 {
     public async Task<Result<long>> CreateAsync(
-        long resourceId,
+        long activityId,
         string sourceCode,
         Core.Common.ProgrammingLanguage language,
         CancellationToken ct)
@@ -38,11 +38,11 @@ public sealed class CodingSubmissionService(
             await dbFactory.CreateDbContextAsync(ct);
 
         var problem = await db.CodingProblems
-            .Include(x => x.Resource)
+            .Include(x => x.Activity)
             .SingleOrDefaultAsync(
-                x => x.ResourceId == resourceId &&
+                x => x.ActivityId == activityId &&
                      !x.IsDeleted &&
-                     x.Resource.IsPublished,
+                     x.Activity.IsPublished,
                 ct);
 
         if (problem is null)
@@ -66,7 +66,7 @@ public sealed class CodingSubmissionService(
         var nextOrder =
             (await db.ProblemSubmissions
                 .Where(x =>
-                    x.ProblemId == resourceId &&
+                    x.ProblemId == activityId &&
                     x.UserId == userId)
                 .MaxAsync(
                     x => (int?)x.OrderIndex,
@@ -74,7 +74,7 @@ public sealed class CodingSubmissionService(
 
         var submission = new ProblemSubmission
         {
-            ProblemId = resourceId,
+            ProblemId = activityId,
             UserId = userId,
             OrderIndex = nextOrder,
             SubmittedCode = sourceCode,
@@ -82,7 +82,7 @@ public sealed class CodingSubmissionService(
             Status = SubmissionStatus.Pending,
             TotalTestCases = await db.ProblemTestCases
                 .CountAsync(
-                    x => x.ProblemId == resourceId,
+                    x => x.ProblemId == activityId,
                     ct)
         };
 

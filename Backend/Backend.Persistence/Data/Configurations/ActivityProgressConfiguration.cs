@@ -4,24 +4,24 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Persistence.Data.Configurations;
 
-public class ResourceProgressConfiguration : IEntityTypeConfiguration<ResourceProgress>
+public class ActivityProgressConfiguration : IEntityTypeConfiguration<ActivityProgress>
 {
-    public void Configure(EntityTypeBuilder<ResourceProgress> builder)
+    public void Configure(EntityTypeBuilder<ActivityProgress> builder)
     {
-        builder.ToTable("resource_progress"); 
+        builder.ToTable("activity_progress");
 
         builder.HasKey(x => x.Id);
 
-        builder.HasIndex(x => new { x.UserId, x.ResourceId }).IsUnique();
+        builder.HasIndex(x => new { x.UserId, x.ActivityId }).IsUnique();
 
         builder.HasOne(x => x.User)
             .WithMany()
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(x => x.Resource)
+        builder.HasOne(x => x.Activity)
             .WithMany(r => r.Progress)
-            .HasForeignKey(x => x.ResourceId)
+            .HasForeignKey(x => x.ActivityId)
             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
     }

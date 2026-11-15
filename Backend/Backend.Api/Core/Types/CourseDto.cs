@@ -1,9 +1,17 @@
 namespace Backend.Api.Core.Types;
 
 public record CourseResponse(
+    string Id,
+    string CreatorId,
+    string Title,
+    string Description,
+    string? BackgroundFileId
+) : IEntityResponse;
+
+public record CourseRecentResponse(
     string CourseId,
     string CourseName,
-    long BackgroundFileId,
+    string? BackgroundFileId,
     DateTime LastAccessedAt
 );
 
@@ -38,7 +46,6 @@ public record CourseProgress(
 public record CourseQueryRequest(
     int PageNumber = 1,
     int PageSize = 10,
-    string? Code = null,
     string? Title = null,
     string? CreatorFirstName = null,
     string? CreatorLastName = null,
@@ -50,7 +57,7 @@ public record CourseCreateRequest(
     string Title,
     string? Description,
     bool EnrollmentOpen,
-    IFormFile BackgroundFile
+    IFormFile? BackgroundFile
 );
 
 public record CoursePatchRequest(

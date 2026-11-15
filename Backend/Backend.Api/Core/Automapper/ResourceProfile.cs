@@ -5,14 +5,14 @@ using Backend.Persistence.Entities.Courses;
 
 namespace Backend.Api.Core.Automapper;
 
-public class ResourceProfile : Profile
+public class ActivityProfile : Profile
 {
-    public ResourceProfile()
+    public ActivityProfile()
     {
-        CreateMap<CourseResource, ResourceResponse>()
+        CreateMap<CourseActivity, ActivityResponse>()
             .MapSqidId();
 
-        CreateMap<CourseResource, ResourceDetailResponse>()
+        CreateMap<CourseActivity, ActivityDetailResponse>()
             .ForCtorParam("Id", o => o.MapFrom(x => x.Id))
             .ForCtorParam("Type", o => o.MapFrom(x => x.Type))
             .ForCtorParam("Title", o => o.MapFrom(x => x.Title))

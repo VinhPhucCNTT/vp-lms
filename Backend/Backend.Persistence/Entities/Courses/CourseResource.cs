@@ -4,7 +4,7 @@ using Backend.Persistence.Entities.Learning;
 
 namespace Backend.Persistence.Entities.Courses;
 
-public enum ResourceType
+public enum ActivityType
 {
     Lesson,
     Assignment,
@@ -12,11 +12,11 @@ public enum ResourceType
     Problem
 }
 
-public class CourseResource : BaseEntity, ISoftDeletable
+public class CourseActivity : BaseEntity, ISoftDeletable
 {
     public long ModuleId { get; set; }
 
-    public ResourceType Type { get; set; }
+    public ActivityType Type { get; set; }
     public required string Title { get; set; }
     public int OrderIndex { get; set; }
     public bool IsPublished { get; set; } = false;
@@ -32,5 +32,5 @@ public class CourseResource : BaseEntity, ISoftDeletable
     // Navigation properties
     public CourseModule Module { get; set; } = default!;
     public ICollection<Comment> Comments { get; set; } = [];
-    public ICollection<ResourceProgress> Progress { get; set; } = [];
+    public ICollection<ActivityProgress> Progress { get; set; } = [];
 }

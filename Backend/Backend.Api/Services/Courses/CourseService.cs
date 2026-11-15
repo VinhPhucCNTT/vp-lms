@@ -33,7 +33,7 @@ public interface ICourseService
 
     public Task SetCoursePublishStatusAsync(Course course, bool value, CancellationToken ct = default);
 
-    public Task<List<CourseResponse>> GetRecentAsync(int count, CancellationToken ct = default);
+    public Task<List<CourseRecentResponse>> GetRecentAsync(int count, CancellationToken ct = default);
 }
 
 public class CourseService(
@@ -102,7 +102,7 @@ public class CourseService(
         {
             var item = new StudentCourseResponse(
                 _mapper.Map<CourseDetailResponse>(course),
-                await ResourceService.GetCourseProgressAsync(db, course.Id, currentUserId));
+                await ActivityService.GetCourseProgressAsync(db, course.Id, currentUserId));
 
             list.Add(item);
         }
@@ -190,8 +190,7 @@ public class CourseService(
         {
             InstructorId = _currentUserService.UserId,
             Title = request.Title,
-            Description = request.Description,
-            IsPublished = request.IsPublished,
+            Description = request.Description ?? "",
             EnrollmentOpen = request.EnrollmentOpen
         };
         db.Courses.Add(course);
@@ -214,9 +213,6 @@ public class CourseService(
 
             if (request.Description is not null)
                 course.Description = request.Description;
-
-            if (request.IsPublished is not null)
-                course.IsPublished = request.IsPublished.Value;
 
             if (request.EnrollmentOpen is not null)
                 course.EnrollmentOpen = request.EnrollmentOpen.Value;
@@ -253,7 +249,7 @@ public class CourseService(
         return;
     }
 
-    public async Task<List<CourseResponse>> GetRecentAsync(int count, CancellationToken ct = default)
+    public async Task<List<CourseRecentResponse>> GetRecentAsync(int count, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
@@ -262,7 +258,7 @@ public class CourseService(
             .AsNoTracking()
             .OrderByDescending(r => r.LastAccessedAt)
             .Where(r => r.UserId == currentUserId)
-            .Select(r => _mapper.Map<CourseResponse>(r));
+            .Select(r => _mapper.Map<CourseRecentResponse>(r));
 
         if (count > 0)
             records = records.Take(count);

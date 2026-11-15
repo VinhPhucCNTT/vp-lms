@@ -16,9 +16,9 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
             .IsRequired()
             .HasColumnType("text");
 
-        builder.HasOne(x => x.Resource)
+        builder.HasOne(x => x.Activity)
             .WithOne(r => r.Lesson)
-            .HasForeignKey<Lesson>(x => x.ResourceId)
+            .HasForeignKey<Lesson>(x => x.ActivityId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

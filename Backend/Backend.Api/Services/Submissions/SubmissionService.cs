@@ -16,24 +16,24 @@ namespace Backend.Api.Services.Submissions;
 
 public interface ISubmissionService
 {
-    public Task<PaginatedResponse<SubmissionResponse>> GetListAsync(long resourceId, PageRequest page, CancellationToken ct = default);
+    public Task<PaginatedResponse<SubmissionResponse>> GetListAsync(long activityId, PageRequest page, CancellationToken ct = default);
 
-    public Task<Result<SubmissionDetailResponse>> GetOwnDetailAsync(long resourceId, CancellationToken ct = default);
+    public Task<Result<SubmissionDetailResponse>> GetOwnDetailAsync(long activityId, CancellationToken ct = default);
 
-    public Task<PaginatedResponse<SubmissionResponse>> GetGradedAsync(long resourceId, PageRequest page, CancellationToken ct = default);
+    public Task<PaginatedResponse<SubmissionResponse>> GetGradedAsync(long activityId, PageRequest page, CancellationToken ct = default);
 
-    public Task<PaginatedResponse<SubmissionResponse>> GetUngradedAsync(long resourceId, PageRequest page, CancellationToken ct = default);
+    public Task<PaginatedResponse<SubmissionResponse>> GetUngradedAsync(long activityId, PageRequest page, CancellationToken ct = default);
 
-    public Task<Result<SubmissionDetailResponse>> SubmitAsync(long resourceId, SubmissionRequest request, CancellationToken ct = default);
+    public Task<Result<SubmissionDetailResponse>> SubmitAsync(long activityId, SubmissionRequest request, CancellationToken ct = default);
 
     public Task<Result<AssignmentFileResponse>> UploadFileAsync(AssignmentSubmission submission, IFormFile file, CancellationToken ct);
 
     public Task<Result<AssignmentSubmission>> ValidateFileAsync(
-        long resourceId,
+        long activityId,
         IFormFile file,
         CancellationToken ct);
 
-    public Task<bool> RemoveAsync(long resourceId, CancellationToken ct = default);
+    public Task<bool> RemoveAsync(long activityId, CancellationToken ct = default);
 
     public Task<List<SubmissionResponse>> GetInstructorUngradedAsync(int count, CancellationToken ct = default);
 
@@ -59,12 +59,12 @@ public class SubmissionService(
 
     public ILogger<SubmissionService> _logger = logger;
 
-    public async Task<PaginatedResponse<SubmissionResponse>> GetListAsync(long resourceId, PageRequest page, CancellationToken ct = default)
+    public async Task<PaginatedResponse<SubmissionResponse>> GetListAsync(long activityId, PageRequest page, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var submissions = db.AssignmentSubmissions
             .AsNoTracking()
-            .Where(s => s.Assignment.ResourceId == resourceId)
+            .Where(s => s.Assignment.ActivityId == activityId)
             .Select(s => _mapper.Map<SubmissionResponse>(s));
 
         var list = await submissions
@@ -79,10 +79,10 @@ public class SubmissionService(
             list);
     }
 
-    public async Task<Result<SubmissionDetailResponse>> GetOwnDetailAsync(long resourceId, CancellationToken ct = default)
+    public async Task<Result<SubmissionDetailResponse>> GetOwnDetailAsync(long activityId, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-        var assignment = await GetStudentAssignmentAsync(db, resourceId, ct);
+        var assignment = await GetStudentAssignmentAsync(db, activityId, ct);
         if (assignment is null)
             return Result<SubmissionDetailResponse>.Failure(ResultError.NotFound, "Assignment not found.");
 
@@ -112,23 +112,23 @@ public class SubmissionService(
     }
 
     // NOTE: Probably don't need this?
-    // public async Task<SubmissionDetailResponse?> GetByUserIdAsync(long resourceId, long userId, CancellationToken ct = default)
+    // public async Task<SubmissionDetailResponse?> GetByUserIdAsync(long activityId, long userId, CancellationToken ct = default)
     // {
     //     using var db = await _dbFactory.CreateDbContextAsync(ct);
     //     return await db.AssignmentSubmissions
     //         .AsNoTracking()
-    //         .Where(s => s.AssignmentId == resourceId && s.UserId == userId)
+    //         .Where(s => s.AssignmentId == activityId && s.UserId == userId)
     //         .Select(s => _mapper.Map<SubmissionDetailResponse>(s))
     //         .FirstOrDefaultAsync(ct);
     // }
 
-    public async Task<PaginatedResponse<SubmissionResponse>> GetGradedAsync(long resourceId, PageRequest page, CancellationToken ct = default)
+    public async Task<PaginatedResponse<SubmissionResponse>> GetGradedAsync(long activityId, PageRequest page, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         var submissions = db.AssignmentSubmissions
             .AsNoTracking()
-            .Where(s => s.AssignmentId == resourceId && s.Grade != null)
+            .Where(s => s.AssignmentId == activityId && s.Grade != null)
             .Select(s => _mapper.Map<SubmissionResponse>(s));
 
         var list = await submissions
@@ -143,13 +143,13 @@ public class SubmissionService(
             list);
     }
 
-    public async Task<PaginatedResponse<SubmissionResponse>> GetUngradedAsync(long resourceId, PageRequest page, CancellationToken ct = default)
+    public async Task<PaginatedResponse<SubmissionResponse>> GetUngradedAsync(long activityId, PageRequest page, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         var submissions = db.AssignmentSubmissions
             .AsNoTracking()
-            .Where(s => s.AssignmentId == resourceId && s.Grade == null)
+            .Where(s => s.AssignmentId == activityId && s.Grade == null)
             .Select(s => _mapper.Map<SubmissionResponse>(s));
 
         var list = await submissions
@@ -164,11 +164,11 @@ public class SubmissionService(
             list);
     }
 
-    public async Task<Result<SubmissionDetailResponse>> SubmitAsync(long resourceId, SubmissionRequest request, CancellationToken ct = default)
+    public async Task<Result<SubmissionDetailResponse>> SubmitAsync(long activityId, SubmissionRequest request, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var userId = _currentUserService.UserId;
-        var assignment = await GetStudentAssignmentAsync(db, resourceId, ct);
+        var assignment = await GetStudentAssignmentAsync(db, activityId, ct);
         if (assignment is null)
             return Result<SubmissionDetailResponse>.Failure(ResultError.NotFound, "Assignment not found");
 
@@ -251,9 +251,9 @@ public class SubmissionService(
             return Result<AssignmentFileResponse>.Failure(SubmissionErrors.Internal);
         }
 
-        var resourceId = await db.Assignments
+        var activityId = await db.Assignments
             .Where(a => a.Id == submission.AssignmentId)
-            .Select(a => a.ResourceId)
+            .Select(a => a.ActivityId)
             .SingleAsync(ct);
 
         var fileAsset = await db.FileAssets
@@ -262,19 +262,19 @@ public class SubmissionService(
 
         return Result.Success(
             new AssignmentFileResponse(
-                _sqidsEncoder.Encode(resourceId),
+                _sqidsEncoder.Encode(activityId),
                 _mapper.Map<FileResponse>(fileAsset)));
     }
 
     public async Task<Result<AssignmentSubmission>> ValidateFileAsync(
-        long resourceId,
+        long activityId,
         IFormFile file,
         CancellationToken ct)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var userId = _currentUserService.UserId;
 
-        var assignment = await GetStudentAssignmentAsync(db, resourceId, ct);
+        var assignment = await GetStudentAssignmentAsync(db, activityId, ct);
         if (assignment is null) return Result<AssignmentSubmission>.Failure(ResultError.NotFound, "Assignment not found");
 
         var submission = await db.AssignmentSubmissions
@@ -314,16 +314,16 @@ public class SubmissionService(
         return Result<AssignmentSubmission>.Success(submission);
     }
 
-    public async Task<bool> RemoveAsync(long resourceId, CancellationToken ct = default)
+    public async Task<bool> RemoveAsync(long activityId, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var userId = _currentUserService.UserId;
 
         var submission = await db.AssignmentSubmissions.FirstOrDefaultAsync(
-            s => s.Assignment.ResourceId == resourceId && s.UserId == userId,
+            s => s.Assignment.ActivityId == activityId && s.UserId == userId,
             ct);
         if (submission is null) return false;
-        if (!await CanStudentAccessAsync(db, resourceId, userId, ct))
+        if (!await CanStudentAccessAsync(db, activityId, userId, ct))
             return false;
 
         var files = await db.AssignmentFiles.Where(f => f.SubmissionId == submission.Id).ToListAsync(ct);
@@ -345,7 +345,7 @@ public class SubmissionService(
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
 
-        var assignmentIds = await _dashboardService.GetInstructorResourceIdsAsync(db, ResourceType.Assignment, currentUserId, ct);
+        var assignmentIds = await _dashboardService.GetInstructorActivityIdsAsync(db, ActivityType.Assignment, currentUserId, ct);
         var submissions = db.AssignmentSubmissions
             .AsNoTracking()
             .OrderByDescending(s => s.UpdatedAt)
@@ -366,7 +366,7 @@ public class SubmissionService(
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
 
-        var assignmentIds = await _dashboardService.GetStudentResourceIdsAsync(db, ResourceType.Assignment, currentUserId, ct);
+        var assignmentIds = await _dashboardService.GetStudentActivityIdsAsync(db, ActivityType.Assignment, currentUserId, ct);
         var submissions = db.AssignmentSubmissions
             .AsNoTracking()
             .OrderByDescending(s => s.UpdatedAt)
@@ -394,9 +394,9 @@ public class SubmissionService(
         return submission;
     }
 
-    private static async Task<bool> CanStudentAccessAsync(AppDbContext db, long resourceId, long userId, CancellationToken ct = default)
+    private static async Task<bool> CanStudentAccessAsync(AppDbContext db, long activityId, long userId, CancellationToken ct = default)
     {
-        var assignment = await db.Assignments.FirstOrDefaultAsync(a => a.ResourceId == resourceId, ct);
+        var assignment = await db.Assignments.FirstOrDefaultAsync(a => a.ActivityId == activityId, ct);
 
         if (assignment is null)
             return false;
@@ -417,16 +417,16 @@ public class SubmissionService(
 
     private async Task<Assignment?> GetStudentAssignmentAsync(
         AppDbContext db,
-        long resourceId,
+        long activityId,
         CancellationToken ct)
     {
         var userId = _currentUserService.UserId;
         return await db.Assignments
-            .Include(a => a.Resource)
+            .Include(a => a.Activity)
                 .ThenInclude(r => r.Module)
-            .Where(a => a.ResourceId == resourceId && a.Resource.IsPublished)
+            .Where(a => a.ActivityId == activityId && a.Activity.IsPublished)
             .Where(a => db.Enrollments.Any(e =>
-                e.CourseId == a.Resource.Module.CourseId &&
+                e.CourseId == a.Activity.Module.CourseId &&
                 e.UserId == userId))
             .FirstOrDefaultAsync(ct);
     }

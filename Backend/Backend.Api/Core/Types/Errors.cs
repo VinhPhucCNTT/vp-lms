@@ -14,13 +14,13 @@ public static class UserErrors
         new("user.forbidden", "You do not have permission to perform this operation.");
 }
 
-public static class ResourceErrors
+public static class ActivityErrors
 {
     public static readonly Error NotFound =
-        new("resource.not_found", "Learning resource not found.");
+        new("activity.not_found", "Learning activity not found.");
 
     public static readonly Error Forbidden =
-        new("resource.forbidden", "You do not have permission to perform this operation.");
+        new("activity.forbidden", "You do not have permission to perform this operation.");
 }
 
 public static class AssessmentErrors

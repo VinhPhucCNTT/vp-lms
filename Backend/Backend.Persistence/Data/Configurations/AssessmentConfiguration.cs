@@ -15,9 +15,9 @@ public class AssessmentConfiguration : IEntityTypeConfiguration<Assessment>
         builder.Property(x => x.Description)
             .HasColumnType("text");
 
-        builder.HasOne(x => x.Resource)
+        builder.HasOne(x => x.Activity)
             .WithOne(r => r.Assessment)
-            .HasForeignKey<Assessment>(x => x.ResourceId)
+            .HasForeignKey<Assessment>(x => x.ActivityId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(x => x.Questions)

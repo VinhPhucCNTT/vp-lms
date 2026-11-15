@@ -31,7 +31,7 @@ public sealed class QuestionSelectionService(
         if (!exists)
         {
             return Result<IReadOnlyList<SelectedQuestion>>
-                .Failure(ResourceErrors.NotFound);
+                .Failure(ActivityErrors.NotFound);
         }
 
         var questions = await db.AssessmentQuestions

@@ -14,7 +14,7 @@ public static class DevelopmentOnlyEndpoints
         var dev = route.MapGroup("/api/dev").WithTags("Development");
 
         dev.MapGet("users", HandleGetUsers);
-        dev.MapPost("judge-test/{resourceId}", HandleTestJudge);
+        dev.MapPost("judge-test/{activityId}", HandleTestJudge);
         dev.MapGet("current-date-utc", HandleGetUtc);
     }
 
@@ -31,13 +31,13 @@ public static class DevelopmentOnlyEndpoints
     private static async
         Task<IResult>
         HandleTestJudge(
-            string resourceId,
+            string activityId,
             [AsParameters] ProblemSubmissionRequest request,
             SqidsEncoder<long> sqidsEncoder,
             IProblemSubmissionService ProblemSubmissionService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 

@@ -123,7 +123,7 @@ builder.Services.AddAutoMapper(_ => { },
         typeof(CourseProfile),
         typeof(EnrollmentProfile),
         typeof(ModuleProfile),
-        typeof(ResourceProfile),
+        typeof(ActivityProfile),
         typeof(UserProfile),
         typeof(AssignmentProfile),
         typeof(FileProfile));
@@ -191,7 +191,7 @@ app.AddAuthEndpoints();
 app.AddCourseEndpoints();
 app.AddEnrollmentEndpoints();
 app.AddModuleEndpoints();
-app.AddResourceEndpoints();
+app.AddActivityEndpoints();
 app.AddLessonEndpoints();
 app.AddAssignmentEndpoints();
 app.AddFileEndpoints();

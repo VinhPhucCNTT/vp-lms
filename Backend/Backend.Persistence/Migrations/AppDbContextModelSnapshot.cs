@@ -579,6 +579,10 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("access_password");
 
+                    b.Property<long>("ActivityId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("activity_id");
+
                     b.Property<DateTime?>("AvailableFrom")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("available_from");
@@ -596,6 +600,7 @@ namespace Backend.Persistence.Migrations
                         .HasColumnName("deleted_at");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("description");
 
@@ -606,10 +611,6 @@ namespace Backend.Persistence.Migrations
                     b.Property<int>("MaxAttempts")
                         .HasColumnType("integer")
                         .HasColumnName("max_attempts");
-
-                    b.Property<long>("ResourceId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("resource_id");
 
                     b.Property<bool>("ShowResults")
                         .HasColumnType("boolean")
@@ -626,9 +627,9 @@ namespace Backend.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_assessments");
 
-                    b.HasIndex("ResourceId")
+                    b.HasIndex("ActivityId")
                         .IsUnique()
-                        .HasDatabaseName("ix_assessments_resource_id")
+                        .HasDatabaseName("ix_assessments_activity_id")
                         .HasFilter("is_deleted = false");
 
                     b.ToTable("assessments", (string)null);
@@ -642,6 +643,10 @@ namespace Backend.Persistence.Migrations
                         .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ActivityId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("activity_id");
 
                     b.PrimitiveCollection<string[]>("AllowedExtensions")
                         .HasMaxLength(100)
@@ -695,10 +700,6 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("open_date");
 
-                    b.Property<long>("ResourceId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("resource_id");
-
                     b.Property<string>("SubmissionType")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -712,9 +713,9 @@ namespace Backend.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_assignments");
 
-                    b.HasIndex("ResourceId")
+                    b.HasIndex("ActivityId")
                         .IsUnique()
-                        .HasDatabaseName("ix_assignments_resource_id")
+                        .HasDatabaseName("ix_assignments_activity_id")
                         .HasFilter("is_deleted = false");
 
                     b.ToTable("assignments", null, t =>
@@ -737,6 +738,10 @@ namespace Backend.Persistence.Migrations
                         .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ActivityId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("activity_id");
 
                     b.Property<string>("ConstraintsMarkdown")
                         .HasColumnType("text")
@@ -777,10 +782,6 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("problem_statement_markdown");
 
-                    b.Property<long>("ResourceId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("resource_id");
-
                     b.Property<int>("TimeLimitMs")
                         .HasColumnType("integer")
                         .HasColumnName("time_limit_ms");
@@ -792,9 +793,9 @@ namespace Backend.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_problems");
 
-                    b.HasIndex("ResourceId")
+                    b.HasIndex("ActivityId")
                         .IsUnique()
-                        .HasDatabaseName("ix_problems_resource_id")
+                        .HasDatabaseName("ix_problems_activity_id")
                         .HasFilter("is_deleted = false");
 
                     b.ToTable("problems", (string)null);
@@ -870,6 +871,10 @@ namespace Backend.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<long>("ActivityId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("activity_id");
+
                     b.Property<string>("ContentMarkdown")
                         .IsRequired()
                         .HasColumnType("text")
@@ -887,10 +892,6 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_deleted");
 
-                    b.Property<long>("ResourceId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("resource_id");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -898,9 +899,9 @@ namespace Backend.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_lessons");
 
-                    b.HasIndex("ResourceId")
+                    b.HasIndex("ActivityId")
                         .IsUnique()
-                        .HasDatabaseName("ix_lessons_resource_id")
+                        .HasDatabaseName("ix_lessons_activity_id")
                         .HasFilter("is_deleted = false");
 
                     b.ToTable("lessons", (string)null);
@@ -1007,18 +1008,18 @@ namespace Backend.Persistence.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_resource_comments");
+                        .HasName("pk_activity_comments");
 
                     b.HasIndex("ActivityId")
-                        .HasDatabaseName("ix_resource_comments_activity_id");
+                        .HasDatabaseName("ix_activity_comments_activity_id");
 
                     b.HasIndex("ParentCommentId")
-                        .HasDatabaseName("ix_resource_comments_parent_comment_id");
+                        .HasDatabaseName("ix_activity_comments_parent_comment_id");
 
                     b.HasIndex("UserId")
-                        .HasDatabaseName("ix_resource_comments_user_id");
+                        .HasDatabaseName("ix_activity_comments_user_id");
 
-                    b.ToTable("resource_comments", (string)null);
+                    b.ToTable("activity_comments", (string)null);
                 });
 
             modelBuilder.Entity("Backend.Persistence.Entities.Courses.Course", b =>
@@ -1034,18 +1035,9 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("background_file_id");
 
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("code");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
-
-                    b.Property<long>("CreatorId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("creator_id");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1056,12 +1048,17 @@ namespace Backend.Persistence.Migrations
                         .HasColumnName("department_id");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("description");
 
                     b.Property<bool>("EnrollmentOpen")
                         .HasColumnType("boolean")
                         .HasColumnName("enrollment_open");
+
+                    b.Property<long>("InstructorId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("instructor_id");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean")
@@ -1092,10 +1089,68 @@ namespace Backend.Persistence.Migrations
                     b.HasIndex("DepartmentId")
                         .HasDatabaseName("ix_courses_department_id");
 
-                    b.HasIndex("CreatorId", "Title")
-                        .HasDatabaseName("ix_courses_creator_id_title");
+                    b.HasIndex("InstructorId", "Title")
+                        .HasDatabaseName("ix_courses_instructor_id_title");
 
                     b.ToTable("courses", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Persistence.Entities.Courses.CourseActivity", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_published");
+
+                    b.Property<long>("ModuleId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("module_id");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("order_index");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("type");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_course_activities");
+
+                    b.HasIndex("ModuleId")
+                        .HasDatabaseName("ix_course_activities_module_id");
+
+                    b.ToTable("course_activities", (string)null);
                 });
 
             modelBuilder.Entity("Backend.Persistence.Entities.Courses.CourseModule", b =>
@@ -1154,64 +1209,6 @@ namespace Backend.Persistence.Migrations
                         .HasFilter("is_deleted = false");
 
                     b.ToTable("modules", (string)null);
-                });
-
-            modelBuilder.Entity("Backend.Persistence.Entities.Courses.CourseResource", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_deleted");
-
-                    b.Property<bool>("IsPublished")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_published");
-
-                    b.Property<long>("ModuleId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("module_id");
-
-                    b.Property<int>("OrderIndex")
-                        .HasColumnType("integer")
-                        .HasColumnName("order_index");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("title");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("type");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id")
-                        .HasName("pk_course_resources");
-
-                    b.HasIndex("ModuleId")
-                        .HasDatabaseName("ix_course_resources_module_id");
-
-                    b.ToTable("course_resources", (string)null);
                 });
 
             modelBuilder.Entity("Backend.Persistence.Entities.Courses.Department", b =>
@@ -1699,7 +1696,7 @@ namespace Backend.Persistence.Migrations
                     b.ToTable("problem_test_results", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Persistence.Entities.Learning.ResourceProgress", b =>
+            modelBuilder.Entity("Backend.Persistence.Entities.Learning.ActivityProgress", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -1707,6 +1704,10 @@ namespace Backend.Persistence.Migrations
                         .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ActivityId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("activity_id");
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1724,10 +1725,6 @@ namespace Backend.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_accessed_at");
 
-                    b.Property<long>("ResourceId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("resource_id");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -1737,16 +1734,16 @@ namespace Backend.Persistence.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_resource_progress");
+                        .HasName("pk_activity_progress");
 
-                    b.HasIndex("ResourceId")
-                        .HasDatabaseName("ix_resource_progress_resource_id");
+                    b.HasIndex("ActivityId")
+                        .HasDatabaseName("ix_activity_progress_activity_id");
 
-                    b.HasIndex("UserId", "ResourceId")
+                    b.HasIndex("UserId", "ActivityId")
                         .IsUnique()
-                        .HasDatabaseName("ix_resource_progress_user_id_resource_id");
+                        .HasDatabaseName("ix_activity_progress_user_id_activity_id");
 
-                    b.ToTable("resource_progress", (string)null);
+                    b.ToTable("activity_progress", (string)null);
                 });
 
             modelBuilder.Entity("Backend.Persistence.Entities.Users.User", b =>
@@ -2002,35 +1999,35 @@ namespace Backend.Persistence.Migrations
 
             modelBuilder.Entity("Backend.Persistence.Entities.Content.Assessment", b =>
                 {
-                    b.HasOne("Backend.Persistence.Entities.Courses.CourseResource", "Resource")
+                    b.HasOne("Backend.Persistence.Entities.Courses.CourseActivity", "Activity")
                         .WithOne("Assessment")
-                        .HasForeignKey("Backend.Persistence.Entities.Content.Assessment", "ResourceId")
+                        .HasForeignKey("Backend.Persistence.Entities.Content.Assessment", "ActivityId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_assessments_course_resources_resource_id");
+                        .HasConstraintName("fk_assessments_course_activities_activity_id");
 
-                    b.Navigation("Resource");
+                    b.Navigation("Activity");
                 });
 
             modelBuilder.Entity("Backend.Persistence.Entities.Content.Assignment", b =>
                 {
-                    b.HasOne("Backend.Persistence.Entities.Courses.CourseResource", "Resource")
+                    b.HasOne("Backend.Persistence.Entities.Courses.CourseActivity", "Activity")
                         .WithOne("Assignment")
-                        .HasForeignKey("Backend.Persistence.Entities.Content.Assignment", "ResourceId")
+                        .HasForeignKey("Backend.Persistence.Entities.Content.Assignment", "ActivityId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_assignments_course_resources_resource_id");
+                        .HasConstraintName("fk_assignments_course_activities_activity_id");
 
-                    b.Navigation("Resource");
+                    b.Navigation("Activity");
                 });
 
             modelBuilder.Entity("Backend.Persistence.Entities.Content.CodingProblem", b =>
                 {
-                    b.HasOne("Backend.Persistence.Entities.Courses.CourseResource", "Resource")
+                    b.HasOne("Backend.Persistence.Entities.Courses.CourseActivity", "Activity")
                         .WithOne("Problem")
-                        .HasForeignKey("Backend.Persistence.Entities.Content.CodingProblem", "ResourceId")
+                        .HasForeignKey("Backend.Persistence.Entities.Content.CodingProblem", "ActivityId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_problems_course_resources_resource_id");
+                        .HasConstraintName("fk_problems_course_activities_activity_id");
 
-                    b.Navigation("Resource");
+                    b.Navigation("Activity");
                 });
 
             modelBuilder.Entity("Backend.Persistence.Entities.Content.FileAsset", b =>
@@ -2047,13 +2044,13 @@ namespace Backend.Persistence.Migrations
 
             modelBuilder.Entity("Backend.Persistence.Entities.Content.Lesson", b =>
                 {
-                    b.HasOne("Backend.Persistence.Entities.Courses.CourseResource", "Resource")
+                    b.HasOne("Backend.Persistence.Entities.Courses.CourseActivity", "Activity")
                         .WithOne("Lesson")
-                        .HasForeignKey("Backend.Persistence.Entities.Content.Lesson", "ResourceId")
+                        .HasForeignKey("Backend.Persistence.Entities.Content.Lesson", "ActivityId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_lessons_course_resources_resource_id");
+                        .HasConstraintName("fk_lessons_course_activities_activity_id");
 
-                    b.Navigation("Resource");
+                    b.Navigation("Activity");
                 });
 
             modelBuilder.Entity("Backend.Persistence.Entities.Content.ProblemTestCase", b =>
@@ -2069,28 +2066,28 @@ namespace Backend.Persistence.Migrations
 
             modelBuilder.Entity("Backend.Persistence.Entities.Courses.Comment", b =>
                 {
-                    b.HasOne("Backend.Persistence.Entities.Courses.CourseResource", "Resource")
+                    b.HasOne("Backend.Persistence.Entities.Courses.CourseActivity", "Activity")
                         .WithMany("Comments")
                         .HasForeignKey("ActivityId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_resource_comments_course_resources_activity_id");
+                        .HasConstraintName("fk_activity_comments_course_activities_activity_id");
 
                     b.HasOne("Backend.Persistence.Entities.Courses.Comment", "ParentComment")
                         .WithMany("Replies")
                         .HasForeignKey("ParentCommentId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_resource_comments_resource_comments_parent_comment_id");
+                        .HasConstraintName("fk_activity_comments_activity_comments_parent_comment_id");
 
                     b.HasOne("Backend.Persistence.Entities.Users.User", "User")
                         .WithMany("Comments")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_resource_comments_users_user_id");
+                        .HasConstraintName("fk_activity_comments_users_user_id");
+
+                    b.Navigation("Activity");
 
                     b.Navigation("ParentComment");
-
-                    b.Navigation("Resource");
 
                     b.Navigation("User");
                 });
@@ -2102,23 +2099,34 @@ namespace Backend.Persistence.Migrations
                         .HasForeignKey("Backend.Persistence.Entities.Courses.Course", "BackgroundFileId")
                         .HasConstraintName("fk_courses_file_assets_background_file_id");
 
-                    b.HasOne("Backend.Persistence.Entities.Users.User", "Creator")
-                        .WithMany("Courses")
-                        .HasForeignKey("CreatorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_courses_users_creator_id");
-
                     b.HasOne("Backend.Persistence.Entities.Courses.Department", "Department")
                         .WithMany()
                         .HasForeignKey("DepartmentId")
                         .HasConstraintName("fk_courses_departments_department_id");
 
+                    b.HasOne("Backend.Persistence.Entities.Users.User", "Instructor")
+                        .WithMany("Courses")
+                        .HasForeignKey("InstructorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_courses_users_instructor_id");
+
                     b.Navigation("BackgroundFile");
 
-                    b.Navigation("Creator");
-
                     b.Navigation("Department");
+
+                    b.Navigation("Instructor");
+                });
+
+            modelBuilder.Entity("Backend.Persistence.Entities.Courses.CourseActivity", b =>
+                {
+                    b.HasOne("Backend.Persistence.Entities.Courses.CourseModule", "Module")
+                        .WithMany("Activities")
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_course_activities_course_modules_module_id");
+
+                    b.Navigation("Module");
                 });
 
             modelBuilder.Entity("Backend.Persistence.Entities.Courses.CourseModule", b =>
@@ -2130,17 +2138,6 @@ namespace Backend.Persistence.Migrations
                         .HasConstraintName("fk_modules_courses_course_id");
 
                     b.Navigation("Course");
-                });
-
-            modelBuilder.Entity("Backend.Persistence.Entities.Courses.CourseResource", b =>
-                {
-                    b.HasOne("Backend.Persistence.Entities.Courses.CourseModule", "Module")
-                        .WithMany("Resources")
-                        .HasForeignKey("ModuleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_course_resources_course_modules_module_id");
-
-                    b.Navigation("Module");
                 });
 
             modelBuilder.Entity("Backend.Persistence.Entities.Courses.Enrollment", b =>
@@ -2305,22 +2302,22 @@ namespace Backend.Persistence.Migrations
                     b.Navigation("TestCase");
                 });
 
-            modelBuilder.Entity("Backend.Persistence.Entities.Learning.ResourceProgress", b =>
+            modelBuilder.Entity("Backend.Persistence.Entities.Learning.ActivityProgress", b =>
                 {
-                    b.HasOne("Backend.Persistence.Entities.Courses.CourseResource", "Resource")
+                    b.HasOne("Backend.Persistence.Entities.Courses.CourseActivity", "Activity")
                         .WithMany("Progress")
-                        .HasForeignKey("ResourceId")
+                        .HasForeignKey("ActivityId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_resource_progress_course_resources_resource_id");
+                        .HasConstraintName("fk_activity_progress_course_activities_activity_id");
 
                     b.HasOne("Backend.Persistence.Entities.Users.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_resource_progress_users_user_id");
+                        .HasConstraintName("fk_activity_progress_users_user_id");
 
-                    b.Navigation("Resource");
+                    b.Navigation("Activity");
 
                     b.Navigation("User");
                 });
@@ -2399,12 +2396,7 @@ namespace Backend.Persistence.Migrations
                     b.Navigation("RecentAccesses");
                 });
 
-            modelBuilder.Entity("Backend.Persistence.Entities.Courses.CourseModule", b =>
-                {
-                    b.Navigation("Resources");
-                });
-
-            modelBuilder.Entity("Backend.Persistence.Entities.Courses.CourseResource", b =>
+            modelBuilder.Entity("Backend.Persistence.Entities.Courses.CourseActivity", b =>
                 {
                     b.Navigation("Assessment");
 
@@ -2417,6 +2409,11 @@ namespace Backend.Persistence.Migrations
                     b.Navigation("Problem");
 
                     b.Navigation("Progress");
+                });
+
+            modelBuilder.Entity("Backend.Persistence.Entities.Courses.CourseModule", b =>
+                {
+                    b.Navigation("Activities");
                 });
 
             modelBuilder.Entity("Backend.Persistence.Entities.Courses.Enrollment", b =>

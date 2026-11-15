@@ -12,13 +12,13 @@ public interface IAssignmentGradeService
 {
     public Task<AssignmentGradeResponse?> GetGradeAsync(long submissionId, CancellationToken ct = default);
 
-    public Task<PaginatedResponse<AssignmentGradeResponse>?> GetAssignmentGradesAsync(long resourceId, PageRequest page, CancellationToken ct = default);
+    public Task<PaginatedResponse<AssignmentGradeResponse>?> GetAssignmentGradesAsync(long activityId, PageRequest page, CancellationToken ct = default);
 
     public Task<PaginatedResponse<AssignmentGradeResponse>?> GetInstructorGradedAsync(PageRequest page, CancellationToken ct = default);
 
     public Task<PaginatedResponse<AssignmentGradeResponse>?> GetStudentSelfGradesAsync(PageRequest page, CancellationToken ct = default);
 
-    public Task<PaginatedResponse<AssignmentGradeResponse>?> GetStudentGradesAsync(long resourceId, long studentUserId, PageRequest page, CancellationToken ct = default);
+    public Task<PaginatedResponse<AssignmentGradeResponse>?> GetStudentGradesAsync(long activityId, long studentUserId, PageRequest page, CancellationToken ct = default);
 
     public Task<AssignmentGradeResponse?> GradeAsync(long submissionId, AssignmentGradeRequest request);
 
@@ -46,10 +46,10 @@ public class AssignmentGradeService(
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<PaginatedResponse<AssignmentGradeResponse>?> GetAssignmentGradesAsync(long resourceId, PageRequest page, CancellationToken ct = default)
+    public async Task<PaginatedResponse<AssignmentGradeResponse>?> GetAssignmentGradesAsync(long activityId, PageRequest page, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-        return await GetGradesAsync(db, page, g => g.Submission.AssignmentId == resourceId, ct);
+        return await GetGradesAsync(db, page, g => g.Submission.AssignmentId == activityId, ct);
     }
 
     public async Task<PaginatedResponse<AssignmentGradeResponse>?> GetInstructorGradedAsync(PageRequest page, CancellationToken ct = default)
@@ -66,10 +66,10 @@ public class AssignmentGradeService(
         return await GetGradesAsync(db, page, g => g.Submission.UserId == currentUserId, ct);
     }
 
-    public async Task<PaginatedResponse<AssignmentGradeResponse>?> GetStudentGradesAsync(long resourceId, long studentUserId, PageRequest page, CancellationToken ct = default)
+    public async Task<PaginatedResponse<AssignmentGradeResponse>?> GetStudentGradesAsync(long activityId, long studentUserId, PageRequest page, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-        return await GetGradesAsync(db, page, g => g.Submission.AssignmentId == resourceId && g.Submission.UserId == studentUserId, ct);
+        return await GetGradesAsync(db, page, g => g.Submission.AssignmentId == activityId && g.Submission.UserId == studentUserId, ct);
     }
 
     public async Task<AssignmentGradeResponse?> GradeAsync(long submissionId, AssignmentGradeRequest request)

@@ -65,14 +65,14 @@ public static class SubmissionEndpoints
     private static async
         Task<Results<Ok<SubmissionDetailResponse>, BadRequest, NotFound<string>>>
         HandleGetSelfSubmission(
-            string resourceId,
+            string activityId,
             SqidsEncoder<long> sqidsEncoder,
             ICourseService courseService,
             ICourseAuthorization auth,
             ISubmissionService submissionService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 

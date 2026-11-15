@@ -13,16 +13,16 @@ public static class QuestionEndpoints
             .WithTags("AssessmentQuestions")
             .RequireAuthorization();
 
-        question.MapGet("{resourceId}/question", HandleGetQuestions);
+        question.MapGet("{activityId}/question", HandleGetQuestions);
     }
 
     private static async Task<Results<Ok<List<QuestionResponse>>, BadRequest>> HandleGetQuestions(
-        string resourceId,
+        string activityId,
         SqidsEncoder<long> sqidsEncoder,
         IQuestionService questionService,
         CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(resourceId);
+        var decoded = sqidsEncoder.Decode(activityId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
 

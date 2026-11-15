@@ -20,9 +20,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<CourseModule> CourseModules => Set<CourseModule>();
 
-    public DbSet<CourseResource> CourseResources => Set<CourseResource>();
+    public DbSet<CourseActivity> CourseActivities => Set<CourseActivity>();
     public DbSet<Comment> Comments => Set<Comment>();
-    public DbSet<ResourceProgress> ResourceProgress => Set<ResourceProgress>();
+    public DbSet<ActivityProgress> ActivityProgress => Set<ActivityProgress>();
     public DbSet<RecentCourse> RecentCourses => Set<RecentCourse>();
 
     public DbSet<Lesson> Lessons => Set<Lesson>();
@@ -94,24 +94,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     //         .HasQueryFilter(x => !x.IsDeleted && !x.Course.IsDeleted);
     //     builder.Entity<CourseModule>()
     //         .HasQueryFilter(x => !x.IsDeleted && !x.Course.IsDeleted);
-    //     builder.Entity<CourseResource>()
+    //     builder.Entity<CourseActivity>()
     //         .HasQueryFilter(x => !x.IsDeleted && !x.Module.IsDeleted);
     //
     //     builder.Entity<Lesson>()
-    //         .HasQueryFilter(x => !x.IsDeleted && !x.Resource.IsDeleted);
+    //         .HasQueryFilter(x => !x.IsDeleted && !x.Activity.IsDeleted);
     //
     //     builder.Entity<Assignment>()
-    //         .HasQueryFilter(x => !x.IsDeleted && !x.Resource.IsDeleted);
+    //         .HasQueryFilter(x => !x.IsDeleted && !x.Activity.IsDeleted);
     //
     //     builder.Entity<Assessment>()
-    //         .HasQueryFilter(x => !x.IsDeleted && !x.Resource.IsDeleted);
+    //         .HasQueryFilter(x => !x.IsDeleted && !x.Activity.IsDeleted);
     //     builder.Entity<AssessmentQuestion>()
     //         .HasQueryFilter(x => !x.Assessment.IsDeleted);
     //     builder.Entity<AttemptQuestion>()
     //         .HasQueryFilter(x => !x.AssessmentQuestion.Assessment.IsDeleted);
     //
     //     builder.Entity<CodingProblem>()
-    //         .HasQueryFilter(x => !x.IsDeleted && !x.Resource.IsDeleted);
+    //         .HasQueryFilter(x => !x.IsDeleted && !x.Activity.IsDeleted);
     //     builder.Entity<CompilerProfile>()
     //         .HasQueryFilter(x => !x.Problem.IsDeleted);
     //     builder.Entity<ProblemSubmission>()
@@ -131,8 +131,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     //     //     .HasQueryFilter(r => !r.Question.IsDeleted);
     //
     //     // Use anonymous name instead
-    //     // builder.Entity<ResourceComment>()
-    //     //     .HasQueryFilter(c => !c.IsDeleted && !c.Resource.IsDeleted);
+    //     // builder.Entity<ActivityComment>()
+    //     //     .HasQueryFilter(c => !c.IsDeleted && !c.Activity.IsDeleted);
     // }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
