@@ -1,4 +1,5 @@
 using AutoMapper;
+using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Common;
 using Backend.Persistence.Data;
@@ -10,21 +11,21 @@ namespace Backend.Api.Services.Courses;
 
 public interface IActivityService
 {
-    public Task<ActivityDetailResponse?> GetActivityByIdAsync(long activityId);
+    public Task<ActivityDetailResponse?> GetActivityByIdAsync(long activityId, CancellationToken ct = default);
 
-    public Task<List<ActivityResponse>> GetPublishedActivitiesAsync(long moduleId);
+    public Task<PaginatedResponse<ActivityResponse>> GetPublishedActivitiesAsync(long moduleId, PageRequest page, CancellationToken ct = default);
 
-    public Task<List<ActivityResponse>> GetUnpublishedActivitiesAsync(long moduleId);
+    public Task<PaginatedResponse<ActivityResponse>> GetUnpublishedActivitiesAsync(long moduleId, PageRequest page, CancellationToken ct = default);
 
-    public Task<ActivityProgressResponse?> GetActivityProgressAsync(long activityId);
+    public Task<ActivityProgressResponse?> GetActivityProgressAsync(long activityId, CancellationToken ct = default);
 
-    public Task<ActivityProgressResponse?> MarkActivityCompletedAsync(long activityId);
+    public Task<ActivityProgressResponse?> MarkActivityCompletedAsync(long activityId, CancellationToken ct = default);
 
-    public Task<bool> DeleteActivityAsync(long activityId);
+    public Task<bool> DeleteActivityAsync(long activityId, CancellationToken ct = default);
 
-    public Task<bool> ReorderActivityAsync(long activityId, int orderIndex);
+    public Task<bool> ReorderActivityAsync(long activityId, int orderIndex, CancellationToken ct = default);
 
-    public Task<bool> CheckOwnerAsync(long activityId);
+    public Task<bool> CheckOwnerAsync(long activityId, CancellationToken ct = default);
 }
 
 public class ActivityService(
@@ -36,53 +37,75 @@ public class ActivityService(
     private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<ActivityDetailResponse?> GetActivityByIdAsync(long activityId)
+    public async Task<ActivityDetailResponse?> GetActivityByIdAsync(long activityId, CancellationToken ct = default)
     {
-        await using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
         return await db.CourseActivities
             .AsNoTracking()
             .Where(r => r.Id == activityId)
             .Where(r => r.IsPublished || r.Module.Course.InstructorId == currentUserId)
             .Select(r => _mapper.Map<ActivityDetailResponse>(r))
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<List<ActivityResponse>> GetPublishedActivitiesAsync(long moduleId)
+    public async Task<PaginatedResponse<ActivityResponse>> GetPublishedActivitiesAsync(long moduleId, PageRequest page, CancellationToken ct = default)
     {
-        await using var db = await _dbFactory.CreateDbContextAsync();
-        return await db.CourseActivities
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        var activities = db.CourseActivities
             .AsNoTracking()
-            .Where(r => r.ModuleId == moduleId && r.IsPublished)
+            .Where(r => r.ModuleId == moduleId && r.IsPublished);
+
+        var list = await activities
+            .Skip((page.PageNumber - 1) * page.PageSize)
+            .Take(page.PageSize)
             .Select(r => _mapper.Map<ActivityResponse>(r))
-            .ToListAsync();
+            .ToListAsync(ct);
+
+        return new PaginatedResponse<ActivityResponse>(
+            page.PageNumber,
+            page.PageSize,
+            await activities.CountAsync(ct),
+            list);
     }
 
-    public async Task<List<ActivityResponse>> GetUnpublishedActivitiesAsync(long moduleId)
+    public async Task<PaginatedResponse<ActivityResponse>> GetUnpublishedActivitiesAsync(long moduleId, PageRequest page, CancellationToken ct = default)
     {
-        await using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
-        return await db.CourseActivities
+
+        var activities = db.CourseActivities
             .AsNoTracking()
-            .Where(r => r.ModuleId == moduleId && !r.IsPublished && r.Module.Course.InstructorId == currentUserId)
+            .Where(r => r.ModuleId == moduleId && !r.IsPublished && r.Module.Course.InstructorId == currentUserId);
+
+        var list = await activities
+            .Skip((page.PageNumber - 1) * page.PageSize)
+            .Take(page.PageSize)
             .Select(r => _mapper.Map<ActivityResponse>(r))
-            .ToListAsync();
+            .ToListAsync(ct);
+
+        return new PaginatedResponse<ActivityResponse>(
+            page.PageNumber,
+            page.PageSize,
+            await activities.CountAsync(ct),
+            list);
     }
 
-    public async Task<ActivityProgressResponse?> GetActivityProgressAsync(long activityId)
+    public async Task<ActivityProgressResponse?> GetActivityProgressAsync(long activityId, CancellationToken ct = default)
     {
-        await using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var userId = _currentUserService.UserId;
 
         var activityExists = await db.CourseActivities
             .AsNoTracking()
-            .AnyAsync(r => r.Id == activityId && r.IsPublished);
+            .AnyAsync(r => r.Id == activityId && r.IsPublished, ct);
         if (!activityExists)
             return null;
 
         var progress = await db.ActivityProgress
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.ActivityId == activityId && p.UserId == userId);
+            .FirstOrDefaultAsync(p => p.ActivityId == activityId && p.UserId == userId, ct);
 
         return progress is null
             ? new ActivityProgressResponse(false, null, null)
@@ -92,19 +115,19 @@ public class ActivityService(
                 progress.LastAccessedAt);
     }
 
-    public async Task<ActivityProgressResponse?> MarkActivityCompletedAsync(long activityId)
+    public async Task<ActivityProgressResponse?> MarkActivityCompletedAsync(long activityId, CancellationToken ct = default)
     {
-        await using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var userId = _currentUserService.UserId;
 
         var activityExists = await db.CourseActivities
             .AsNoTracking()
-            .AnyAsync(r => r.Id == activityId && r.IsPublished);
+            .AnyAsync(r => r.Id == activityId && r.IsPublished, ct);
         if (!activityExists)
             return null;
 
         var progress = await db.ActivityProgress
-            .FirstOrDefaultAsync(p => p.ActivityId == activityId && p.UserId == userId);
+            .FirstOrDefaultAsync(p => p.ActivityId == activityId && p.UserId == userId, ct);
         var now = DateTime.UtcNow;
 
         if (progress is null)
@@ -126,7 +149,7 @@ public class ActivityService(
             progress.LastAccessedAt = now;
         }
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         return new ActivityProgressResponse(
             progress.IsCompleted,
@@ -134,81 +157,81 @@ public class ActivityService(
             progress.LastAccessedAt);
     }
 
-    public async Task<bool> DeleteActivityAsync(long activityId)
+    public async Task<bool> DeleteActivityAsync(long activityId, CancellationToken ct = default)
     {
-        await using var db = await _dbFactory.CreateDbContextAsync();
-        var activity = await db.CourseActivities.FirstOrDefaultAsync(r => r.Id == activityId);
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var activity = await db.CourseActivities.FirstOrDefaultAsync(r => r.Id == activityId, ct);
         if (activity is null)
             return false;
         db.CourseActivities.Remove(activity);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         return true;
     }
 
-    public async Task<bool> ReorderActivityAsync(long activityId, int orderIndex)
+    public async Task<bool> ReorderActivityAsync(long activityId, int orderIndex, CancellationToken ct = default)
     {
-        await using var db = await _dbFactory.CreateDbContextAsync();
-        await using var transaction = await db.Database.BeginTransactionAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
 
         try
         {
-            var target = await db.CourseActivities.FirstOrDefaultAsync(m => m.Id == activityId);
+            var target = await db.CourseActivities.FirstOrDefaultAsync(m => m.Id == activityId, ct);
             if (target == null) return false;
 
             var activities = db.CourseActivities
                 .Where(m => m.ModuleId == target.ModuleId);
-            var count = await activities.CountAsync();
+            var count = await activities.CountAsync(ct);
 
             if (orderIndex < 0) orderIndex = 0;
             orderIndex = Math.Min(orderIndex, count + 1);
 
             await activities
                 .Where(m => m.OrderIndex >= orderIndex)
-                .ExecuteUpdateAsync(m => m.SetProperty(m => m.OrderIndex, m => m.OrderIndex + 1));
+                .ExecuteUpdateAsync(m => m.SetProperty(m => m.OrderIndex, m => m.OrderIndex + 1), ct);
             target.OrderIndex = orderIndex;
-            await db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
         }
         catch (Exception)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(ct);
             return false;
         }
 
         return true;
     }
 
-    public async Task<bool> CheckOwnerAsync(long activityId)
+    public async Task<bool> CheckOwnerAsync(long activityId, CancellationToken ct = default)
     {
-        await using var db = await _dbFactory.CreateDbContextAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
         return await db.CourseActivities
             .AsNoTracking()
             .Where(c => c.Id == activityId && c.Module.Course.InstructorId == currentUserId)
-            .AnyAsync();
+            .AnyAsync(ct);
     }
 
-    static public async Task<List<long>> GetCourseActivityIdsAsync(AppDbContext db, long courseId)
+    static public async Task<List<long>> GetCourseActivityIdsAsync(AppDbContext db, long courseId, CancellationToken ct = default)
     {
         var moduleIds = await db.CourseModules
             .AsNoTracking()
             .Where(m => m.CourseId == courseId)
             .Select(m => m.Id)
-            .ToListAsync();
+            .ToListAsync(ct);
         return await db.CourseActivities
             .AsNoTracking()
             .Where(r => moduleIds.Contains(r.ModuleId))
             .Select(r => r.Id)
-            .ToListAsync();
+            .ToListAsync(ct);
     }
 
-    static public async Task<CourseProgress> GetCourseProgressAsync(AppDbContext db, long courseId, long userId)
+    static public async Task<CourseProgress> GetCourseProgressAsync(AppDbContext db, long courseId, long userId, CancellationToken ct = default)
     {
-        var activityIds = await GetCourseActivityIdsAsync(db, courseId);
+        var activityIds = await GetCourseActivityIdsAsync(db, courseId, ct);
         var completed = await db.ActivityProgress
             .AsNoTracking()
             .Where(r => r.UserId == userId && r.IsCompleted && activityIds.Contains(r.ActivityId))
-            .CountAsync();
+            .CountAsync(ct);
         return new CourseProgress(Completed: completed, Total: activityIds.Count);
     }
 
@@ -228,9 +251,9 @@ public class ActivityService(
         return activity;
     }
 
-    static public async Task<CourseActivity> UpdateActivityAsync(AppDbContext db, long activityId, ActivityRequestInfo info)
+    static public async Task<CourseActivity> UpdateActivityAsync(AppDbContext db, long activityId, ActivityRequestInfo info, CancellationToken ct = default)
     {
-        var activity = await db.CourseActivities.FirstOrDefaultAsync(r => r.Id == activityId);
+        var activity = await db.CourseActivities.FirstOrDefaultAsync(r => r.Id == activityId, ct);
         if (activity is not null)
         {
             activity.Title = info.Title;
@@ -238,7 +261,7 @@ public class ActivityService(
             activity.IsPublished = info.IsPublished;
 
             db.CourseActivities.Update(activity);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
 
             return activity;
         }

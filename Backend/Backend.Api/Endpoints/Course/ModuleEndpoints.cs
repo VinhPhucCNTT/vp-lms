@@ -1,3 +1,4 @@
+using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Courses;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -12,6 +13,8 @@ public static class ModuleEndpoints
     {
         var module = route.MapGroup("/api/module").WithTags("Modules");
 
+        module.MapGet("{moduleId}/activities", HandleGetActivities).RequireAuthorization();
+
         module.MapPut("{moduleId}", HandleUpdate).RequireAuthorization();
         module.MapDelete("{moduleId}", HandleDelete).RequireAuthorization();
 
@@ -19,6 +22,23 @@ public static class ModuleEndpoints
         module.MapPost("unpublish/{moduleId}", HandleUnpublish).RequireAuthorization();
         module.MapPost("reorder/{moduleId}", HandleReorder).RequireAuthorization();
     }
+
+    private static async
+        Task<Results<Ok<PaginatedResponse<ActivityResponse>>, BadRequest>>
+        HandleGetActivities(
+            string moduleId,
+            [AsParameters] PageRequest page,
+            SqidsEncoder<long> sqidsEncoder,
+            IActivityService activityService)
+    {
+        var decoded = sqidsEncoder.Decode(moduleId);
+        if (decoded.Count != 1)
+            return TypedResults.BadRequest();
+
+        return TypedResults.Ok(
+            await activityService.GetPublishedActivitiesAsync(decoded[0], page));
+    }
+
 
     private static async
         Task<Results<Ok<ModuleSetResponse>, NotFound, BadRequest, UnauthorizedHttpResult>>
