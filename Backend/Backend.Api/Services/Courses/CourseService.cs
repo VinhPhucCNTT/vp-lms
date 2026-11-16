@@ -17,9 +17,9 @@ public interface ICourseService
 
     public Task<CourseDetailResponse?> GetDtoAsync(long courseId, CancellationToken ct = default);
 
-    public Task<List<StudentCourseResponse>> GetStudentCoursesAsync(CancellationToken ct = default);
+    public Task<PaginatedResponse<StudentCourseResponse>> GetStudentCoursesAsync(PageRequest page, CancellationToken ct = default);
 
-    public Task<List<CourseDetailResponse>> GetInstructorCoursesAsync(CancellationToken ct = default);
+    public Task<PaginatedResponse<CourseDetailResponse>> GetInstructorCoursesAsync(PageRequest page, CancellationToken ct = default);
 
     public Task<ExploreCourseResponse> GetExploreAsync(CancellationToken ct = default);
 
@@ -82,44 +82,60 @@ public class CourseService(
         return _mapper.Map<CourseDetailResponse>(course);
     }
 
-    public async Task<List<StudentCourseResponse>> GetStudentCoursesAsync(CancellationToken ct = default)
+    public async Task<PaginatedResponse<StudentCourseResponse>> GetStudentCoursesAsync(PageRequest page, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
-        var enrolledCourseIds = await db.Enrollments
+
+        var courses = db.Courses
             .AsNoTracking()
-            .Where(e => e.UserId == currentUserId)
-            .Select(e => e.CourseId)
+            .Where(c => db.Enrollments
+                .Where(e => e.UserId == currentUserId)
+                .Select(e => e.CourseId)
+                .Contains(c.Id));
+
+        var list = await courses
+            .Skip((page.PageNumber - 1) * page.PageSize)
+            .Take(page.PageSize)
             .ToListAsync(ct);
 
-        var courses = await db.Courses
-            .AsNoTracking()
-            .Where(c => enrolledCourseIds.Contains(c.Id))
-            .ToListAsync(ct);
-
-        List<StudentCourseResponse> list = [];
-        foreach (var course in courses)
+        List<StudentCourseResponse> results = [];
+        foreach (var c in list)
         {
             var item = new StudentCourseResponse(
-                _mapper.Map<CourseDetailResponse>(course),
-                await ActivityService.GetCourseProgressAsync(db, course.Id, currentUserId));
+                _mapper.Map<CourseDetailResponse>(c),
+                await ActivityService.GetCourseProgressAsync(db, c.Id, currentUserId));
 
-            list.Add(item);
+            results.Add(item);
         }
 
-        return list;
+        return new PaginatedResponse<StudentCourseResponse>(
+            page.PageNumber,
+            page.PageSize,
+            await courses.CountAsync(ct),
+            results);
     }
 
-    public async Task<List<CourseDetailResponse>> GetInstructorCoursesAsync(CancellationToken ct = default)
+    public async Task<PaginatedResponse<CourseDetailResponse>> GetInstructorCoursesAsync(PageRequest page, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
 
-        return await db.Courses
+        var courses = db.Courses
             .AsNoTracking()
-            .Where(c => c.InstructorId == currentUserId)
+            .Where(c => c.InstructorId == currentUserId);
+
+        var list = await courses
+            .Skip((page.PageNumber - 1) * page.PageSize)
+            .Take(page.PageSize)
             .Select(c => _mapper.Map<CourseDetailResponse>(c))
             .ToListAsync(ct);
+
+        return new PaginatedResponse<CourseDetailResponse>(
+            page.PageNumber,
+            page.PageSize,
+            await courses.CountAsync(ct),
+            list);
     }
 
     public async Task<ExploreCourseResponse> GetExploreAsync(CancellationToken ct = default)
@@ -159,11 +175,11 @@ public class CourseService(
         if (!string.IsNullOrEmpty(query.Title))
             courses = courses.Where(c => c.Title.Contains(query.Title, StringComparison.OrdinalIgnoreCase));
 
-        if (!string.IsNullOrEmpty(query.CreatorFirstName))
-            courses = courses.Where(c => c.Instructor.FirstName.Contains(query.CreatorFirstName, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrEmpty(query.InstructorFirstName))
+            courses = courses.Where(c => c.Instructor.FirstName.Contains(query.InstructorFirstName, StringComparison.OrdinalIgnoreCase));
 
-        if (!string.IsNullOrEmpty(query.CreatorLastName))
-            courses = courses.Where(c => c.Instructor.LastName.Contains(query.CreatorLastName, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrEmpty(query.InstructorLastName))
+            courses = courses.Where(c => c.Instructor.LastName.Contains(query.InstructorLastName, StringComparison.OrdinalIgnoreCase));
 
         if (query.EnrollmentOpen != null)
             courses = courses.Where(c => c.EnrollmentOpen == query.EnrollmentOpen);

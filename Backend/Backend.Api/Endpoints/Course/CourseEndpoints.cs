@@ -51,16 +51,22 @@ public static class CourseEndpoints
     }
 
     private static async
-        Task<Ok<List<StudentCourseResponse>>>
-        HandleGetStudent(ICourseService courseService,
-            CancellationToken ct) => TypedResults.Ok(
-            await courseService.GetStudentCoursesAsync(ct));
+        Task<Ok<PaginatedResponse<StudentCourseResponse>>>
+        HandleGetStudent(
+            [AsParameters] PageRequest page,
+            ICourseService courseService,
+            CancellationToken ct)
+        => TypedResults.Ok(
+            await courseService.GetStudentCoursesAsync(page, ct));
 
     private static async
-        Task<Ok<List<CourseDetailResponse>>>
-        HandleGetInstructor(ICourseService courseService,
-            CancellationToken ct) => TypedResults.Ok(
-            await courseService.GetInstructorCoursesAsync(ct));
+        Task<Ok<PaginatedResponse<CourseDetailResponse>>>
+        HandleGetInstructor(
+            [AsParameters] PageRequest page,
+            ICourseService courseService,
+            CancellationToken ct)
+        => TypedResults.Ok(
+            await courseService.GetInstructorCoursesAsync(page, ct));
 
     private static async
         Task<Ok<ExploreCourseResponse>>
@@ -75,9 +81,10 @@ public static class CourseEndpoints
             await courseService.QueryCoursesAsync(query, ct));
 
     private static async
-        Task<Results<Ok<List<ModuleResponse>>, BadRequest>>
+        Task<Results<Ok<PaginatedResponse<ModuleResponse>>, BadRequest>>
         HandleGetModules(
             string courseId,
+            [AsParameters] PageRequest page,
             SqidsEncoder<long> sqidsEncoder,
             IModuleService moduleService,
             CancellationToken ct)
@@ -87,7 +94,7 @@ public static class CourseEndpoints
             return TypedResults.BadRequest();
 
         return TypedResults.Ok(
-            await moduleService.GetCourseModulesAsync(decoded[0], ct));
+            await moduleService.GetCourseModulesAsync(decoded[0], page, ct));
     }
 
     private static async

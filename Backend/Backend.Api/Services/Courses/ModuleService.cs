@@ -1,4 +1,5 @@
 using AutoMapper;
+using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Persistence.Data;
 using Backend.Persistence.Entities.Courses;
@@ -8,7 +9,7 @@ namespace Backend.Api.Services.Courses;
 
 public interface IModuleService
 {
-    public Task<List<ModuleResponse>> GetCourseModulesAsync(long courseId, CancellationToken ct = default);
+    public Task<PaginatedResponse<ModuleResponse>> GetCourseModulesAsync(long courseId, PageRequest page, CancellationToken ct = default);
 
     public Task<ModuleSetResponse> CreateModuleAsync(long courseId, ModuleSetRequest dto, CancellationToken ct = default);
 
@@ -30,14 +31,25 @@ public class ModuleService(
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<List<ModuleResponse>> GetCourseModulesAsync(long courseId, CancellationToken ct = default)
+    public async Task<PaginatedResponse<ModuleResponse>> GetCourseModulesAsync(long courseId, PageRequest page, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-        return await db.CourseModules
+
+        var modules = db.CourseModules
             .AsNoTracking()
             .Where(m => m.CourseId == courseId)
-            .Select(m => _mapper.Map<ModuleResponse>(m))
-            .ToListAsync(cancellationToken: ct);
+            .Select(m => _mapper.Map<ModuleResponse>(m));
+
+        var list = await modules
+            .Skip((page.PageNumber - 1) * page.PageSize)
+            .Take(page.PageSize)
+            .ToListAsync(ct);
+
+        return new PaginatedResponse<ModuleResponse>(
+            page.PageNumber,
+            page.PageSize,
+            await modules.CountAsync(ct),
+            list);
     }
 
     public async Task<ModuleSetResponse> CreateModuleAsync(long courseId, ModuleSetRequest dto, CancellationToken ct = default)
