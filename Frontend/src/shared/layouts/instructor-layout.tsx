@@ -1,6 +1,5 @@
-import * as React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboardIcon, BookOpenIcon, FileTextIcon, CalendarIcon, BellIcon, LogOutIcon, ChevronDownIcon, CodeIcon, ClipboardListIcon, LibraryIcon } from "lucide-react";
+import { LayoutDashboardIcon, BookOpenIcon, FileTextIcon, LogOutIcon, ChevronDownIcon, CodeIcon, ClipboardListIcon, LibraryIcon } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-context";
 import { ModeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";

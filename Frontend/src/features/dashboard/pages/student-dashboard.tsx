@@ -1,4 +1,3 @@
-import * as React from "react";
 import { BookOpenIcon, FileTextIcon, ClipboardCheckIcon, ClockIcon, TrendingUpIcon, CodeIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,13 +9,12 @@ import { PageHeader } from "@/shared/components/page-header";
 import { CourseCard } from "@/shared/components/course-card";
 import { LoadingState, ErrorState } from "@/shared/components/api-states";
 import { useApi } from "@/lib/use-api";
-import { courseApi } from "@/features/courses/course-api";
+import { courseApi, StudentCourseResponse } from "@/features/courses/api/course-api";
 import { useAuth } from "@/features/auth/auth-context";
-import type { Course } from "@/types";
 
 export function StudentDashboard() {
   const { user } = useAuth();
-  const { data: enrolledCourses, loading, error, reload } = useApi<Course[]>(() => courseApi.getEnrolledCourses());
+  const { data: enrolledCourses, loading, error, reload } = useApi<StudentCourseResponse[]>(() => courseApi.getEnrolledCourses());
 
   const courseCount = enrolledCourses?.length ?? 0;
 
@@ -57,7 +55,7 @@ export function StudentDashboard() {
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
                     {enrolledCourses.slice(0, 4).map((course) => (
-                      <CourseCard key={course.id} course={course} progress={0} showProgress variant="compact" />
+                      <CourseCard key={course.info.id} course={course} progress={0} showProgress variant="compact" />
                     ))}
                   </div>
                 )}

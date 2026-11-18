@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/shared/components/page-header";
 import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
 import { useApi } from "@/lib/use-api";
-import { judgeApi } from "@/features/courses/judge-api";
+import { judgeApi } from "@/features/courses/api/judge-api";
 import type { Problem } from "@/types";
 import { cn } from "@/lib/utils";
 

@@ -6,17 +6,16 @@ import { PageHeader } from "@/shared/components/page-header";
 import { CourseCard } from "@/shared/components/course-card";
 import { useApi } from "@/lib/use-api";
 import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
-import { courseApi } from "@/features/courses/course-api";
-import type { Course } from "@/types";
+import { courseApi, StudentCourseResponse } from "@/features/courses/api/course-api";
 
 export function StudentCourses() {
-  const { data: enrolledCourses, loading, error, reload } = useApi<Course[]>(() => courseApi.getEnrolledCourses());
+  const { data: enrolledCourses, loading, error, reload } = useApi<StudentCourseResponse[]>(() => courseApi.getEnrolledCourses());
   const [search, setSearch] = React.useState("");
 
   const filteredCourses = React.useMemo(() => {
     if (!enrolledCourses) return [];
     return enrolledCourses.filter((course) =>
-      course.title.toLowerCase().includes(search.toLowerCase()) || course.code.toLowerCase().includes(search.toLowerCase())
+      course.info.title.toLowerCase().includes(search.toLowerCase())
     );
   }, [enrolledCourses, search]);
 
@@ -47,7 +46,7 @@ export function StudentCourses() {
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredCourses.map((course) => (
-                <CourseCard key={course.id} course={course} progress={0} showProgress />
+                <CourseCard key={course.info.id} course={course} progress={0} showProgress />
               ))}
             </div>
           )}
@@ -59,7 +58,7 @@ export function StudentCourses() {
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredCourses.map((course) => (
-                <CourseCard key={course.id} course={course} progress={0} showProgress />
+                <CourseCard key={course.info.id} course={course} progress={0} showProgress />
               ))}
             </div>
           )}

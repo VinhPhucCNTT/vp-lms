@@ -38,8 +38,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { cn } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
 import { LoadingState, ErrorState } from "@/shared/components/api-states";
-import { courseApi } from "@/features/courses/course-api";
-import type { CourseModuleDto, CourseResourceDto, LessonDto, ResourceProgressDto } from "@/features/courses/course-api";
+import { courseApi } from "@/features/courses/api/course-api";
+import type { CourseModuleDto, CourseResourceDto, LessonDto, ResourceProgressDto } from "@/features/courses/api/course-api";
 import {
   courses,
   modules,

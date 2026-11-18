@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/shared/components/page-header";
 import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
 import { useApi } from "@/lib/use-api";
-import { assignmentApi, type AssignmentSummaryDto } from "@/features/assignments/assignment-api";
+import { assignmentApi, type AssignmentSummaryDto } from "@/features/assignments/api/assignment-api";
 import { cn } from "@/lib/utils";
 
 type AssignmentStatus = "pending" | "submitted" | "graded" | "overdue";

@@ -127,7 +127,6 @@ export const assignmentApi = {
       type: dto.type as StudentActivity["type"],
       course: dto.course,
       dueDate: dto.dueDate,
-      status: dto.status as StudentActivity["status"],
       refId: dto.refId,
       moduleId: dto.moduleId,
     }));

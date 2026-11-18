@@ -12,8 +12,8 @@ import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/shared/components/page-header";
 import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
 import { useApi } from "@/lib/use-api";
-import { instructorApi, type GradebookStudentDto } from "@/features/courses/instructor-api";
-import { courseApi } from "@/features/courses/course-api";
+import { instructorApi, type GradebookStudentDto } from "@/features/courses/api/instructor-api";
+import { courseApi } from "@/features/courses/api/course-api";
 import type { Course } from "@/types";
 import { cn } from "@/lib/utils";
 

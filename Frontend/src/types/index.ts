@@ -1,55 +1,31 @@
 export type UserRole = "student" | "instructor" | "admin";
-export type UserStatus = "active" | "suspended" | "pending";
-export type CourseLevel = "beginner" | "intermediate" | "advanced";
-export type ActivityStatus = "pending" | "completed" | "overdue";
 
 export interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
+  avatarFileId?: string;
   role: UserRole;
-  status: UserStatus;
   createdAt: string;
-  updatedAt: string;
 }
 
-export interface Student extends User {
-  role: "student";
-  studentId: string;
-  enrolledCourses: string[];
-  gpa: number;
-}
-
-export interface Instructor extends User {
-  role: "instructor";
-  department: string;
-  officeLocation?: string;
-}
-
-export interface Admin extends User {
-  role: "admin";
-  permissions: string[];
-}
-
-export interface Course {
-  id: string;
-  code: string;
-  title: string;
-  description: string;
-  instructorId: string;
-  status: "draft" | "published" | "archived";
-  enrolledCount: number;
-  startDate: string;
-  endDate: string;
-  createdAt: string;
-  department?: string;
-  credits?: number;
-  level?: CourseLevel;
-  semester?: string;
-  tags?: string[];
-  featured?: boolean;
-}
+// export interface Student extends User {
+//   role: "student";
+//   studentId: string;
+//   enrolledCourses: string[];
+// }
+//
+// export interface Instructor extends User {
+//   role: "instructor";
+//   department: string;
+//   officeLocation?: string;
+// }
+//
+// export interface Admin extends User {
+//   role: "admin";
+//   permissions: string[];
+// }
 
 export interface Module {
   id: string;
@@ -109,7 +85,7 @@ export interface Assessment {
   totalPoints?: number;
 }
 
-// ── Question Bank types ──────────────────────────────────────────────────────
+// Question Bank types
 
 export type QuestionType =
   | "multiple-choice"
@@ -155,7 +131,7 @@ export interface QuestionBank {
   createdAt: string;
 }
 
-// ── Assessment linking & attempts ────────────────────────────────────────────
+// Assessment linking & attempts
 
 export interface AssessmentQuestion {
   id: string;
@@ -253,7 +229,7 @@ export interface StudentActivity {
   type: ActivityType;
   course: { id: string; code: string; title: string };
   dueDate: string;
-  status: ActivityStatus;
   refId: string;
   moduleId: string;
 }
+

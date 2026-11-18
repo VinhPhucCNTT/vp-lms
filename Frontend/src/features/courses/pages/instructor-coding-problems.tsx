@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PageHeader } from "@/shared/components/page-header";
 import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
 import { useApi } from "@/lib/use-api";
-import { courseApi, type CourseDetailDto } from "@/features/courses/course-api";
-import { judgeApi } from "@/features/courses/judge-api";
+import { courseApi, type CourseDetailDto } from "@/features/courses/api/course-api";
+import { judgeApi } from "@/features/courses/api/judge-api";
 import type { Course, Problem } from "@/types";
 import { cn } from "@/lib/utils";
 

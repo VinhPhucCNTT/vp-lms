@@ -8,13 +8,13 @@ import { PageHeader } from "@/shared/components/page-header";
 import { LoadingState, ErrorState } from "@/shared/components/api-states";
 import { useApi } from "@/lib/use-api";
 import { useAuth } from "@/features/auth/auth-context";
-import { instructorApi, type InstructorStatsDto, type PendingSubmissionDto } from "@/features/courses/instructor-api";
-import { courseApi } from "@/features/courses/course-api";
+import { instructorApi, type InstructorStatsResponse, type PendingSubmissionDto } from "@/features/courses/api/instructor-api";
+import { courseApi } from "@/features/courses/api/course-api";
 import type { Course } from "@/types";
 
 export function InstructorDashboard() {
   const { user } = useAuth();
-  const { data: stats, loading, error, reload } = useApi<InstructorStatsDto>(() => instructorApi.getStats());
+  const { data: stats, loading, error, reload } = useApi<InstructorStatsResponse>(() => instructorApi.getStats());
   const { data: pendingSubs } = useApi<PendingSubmissionDto[]>(() => instructorApi.getPendingSubmissions());
   const { data: recentCourses } = useApi<Course[]>(() => instructorApi.getRecentCourses());
 
@@ -27,7 +27,7 @@ export function InstructorDashboard() {
       <PageHeader
         title={`Welcome back, ${user?.firstName ?? "Instructor"}!`}
         description="Here's an overview of your courses and student submissions"
-        actions={<Link to="/instructor/courses"><Button>New Course</Button></Link>}
+        actions={<Link to="/instructor/courses?action=create"><Button>New Course</Button></Link>}
       />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

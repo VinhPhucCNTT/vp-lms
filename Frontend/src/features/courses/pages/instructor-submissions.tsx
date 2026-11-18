@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/shared/components/page-header";
 import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
 import { useApi } from "@/lib/use-api";
-import { instructorApi, type SubmissionDetailDto } from "@/features/courses/instructor-api";
+import { instructorApi, type SubmissionDetailDto } from "@/features/courses/api/instructor-api";
 import { cn } from "@/lib/utils";
 import type { SubmissionVerdict } from "@/types";
 

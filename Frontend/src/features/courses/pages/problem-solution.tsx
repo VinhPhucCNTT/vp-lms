@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LoadingState, ErrorState } from "@/shared/components/api-states";
 import { useApi } from "@/lib/use-api";
-import { judgeApi } from "@/features/courses/judge-api";
+import { judgeApi } from "@/features/courses/api/judge-api";
 import { cn } from "@/lib/utils";
 import type { JudgeLanguage, Submission, SubmissionVerdict } from "@/types";
 

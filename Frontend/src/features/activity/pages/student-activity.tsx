@@ -7,7 +7,6 @@ import {
   getPaginationRowModel,
   useReactTable,
   type ColumnDef,
-  type ColumnFiltersState,
 } from "@tanstack/react-table";
 import { SearchIcon, ClockIcon, CheckCircleIcon, AlertCircleIcon, ListTodoIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +31,7 @@ import {
 import { PageHeader } from "@/shared/components/page-header";
 import { LoadingState, ErrorState } from "@/shared/components/api-states";
 import { useApi } from "@/lib/use-api";
-import { assignmentApi } from "@/features/assignments/assignment-api";
+import { assignmentApi } from "@/features/assignments/api/assignment-api";
 import { cn } from "@/lib/utils";
 import type { StudentActivity, ActivityType, ActivityStatus } from "@/types";
 

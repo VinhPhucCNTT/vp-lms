@@ -13,7 +13,7 @@ import {
   type AssignmentInfoDto,
   type AssignmentResponseDto,
   type SubmissionDetailDto,
-} from "@/features/assignments/assignment-api";
+} from "@/features/assignments/api/assignment-api";
 
 function submissionTypeLabel(info: AssignmentInfoDto): string {
   if (info.submissionType === 0 || info.submissionType === "File") return "File submission";

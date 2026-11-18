@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/shared/components/page-header";
 import { LoadingState, ErrorState } from "@/shared/components/api-states";
 import { useApi } from "@/lib/use-api";
-import { courseApi } from "@/features/courses/course-api";
+import { courseApi } from "@/features/courses/api/course-api";
 import type { Course } from "@/types";
 
 const semesters = ["Spring 2026", "Summer 2026", "Fall 2026"] as const;
