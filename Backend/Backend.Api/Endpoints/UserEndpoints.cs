@@ -1,6 +1,7 @@
 using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Users;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Sqids;
@@ -73,23 +74,45 @@ public static class UserEndpoints
     }
 
     private static async
-        Task<Ok<UserResponse>>
+        Task<IResult>
         HandleCreate(
             [FromForm] UserCreateRequest request,
+            HttpContext context,
+            IAntiforgery antiforgery,
             [FromServices] IUserService userService)
     {
+        try
+        {
+            await antiforgery.ValidateRequestAsync(context);
+        }
+        catch (AntiforgeryValidationException)
+        {
+            return TypedResults.BadRequest("Antiforgery validation failed.");
+        }
+
         var result = await userService.CreateUserAsync(request);
         return TypedResults.Ok(result);
     }
 
     private static async
-        Task<Results<Ok<UserResponse>, BadRequest, NotFound, InternalServerError>>
+        Task<IResult>
         HandleUpdate(
             string id,
             [FromForm] UserPatchRequest request,
             SqidsEncoder<long> sqidsEncoder,
-            [FromServices] IUserService userService)
+            [FromServices] IUserService userService,
+            HttpContext context,
+            IAntiforgery antiforgery)
     {
+        try
+        {
+            await antiforgery.ValidateRequestAsync(context);
+        }
+        catch (AntiforgeryValidationException)
+        {
+            return TypedResults.BadRequest("Antiforgery validation failed.");
+        }
+
         var decoded = sqidsEncoder.Decode(id);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();
@@ -130,8 +153,19 @@ public static class UserEndpoints
         HandleUpdateSelf(
             [FromForm] UserPatchRequest request,
             [FromServices] IUserService userService,
+            HttpContext context,
+            IAntiforgery antiforgery,
             CancellationToken ct)
     {
+        try
+        {
+            await antiforgery.ValidateRequestAsync(context);
+        }
+        catch (AntiforgeryValidationException)
+        {
+            return TypedResults.BadRequest("Antiforgery validation failed.");
+        }
+
         var result = await userService.UpdateSelfAsync(request, ct);
         return result.IsSuccess
             ? TypedResults.Ok(result.Value)

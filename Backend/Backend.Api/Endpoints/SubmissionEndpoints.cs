@@ -16,6 +16,7 @@ public static class SubmissionEndpoints
 
         submission.MapGet("{submissionId}", HandleGetById).RequireAuthorization("IsInstructor");
         submission.MapGet("/student-self-grades", HandleGetOwnGrades).RequireAuthorization("IsStudent");
+        submission.MapGet("instructor", HandleGetInstructorAll).RequireAuthorization("IsInstructor");
 
         submission.MapGet("{submissionId}/grade", HandleGetGrade).RequireAuthorization();
         submission.MapPost("{submissionId}/grade", HandleAddGrade).RequireAuthorization("IsInstructor");
@@ -62,28 +63,39 @@ public static class SubmissionEndpoints
             : TypedResults.NotFound("Submission not found.");
     }
 
+    // NOTE: Unused?
+    // private static async
+    //     Task<Results<Ok<SubmissionDetailResponse>, BadRequest, NotFound<string>>>
+    //     HandleGetSelfSubmission(
+    //         string activityId,
+    //         SqidsEncoder<long> sqidsEncoder,
+    //         ICourseService courseService,
+    //         ICourseAuthorization auth,
+    //         ISubmissionService submissionService,
+    //         CancellationToken ct)
+    // {
+    //     var decoded = sqidsEncoder.Decode(activityId);
+    //     if (decoded.Count != 1)
+    //         return TypedResults.BadRequest();
+    //
+    //     var course = await courseService.GetFromModuleAsync(decoded[0], ct);
+    //     if (course is null || !await auth.IsParticipantAsync(course.Id, ct))
+    //         return TypedResults.NotFound("Course not found.");
+    //
+    //     var result = await submissionService.GetOwnDetailAsync(decoded[0], ct);
+    //     return result.IsSuccess
+    //         ? TypedResults.Ok(result.Value)
+    //         : TypedResults.NotFound(result.Error!.Message);
+    // }
+
     private static async
-        Task<Results<Ok<SubmissionDetailResponse>, BadRequest, NotFound<string>>>
-        HandleGetSelfSubmission(
-            string activityId,
-            SqidsEncoder<long> sqidsEncoder,
-            ICourseService courseService,
-            ICourseAuthorization auth,
+        Task<IResult>
+        HandleGetInstructorAll(
+            [AsParameters] PageRequest page,
             ISubmissionService submissionService,
             CancellationToken ct)
     {
-        var decoded = sqidsEncoder.Decode(activityId);
-        if (decoded.Count != 1)
-            return TypedResults.BadRequest();
-
-        var course = await courseService.GetFromModuleAsync(decoded[0]);
-        if (course is null || !await auth.IsParticipantAsync(course.Id))
-            return TypedResults.NotFound("Course not found.");
-
-        var result = await submissionService.GetOwnDetailAsync(decoded[0], ct);
-        return result.IsSuccess
-            ? TypedResults.Ok(result.Value)
-            : TypedResults.NotFound(result.Error!.Message);
+        return TypedResults.Ok(await submissionService.GetInstructorAllAsync(page, ct));
     }
 
     private static async Task<Ok<PaginatedResponse<AssignmentGradeResponse>>> HandleGetOwnGrades(
@@ -91,7 +103,7 @@ public static class SubmissionEndpoints
         IAssignmentGradeService gradeService,
         CancellationToken ct)
     {
-        return TypedResults.Ok((await gradeService.GetStudentSelfGradesAsync(page, ct))!);
+        return TypedResults.Ok(await gradeService.GetStudentSelfGradesAsync(page, ct));
     }
 
     private static async Task<Results<Ok<AssignmentGradeResponse>, BadRequest, NotFound<string>>> HandleAddGrade(

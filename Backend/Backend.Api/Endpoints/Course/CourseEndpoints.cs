@@ -2,6 +2,7 @@ using Backend.Api.Core.Authorization;
 using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Courses;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Sqids;
@@ -25,7 +26,7 @@ public static class CourseEndpoints
         course.MapPost("{courseId}/modules", HandleCreateModule);
 
         course.MapPost("", HandleCreate).RequireAuthorization("IsInstructor");
-        course.MapPut("{courseId}", HandleUpdate);
+        course.MapPatch("{courseId}", HandleUpdate);
         course.MapDelete("{courseId}", HandleDelete);
 
         course.MapPost("{courseId}/publish", HandlePublish);
@@ -60,7 +61,7 @@ public static class CourseEndpoints
             await courseService.GetStudentCoursesAsync(page, ct));
 
     private static async
-        Task<Ok<PaginatedResponse<CourseDetailResponse>>>
+        Task<Ok<PaginatedResponse<InstructorCourseResponse>>>
         HandleGetInstructor(
             [AsParameters] PageRequest page,
             ICourseService courseService,
@@ -114,21 +115,48 @@ public static class CourseEndpoints
     }
 
     private static async
-        Task<Ok<CourseSetResponse>>
-        HandleCreate([FromBody] CourseCreateRequest request, ICourseService courseService,
-            CancellationToken ct) => TypedResults.Ok(
-            await courseService.CreateCourseAsync(request, ct));
+        Task<IResult>
+        HandleCreate(
+            [FromForm] CourseCreateRequest request,
+            ICourseService courseService,
+            HttpContext context,
+            IAntiforgery antiforgery,
+            CancellationToken ct)
+    {
+        try
+        {
+            await antiforgery.ValidateRequestAsync(context);
+        }
+        catch (AntiforgeryValidationException)
+        {
+            return TypedResults.BadRequest("Antiforgery validation failed.");
+        }
+
+        return TypedResults.Ok(
+        await courseService.CreateCourseAsync(request, ct));
+    }
 
     private static async
-        Task<Results<Ok<CourseSetResponse>, NotFound, BadRequest>>
+        Task<IResult>
         HandleUpdate(
             string courseId,
             [FromForm] CoursePatchRequest request,
             SqidsEncoder<long> sqidsEncoder,
+            HttpContext context,
+            IAntiforgery antiforgery,
             ICourseAuthorization auth,
             ICourseService courseService,
             CancellationToken ct)
     {
+        try
+        {
+            await antiforgery.ValidateRequestAsync(context);
+        }
+        catch (AntiforgeryValidationException)
+        {
+            return TypedResults.BadRequest("Antiforgery validation failed.");
+        }
+
         var decoded = sqidsEncoder.Decode(courseId);
         if (decoded.Count != 1)
             return TypedResults.BadRequest();

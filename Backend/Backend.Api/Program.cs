@@ -23,8 +23,6 @@ using Sqids;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Console.WriteLine(Directory.GetCurrentDirectory());
-
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
@@ -45,6 +43,8 @@ builder.Services.AddCors(options =>
                    .AllowAnyMethod();
         });
 });
+
+builder.Services.AddAntiforgery();
 
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 

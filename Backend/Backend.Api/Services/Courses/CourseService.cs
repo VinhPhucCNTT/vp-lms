@@ -19,7 +19,7 @@ public interface ICourseService
 
     public Task<PaginatedResponse<StudentCourseResponse>> GetStudentCoursesAsync(PageRequest page, CancellationToken ct = default);
 
-    public Task<PaginatedResponse<CourseDetailResponse>> GetInstructorCoursesAsync(PageRequest page, CancellationToken ct = default);
+    public Task<PaginatedResponse<InstructorCourseResponse>> GetInstructorCoursesAsync(PageRequest page, CancellationToken ct = default);
 
     public Task<ExploreCourseResponse> GetExploreAsync(CancellationToken ct = default);
 
@@ -104,7 +104,7 @@ public class CourseService(
         {
             var item = new StudentCourseResponse(
                 _mapper.Map<CourseDetailResponse>(c),
-                await ActivityService.GetCourseProgressAsync(db, c.Id, currentUserId));
+                await ActivityService.GetCourseProgressAsync(db, c.Id, currentUserId, ct));
 
             results.Add(item);
         }
@@ -116,7 +116,7 @@ public class CourseService(
             results);
     }
 
-    public async Task<PaginatedResponse<CourseDetailResponse>> GetInstructorCoursesAsync(PageRequest page, CancellationToken ct = default)
+    public async Task<PaginatedResponse<InstructorCourseResponse>> GetInstructorCoursesAsync(PageRequest page, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var currentUserId = _currentUserService.UserId;
@@ -128,14 +128,24 @@ public class CourseService(
         var list = await courses
             .Skip((page.PageNumber - 1) * page.PageSize)
             .Take(page.PageSize)
-            .Select(c => _mapper.Map<CourseDetailResponse>(c))
             .ToListAsync(ct);
 
-        return new PaginatedResponse<CourseDetailResponse>(
+        List<InstructorCourseResponse> results = [];
+        foreach (var c in list)
+        {
+            var item = new InstructorCourseResponse(
+                _mapper.Map<CourseDetailResponse>(c),
+                c.IsPublished
+            );
+
+            results.Add(item);
+        }
+
+        return new PaginatedResponse<InstructorCourseResponse>(
             page.PageNumber,
             page.PageSize,
             await courses.CountAsync(ct),
-            list);
+            results);
     }
 
     public async Task<ExploreCourseResponse> GetExploreAsync(CancellationToken ct = default)

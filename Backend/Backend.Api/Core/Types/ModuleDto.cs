@@ -21,5 +21,5 @@ public record ModuleSetResponse(
     string Title,
     string? Description,
     int OrderIndex,
-    bool? IsPublished
+    bool IsPublished
 ) : IEntityResponse;

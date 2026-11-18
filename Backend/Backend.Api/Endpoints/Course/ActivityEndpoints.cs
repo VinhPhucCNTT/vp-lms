@@ -12,8 +12,6 @@ public static class ActivityEndpoints
     {
         var activity = route.MapGroup("/api/activity").WithTags("Activities");
 
-        activity.MapGet("module/{moduleId}", HandleGetByModule)
-            .RequireAuthorization();
         activity.MapGet("{activityId}/progress", HandleGetProgress)
             .RequireAuthorization("IsStudent");
         activity.MapPost("{activityId}/complete", HandleComplete)
@@ -23,21 +21,6 @@ public static class ActivityEndpoints
         // activity.MapPost("{moduleId}/publish/{activityId}", HandlePublish).RequireAuthorization();
         // activity.MapPost("{moduleId}/unpublish/{activityId}", HandleUnpublish).RequireAuthorization();
         activity.MapPost("{activityId}/reorder", HandleReorder).RequireAuthorization();
-    }
-
-    private static async
-        Task<Results<Ok<List<ActivityResponse>>, BadRequest>>
-        HandleGetByModule(
-            string moduleId,
-            SqidsEncoder<long> sqidsEncoder,
-            IActivityService activityService)
-    {
-        var decoded = sqidsEncoder.Decode(moduleId);
-        if (decoded.Count != 1)
-            return TypedResults.BadRequest();
-
-        return TypedResults.Ok(
-            await activityService.GetPublishedActivitiesAsync(decoded[0]));
     }
 
     private static async

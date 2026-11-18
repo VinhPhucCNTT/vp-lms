@@ -20,6 +20,8 @@ public interface ISubmissionService
 
     public Task<Result<SubmissionDetailResponse>> GetOwnDetailAsync(long activityId, CancellationToken ct = default);
 
+    public Task<PaginatedResponse<SubmissionResponse>> GetInstructorAllAsync(PageRequest page, CancellationToken ct = default);
+
     public Task<PaginatedResponse<SubmissionResponse>> GetGradedAsync(long activityId, PageRequest page, CancellationToken ct = default);
 
     public Task<PaginatedResponse<SubmissionResponse>> GetUngradedAsync(long activityId, PageRequest page, CancellationToken ct = default);
@@ -111,6 +113,29 @@ public class SubmissionService(
             CreateSubmissionDetail(assignment, userId, submission, files));
     }
 
+    public async Task<PaginatedResponse<SubmissionResponse>> GetInstructorAllAsync(PageRequest page, CancellationToken ct = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        var currentUserId = _currentUserService.UserId;
+
+        var submissions = db.Assignments
+            .AsNoTracking()
+            .Where(a => a.Activity.Module.Course.InstructorId == currentUserId)
+            .Select(a => a.Submissions);
+
+        var list = await submissions
+            .Skip((page.PageNumber - 1) * page.PageSize)
+            .Take(page.PageSize)
+            .Select(s => _mapper.Map<SubmissionResponse>(s))
+            .ToListAsync(ct);
+
+        return new PaginatedResponse<SubmissionResponse>(
+            page.PageNumber,
+            page.PageSize,
+            await submissions.CountAsync(ct),
+            list);
+    }
+
     // NOTE: Probably don't need this?
     // public async Task<SubmissionDetailResponse?> GetByUserIdAsync(long activityId, long userId, CancellationToken ct = default)
     // {
@@ -200,8 +225,7 @@ public class SubmissionService(
         if ((assignment.SubmissionType is SubmissionType.File or SubmissionType.Both) && fileCount == 0 && string.IsNullOrWhiteSpace(text))
             return Result<SubmissionDetailResponse>.Failure(ResultError.Validation, "Add at least one file or text response before submitting.");
 
-        if (submission is null)
-            submission = await CreateEmptySubmissionAsync(db, assignment.Id, userId, ct);
+        submission ??= await CreateEmptySubmissionAsync(db, assignment.Id, userId, ct);
 
         submission.SubmissionText = text;
         submission.SubmittedOn = DateTime.UtcNow;

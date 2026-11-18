@@ -69,7 +69,7 @@ public class CompilerService(
         return new PaginatedResponse<CompilerResponse>(
             query.PageNumber,
             query.PageSize,
-            await compilers.CountAsync(),
+            await compilers.CountAsync(ct),
             list);
     }
 

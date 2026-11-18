@@ -32,6 +32,11 @@ public record StudentCourseResponse(
     CourseProgress Progress
 );
 
+public record InstructorCourseResponse(
+    CourseDetailResponse Info,
+    bool IsPublished
+);
+
 public record ExploreCourseResponse(
     List<CourseDetailResponse> Featured,
     Dictionary<string, List<CourseDetailResponse>> ByDepartment,
@@ -47,8 +52,8 @@ public record CourseQueryRequest(
     int PageNumber = 1,
     int PageSize = 10,
     string? Title = null,
-    string? CreatorFirstName = null,
-    string? CreatorLastName = null,
+    string? InstructorFirstName = null,
+    string? InstructorLastName = null,
     bool? EnrollmentOpen = null
 );
 

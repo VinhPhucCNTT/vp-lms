@@ -6,7 +6,7 @@ namespace Backend.Persistence.Entities.Courses;
 
 public enum ActivityType
 {
-    Lesson,
+    Lesson = 0,
     Assignment,
     Assessment,
     Problem
