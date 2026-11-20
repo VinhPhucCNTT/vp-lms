@@ -146,6 +146,7 @@ public class FileService(
         return Results.File(
             stream,
             file.ContentType,
+            fileDownloadName: file.OriginalFileName,
             enableRangeProcessing: true);
     }
 

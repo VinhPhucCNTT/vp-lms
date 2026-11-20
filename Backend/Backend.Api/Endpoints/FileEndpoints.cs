@@ -1,5 +1,4 @@
 using Backend.Api.Services.Content;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Sqids;
 
 namespace Backend.Api.Endpoints;
@@ -13,9 +12,7 @@ public static class FileEndpoints
         file.MapGet("{fileId}", HandleGet);
     }
 
-    private static async
-        Task<Results<Ok<IResult>, BadRequest, NotFound>>
-        HandleGet(
+    private static async Task<IResult> HandleGet(
             string fileId,
             SqidsEncoder<long> sqidsEncoder,
             IFileService fileService,
@@ -29,6 +26,6 @@ public static class FileEndpoints
         if (result is null)
             return TypedResults.NotFound();
 
-        return TypedResults.Ok(result);
+        return result;
     }
 }
