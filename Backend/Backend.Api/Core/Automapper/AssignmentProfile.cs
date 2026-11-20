@@ -1,7 +1,6 @@
 using AutoMapper;
 using Backend.Api.Core.Types;
 using Backend.Persistence.Entities.Assignments;
-using Backend.Persistence.Entities.Content;
 
 namespace Backend.Api.Core.Automapper;
 
@@ -9,15 +8,17 @@ public class AssignmentProfile : Profile
 {
     public AssignmentProfile()
     {
-        CreateMap<Assignment, AssignmentInfo>();
-
         CreateMap<AssignmentSubmission, SubmissionResponse>()
+            .ForMember(
+                d => d.SubmissionId,
+                o => o.ConvertUsing<SqidConverter, long>(x => x.AssignmentId))
             .ForMember(
                 d => d.AssignmentId,
                 o => o.ConvertUsing<SqidConverter, long>(x => x.AssignmentId))
             .ForMember(
                 d => d.UserId,
-                o => o.ConvertUsing<SqidConverter, long>(x => x.UserId));
+                o => o.ConvertUsing<SqidConverter, long>(x => x.UserId))
+            .DisableCtorValidation();
 
         // CreateMap<AssignmentGrade, AssignmentGradeResponse>()
         //     .MapSqidId()

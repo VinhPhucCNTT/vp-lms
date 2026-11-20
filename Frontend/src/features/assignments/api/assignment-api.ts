@@ -26,15 +26,14 @@ export interface AssignmentInfoDto {
 }
 
 export interface AssignmentResponseDto {
-  resourceInfo: AssignmentResourceInfoDto;
+  activityInfo: AssignmentResourceInfoDto;
   info: AssignmentInfoDto;
 }
 
 export interface CourseSummaryDto {
   id: string;
-  code: string;
   title: string;
-  description: string | null;
+  description: string;
 }
 
 export interface StudentAssignmentSummaryDto {
@@ -85,9 +84,9 @@ export interface StudentActivityDto {
 
 function mapAssignment(dto: AssignmentResponseDto): Assignment {
   return {
-    id: dto.resourceInfo.id,
+    id: dto.activityInfo.id,
     moduleId: "",
-    title: dto.resourceInfo.title,
+    title: dto.activityInfo.title,
     description: dto.info.instructionsMD,
     dueDate: dto.info.closeDate ?? "",
     maxScore: 0,

@@ -102,7 +102,7 @@ export function InstructorCourses() {
                         {/* {course.status === "draft" && ( */}
                         {/*     <Button size="sm" variant="default">Publish</Button> */}
                         {/* )} */}
-                        <Button size="sm" variant="outline">Edit</Button>
+                        {/* <Button size="sm" variant="outline">Edit</Button> */}
                         <Button size="sm" variant="secondary" asChild>
                             <Link to={`/instructor/courses/${course.info.id}`}>View Course</Link>
                         </Button>

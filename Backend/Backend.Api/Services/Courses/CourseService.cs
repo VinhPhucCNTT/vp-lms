@@ -221,6 +221,10 @@ public class CourseService(
         };
         db.Courses.Add(course);
         await db.SaveChangesAsync(ct);
+
+        if (request.BackgroundFile is not null)
+            await UploadBackgroundAsync(db, course, request.BackgroundFile, ct);
+
         return _mapper.Map<CourseSetResponse>(course);
     }
 

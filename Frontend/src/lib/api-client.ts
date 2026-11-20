@@ -2,6 +2,7 @@ import type { User, UserRole } from "@/types";
 
 const TOKEN_KEY = "lms-token";
 const USER_KEY = "lms-user";
+const ANTIFORGERY_HEADER = "X-CSRF-TOKEN";
 
 export function getBaseUrl(): string {
     return import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5039";
@@ -56,6 +57,30 @@ type RequestOptions = {
     skipAuth?: boolean;
 };
 
+async function getAntiforgeryToken(): Promise<string> {
+    const headers: Record<string, string> = {};
+    const token = getToken();
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${getBaseUrl()}/api/antiforgery/token`, {
+        credentials: "include",
+        headers,
+    });
+
+    if (!response.ok) {
+        throw new ApiError(response.status, "Unable to obtain an anti-forgery token.");
+    }
+
+    const payload: unknown = await response.json();
+    if (!payload || typeof payload !== "object" || !("token" in payload) || typeof payload.token !== "string") {
+        throw new ApiError(response.status, "The anti-forgery token response was invalid.");
+    }
+
+    return payload.token;
+}
+
 async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
     const { method = "GET", body, headers = {}, signal, skipAuth = false } = opts;
 
@@ -73,11 +98,16 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
         }
     }
 
+    if (!skipAuth && getToken() && ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase())) {
+        finalHeaders[ANTIFORGERY_HEADER] = await getAntiforgeryToken();
+    }
+
     let res: Response;
     try {
         res = await fetch(url, {
             method,
             headers: finalHeaders,
+            credentials: "include",
             body: body !== undefined
                 ? isFormData
                     ? body as FormData

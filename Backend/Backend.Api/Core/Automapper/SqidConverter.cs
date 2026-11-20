@@ -40,3 +40,17 @@ public sealed class SqidTypeConverter(SqidsEncoder<long> sqids)
         return sqids.Encode(source);
     }
 }
+
+public sealed class NullableSqidTypeConverter(SqidsEncoder<long> sqids)
+    : ITypeConverter<long?, string?>
+{
+    public string? Convert(
+        long? source,
+        string? destination,
+        ResolutionContext context)
+    {
+        return source is long id
+            ? sqids.Encode(id)
+            : null;
+    }
+}

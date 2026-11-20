@@ -12,6 +12,7 @@ public class AssessmentProfile : Profile
             .MapSqidId()
             .ForMember(
                 d => d.BankId,
-                o => o.ConvertUsing<SqidConverter, long>(x => x.QuestionBankId));
+                o => o.ConvertUsing<SqidConverter, long>(x => x.QuestionBankId))
+            .DisableCtorValidation();
     }
 }

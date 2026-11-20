@@ -7,9 +7,10 @@ import { CourseCard } from "@/shared/components/course-card";
 import { useApi } from "@/lib/use-api";
 import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
 import { courseApi, StudentCourseResponse } from "@/features/courses/api/course-api";
+import { PaginatedResponse } from "@/shared/types";
 
 export function StudentCourses() {
-  const { data: enrolledCourses, loading, error, reload } = useApi<StudentCourseResponse[]>(() => courseApi.getEnrolledCourses());
+  const { data: enrolledCourses, loading, error, reload } = useApi<PaginatedResponse<StudentCourseResponse>>(() => courseApi.getEnrolledCourses());
   const [search, setSearch] = React.useState("");
 
   const filteredCourses = React.useMemo(() => {

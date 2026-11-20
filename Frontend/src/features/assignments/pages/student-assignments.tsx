@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/shared/components/page-header";
 import { LoadingState, ErrorState, EmptyState } from "@/shared/components/api-states";
 import { useApi } from "@/lib/use-api";
-import { assignmentApi, type AssignmentSummaryDto } from "@/features/assignments/api/assignment-api";
+import { assignmentApi, type StudentAssignmentSummaryDto } from "@/features/assignments/api/assignment-api";
 import { cn } from "@/lib/utils";
 
 type AssignmentStatus = "pending" | "submitted" | "graded" | "overdue";
@@ -23,7 +23,7 @@ const statusColors: Record<AssignmentStatus, string> = {
 };
 
 export function StudentAssignments() {
-  const { data: summaries, loading, error, reload } = useApi<AssignmentSummaryDto[]>(
+  const { data: summaries, loading, error, reload } = useApi<StudentAssignmentSummaryDto[]>(
     () => assignmentApi.getStudentAssignments()
   );
   const [search, setSearch] = React.useState("");
@@ -32,7 +32,7 @@ export function StudentAssignments() {
   const allAssignments = summaries ?? [];
 
   const filteredAssignments = allAssignments.filter((a) => {
-    const matchesSearch = a.assignment.title.toLowerCase().includes(search.toLowerCase()) || (a.course?.code ?? "").toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = a.assignment.activityInfo.title.toLowerCase().includes(search.toLowerCase()) || a.course.title.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || a.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -106,7 +106,7 @@ export function StudentAssignments() {
                       <div className="flex items-start justify-between">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline">{item.course.code}</Badge>
+                            <Badge variant="outline">{item.course.title}</Badge>
                             <Badge className={cn(statusColors[item.status as AssignmentStatus] ?? statusColors.pending)}>{item.status}</Badge>
                           </div>
                           <h3 className="font-semibold">{assignment.title}</h3>

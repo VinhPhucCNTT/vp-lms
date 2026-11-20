@@ -1,8 +1,6 @@
-import { BookOpenIcon, FileTextIcon, ClipboardCheckIcon, ClockIcon, TrendingUpIcon, CodeIcon } from "lucide-react";
+import { BookOpenIcon, FileTextIcon, ClipboardCheckIcon, TrendingUpIcon, CodeIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/shared/components/stat-card";
 import { PageHeader } from "@/shared/components/page-header";
@@ -11,12 +9,13 @@ import { LoadingState, ErrorState } from "@/shared/components/api-states";
 import { useApi } from "@/lib/use-api";
 import { courseApi, StudentCourseResponse } from "@/features/courses/api/course-api";
 import { useAuth } from "@/features/auth/auth-context";
+import { PaginatedResponse } from "@/shared/types";
 
 export function StudentDashboard() {
   const { user } = useAuth();
-  const { data: enrolledCourses, loading, error, reload } = useApi<StudentCourseResponse[]>(() => courseApi.getEnrolledCourses());
+  const { data: enrolledCourses, loading, error, reload } = useApi<PaginatedResponse<StudentCourseResponse>>(() => courseApi.getEnrolledCourses());
 
-  const courseCount = enrolledCourses?.length ?? 0;
+  const courseCount = enrolledCourses?.data.length ?? 0;
 
   return (
     <div className="space-y-6">
@@ -47,14 +46,14 @@ export function StudentDashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                {!enrolledCourses || enrolledCourses.length === 0 ? (
+                {!enrolledCourses || enrolledCourses.data.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     You are not enrolled in any courses yet.{" "}
                     <Link to="/student/explore" className="text-primary underline">Explore courses</Link>
                   </div>
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {enrolledCourses.slice(0, 4).map((course) => (
+                    {enrolledCourses.data.slice(0, 4).map((course) => (
                       <CourseCard key={course.info.id} course={course} progress={0} showProgress variant="compact" />
                     ))}
                   </div>

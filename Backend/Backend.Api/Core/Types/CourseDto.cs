@@ -2,7 +2,7 @@ namespace Backend.Api.Core.Types;
 
 public record CourseResponse(
     string Id,
-    string CreatorId,
+    string InstructorId,
     string Title,
     string Description,
     string? BackgroundFileId
@@ -17,9 +17,9 @@ public record CourseRecentResponse(
 
 public record CourseDetailResponse(
     string Id,
-    string CreatorId,
-    string CreatorFirstName,
-    string CreatorLastName,
+    string InstructorId,
+    string InstructorFirstName,
+    string InstructorLastName,
     string? BackgroundFileId,
     // string Code,
     string Title,
@@ -57,13 +57,20 @@ public record CourseQueryRequest(
     bool? EnrollmentOpen = null
 );
 
-public record CourseCreateRequest(
-    // string Code,
-    string Title,
-    string? Description,
-    bool EnrollmentOpen,
-    IFormFile? BackgroundFile
-);
+// public record CourseCreateRequest(
+//     // string Code,
+//     string Title,
+//     string? Description,
+//     bool EnrollmentOpen,
+//     IFormFile? BackgroundFile = null
+// );
+
+public class CourseCreateRequest {
+    public string Title { get; set; } = "";
+    public string? Description { get; set; }
+    public bool EnrollmentOpen { get; set; }
+    public IFormFile? BackgroundFile { get; set; }
+}
 
 public record CoursePatchRequest(
     // string? Code,
@@ -75,7 +82,7 @@ public record CoursePatchRequest(
 
 public record CourseSetResponse(
     string Id,
-    string CreatorId,
+    string InstructorId,
     // string Code,
     string Title,
     string? Description,

@@ -20,8 +20,6 @@ import { ProblemList } from "@/features/courses/pages/problem-list";
 import { ProblemSolution } from "@/features/courses/pages/problem-solution";
 import { InstructorCourses } from "@/features/courses/pages/instructor-courses";
 import { InstructorCourseDetail } from "@/features/courses/pages/instructor-course-detail";
-import { InstructorCalendar } from "@/features/courses/pages/instructor-calendar";
-import { InstructorNotifications } from "@/features/courses/pages/instructor-notifications";
 import { InstructorSubmissions } from "@/features/courses/pages/instructor-submissions";
 import { InstructorCodingProblems } from "@/features/courses/pages/instructor-coding-problems";
 

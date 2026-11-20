@@ -127,7 +127,7 @@ export function StudentAssignmentDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">{assignment.resourceInfo.title}</CardTitle>
+          <CardTitle className="text-2xl">{assignment.activityInfo.title}</CardTitle>
           <CardDescription className="flex flex-wrap gap-4">
             <span className="flex items-center gap-1.5"><ClockIcon className="size-4" />{closed ? "Closed" : `Due ${formatDate(info.closeDate)}`}</span>
             <span>{submissionTypeLabel(info)}</span>

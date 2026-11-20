@@ -10,6 +10,8 @@ public class CourseProfile : Profile
     {
         CreateMap<long, string>()
             .ConvertUsing<SqidTypeConverter>();
+        CreateMap<long?, string?>()
+            .ConvertUsing<NullableSqidTypeConverter>();
 
         CreateMap<Course, CourseResponse>()
             .MapSqidId();
@@ -19,13 +21,13 @@ public class CourseProfile : Profile
                 "Id",
                 o => o.MapFrom(x => x.Id))
             .ForCtorParam(
-                "CreatorId",
+                "InstructorId",
                 o => o.MapFrom(x => x.InstructorId))
             .ForCtorParam(
-                "CreatorFirstName",
+                "InstructorFirstName",
                 o => o.MapFrom(x => x.Instructor != null ? x.Instructor.FirstName : ""))
             .ForCtorParam(
-                "CreatorLastName",
+                "InstructorLastName",
                 o => o.MapFrom(x => x.Instructor != null ? x.Instructor.LastName : ""))
             .ForCtorParam(
                 "EnrollmentCount",
@@ -37,8 +39,8 @@ public class CourseProfile : Profile
         CreateMap<Course, CourseSetResponse>()
             .MapSqidId()
             .ForMember(
-                d => d.CreatorId,
-                o => o.ConvertUsing<SqidConverter, long>(x => x.InstructorId));
+                d => d.BackgroundFileId,
+                o => o.ConvertUsing<NullableSqidConverter, long?>(x => x.BackgroundFileId));
 
     }
 }

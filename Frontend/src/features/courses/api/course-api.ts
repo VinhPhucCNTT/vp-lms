@@ -199,7 +199,7 @@ export const courseApi = {
 
         let activities = new Map<string, PaginatedResponse<ActivityResponse>>;
         for (let module of modules.data) {
-            const response = await api.get<PaginatedResponse<ActivityResponse>>(`/api/module/${module.id}/activities` + pageParams);
+            const response = await api.get<PaginatedResponse<ActivityResponse>>(`/api/module/${module.id}/activities?` + pageParams);
             activities.set(module.id, response);
         }
 

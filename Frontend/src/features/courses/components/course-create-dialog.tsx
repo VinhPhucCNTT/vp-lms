@@ -51,17 +51,17 @@ export function CourseCreateDialog({ onCreating, onCreated }: CourseCreateDialog
 
     return (
         <Dialog>
-            <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-            >
-                <DialogTrigger asChild>
-                    <Button variant="outline">
-                        <PlusIcon className="size-4 mr-2" />
-                        Create course
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-sm">
+            <DialogTrigger asChild>
+                <Button variant="outline">
+                    <PlusIcon className="size-4 mr-2" />
+                    Create course
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-sm">
+                <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-6"
+                >
                     <DialogHeader>
                         <DialogTitle>Create a new course</DialogTitle>
                         <DialogDescription>
@@ -175,8 +175,8 @@ export function CourseCreateDialog({ onCreating, onCreated }: CourseCreateDialog
                                 : "Create Course"}
                         </Button>
                     </DialogFooter>
-                </DialogContent>
-            </form>
-        </Dialog>
+                </form>
+            </DialogContent>
+        </Dialog >
     );
 }

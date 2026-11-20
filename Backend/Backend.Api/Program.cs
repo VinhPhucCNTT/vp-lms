@@ -40,22 +40,25 @@ builder.Services.AddCors(options =>
         {
             policy.WithOrigins("http://localhost:5173")
                    .AllowAnyHeader()
-                   .AllowAnyMethod();
+                   .AllowAnyMethod()
+                   .AllowCredentials();
         });
 });
 
-builder.Services.AddAntiforgery();
+builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
 
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 
 // Authorization
 builder.Services.AddAuthorization();
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy("IsStudent", options => {
+    .AddPolicy("IsStudent", options =>
+    {
         options.RequireAuthenticatedUser();
         options.RequireRole(nameof(UserRoles.Student), nameof(UserRoles.Admin));
     })
-    .AddPolicy("IsInstructor", options => {
+    .AddPolicy("IsInstructor", options =>
+    {
         options.RequireAuthenticatedUser();
         options.RequireRole(nameof(UserRoles.Instructor), nameof(UserRoles.Admin));
     });
@@ -170,7 +173,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 
 app.UseExceptionHandler();
-
 app.UseCors("allowFrontend");
 
 if (app.Environment.IsDevelopment())
@@ -185,9 +187,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
 
 // Add endpoints
 app.AddAuthEndpoints();
+app.AddAntiforgeryEndpoints();
 app.AddCourseEndpoints();
 app.AddEnrollmentEndpoints();
 app.AddModuleEndpoints();

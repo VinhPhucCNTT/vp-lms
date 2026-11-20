@@ -151,8 +151,8 @@ public static class DevelopmentDataSeeder
             db.Assignments.Add(new Assignment
             {
                 ActivityId = assignmentActivity.Id,
-                InstructionsMD = "# Welcome Assignment\n\nUpload a short text or PDF file describing what you learned in the welcome lesson.",
-                SubmissionType = SubmissionType.File,
+                InstructionsMD = "# Welcome Assignment\n\nWrite a short response, upload a text or PDF file, or do both to describe what you learned in the welcome lesson.",
+                SubmissionType = SubmissionType.Both,
                 AllowedExtensions = [".txt", ".md", ".pdf"],
                 MaxFileSizeKb = 1024,
                 MaxFileCount = 2,
