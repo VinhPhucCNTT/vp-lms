@@ -1090,7 +1090,9 @@ namespace Backend.Persistence.Migrations
                         .HasDatabaseName("ix_courses_department_id");
 
                     b.HasIndex("InstructorId", "Title")
-                        .HasDatabaseName("ix_courses_instructor_id_title");
+                        .IsUnique()
+                        .HasDatabaseName("ix_courses_instructor_id_title")
+                        .HasFilter("is_deleted = false");
 
                     b.ToTable("courses", (string)null);
                 });

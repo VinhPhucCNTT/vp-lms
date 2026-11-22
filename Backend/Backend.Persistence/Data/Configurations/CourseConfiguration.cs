@@ -19,7 +19,8 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.Property(x => x.Description)
             .HasColumnType("text");
 
-        builder.HasIndex(x => new { x.InstructorId, x.Title });
+        builder.HasIndex(x => new { x.InstructorId, x.Title })
+            .IsUnique();
 
         builder.HasOne(x => x.Instructor)
             .WithMany(u => u.Courses)
