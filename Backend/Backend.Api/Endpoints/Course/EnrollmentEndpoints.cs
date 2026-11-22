@@ -17,7 +17,7 @@ public static class EnrollmentEndpoints
         enrollment.MapGet("user/{userId}", HandleGetByUserId).RequireAuthorization();
         enrollment.MapGet("user", HandleGetCurrent).RequireAuthorization();
 
-        enrollment.MapPost("enroll/{courseId}", HandleEnroll).RequireAuthorization();
+        enrollment.MapPost("enroll/{courseId}", HandleEnroll).RequireAuthorization("IsStudent");
         enrollment.MapPost("unenroll/{courseId}", HandleUnenroll).RequireAuthorization();
         enrollment.MapPost("set-ta/{enrollmentId}", HandleSetTA).RequireAuthorization();
         enrollment.MapDelete("{enrollmentId}", HandleDelete).RequireAuthorization();

@@ -70,7 +70,10 @@ public class EnrollmentService(
         var currentUserId = _currentUserService.UserId;
 
         var course = await db.Courses.AsNoTracking().FirstOrDefaultAsync(c => c.Id == courseId);
-        if (course is null || course.InstructorId == currentUserId)
+        if (course is null ||
+            course.InstructorId == currentUserId ||
+            !course.IsPublished ||
+            !course.EnrollmentOpen)
             return null;
         var existing = await db.Enrollments.AsNoTracking().FirstOrDefaultAsync(e => e.UserId == currentUserId && e.CourseId == courseId);
         if (existing is not null)

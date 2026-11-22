@@ -32,6 +32,9 @@ public class CourseProfile : Profile
             .ForCtorParam(
                 "EnrollmentCount",
                 o => o.MapFrom(x => x.Enrollments.Count))
+            .ForCtorParam(
+                "EnrollmentOpen",
+                o => o.MapFrom(x => x.EnrollmentOpen))
             .ForMember(
                 d => d.BackgroundFileId,
                 o => o.ConvertUsing<NullableSqidConverter, long?>(x => x.BackgroundFileId));

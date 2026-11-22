@@ -24,7 +24,8 @@ public record CourseDetailResponse(
     // string Code,
     string Title,
     string? Description,
-    int EnrollmentCount
+    int EnrollmentCount,
+    bool EnrollmentOpen
 ) : IEntityResponse;
 
 public record StudentCourseResponse(

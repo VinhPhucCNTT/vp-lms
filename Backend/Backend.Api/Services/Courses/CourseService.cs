@@ -6,6 +6,7 @@ using Backend.Api.Services.Content;
 using Backend.Persistence.Data;
 using Backend.Persistence.Entities.Courses;
 using Microsoft.EntityFrameworkCore;
+using Sqids;
 
 namespace Backend.Api.Services.Courses;
 
@@ -41,12 +42,14 @@ public class CourseService(
     CurrentUserService currentUserService,
     IFileService fileService,
     IMapper mapper,
+    SqidsEncoder<long> sqidsEncoder,
     ILogger<CourseService> logger) : ICourseService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
     private readonly IFileService _fileService = fileService;
     private readonly IMapper _mapper = mapper;
+    private readonly SqidsEncoder<long> _sqidsEncoder = sqidsEncoder;
     private readonly ILogger<CourseService> _logger = logger;
 
     public async Task<Course?> GetAsync(long courseId, CancellationToken ct = default)
@@ -94,16 +97,17 @@ public class CourseService(
                 .Select(e => e.CourseId)
                 .Contains(c.Id));
 
-        var list = await courses
+        var list = await ProjectCourseDetails(courses
+            .OrderBy(c => c.Title)
             .Skip((page.PageNumber - 1) * page.PageSize)
-            .Take(page.PageSize)
-            .ToListAsync(ct);
+            .Take(page.PageSize))
+        .ToListAsync(ct);
 
         List<StudentCourseResponse> results = [];
         foreach (var c in list)
         {
             var item = new StudentCourseResponse(
-                _mapper.Map<CourseDetailResponse>(c),
+                ToCourseDetailResponse(c),
                 await ActivityService.GetCourseProgressAsync(db, c.Id, currentUserId, ct));
 
             results.Add(item);
@@ -151,28 +155,43 @@ public class CourseService(
     public async Task<ExploreCourseResponse> GetExploreAsync(CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
-
-        var featuredCourses = await GetFeaturedCoursesAsync(db, ct);
-
-        var departments = db.Departments.AsNoTracking();
-        Dictionary<string, List<CourseDetailResponse>> coursesByDepartment = [];
-        foreach (var department in departments)
-        {
-            var courses = await db.Courses
-                .AsNoTracking()
-                .Where(c => c.DepartmentId == department.Id)
-                .Select(c => _mapper.Map<CourseDetailResponse>(c))
-                .ToListAsync(ct);
-
-            coursesByDepartment.Add(department.Name, courses);
-        }
-
-        var recentlyUpdated = await db.Courses
+        var publishedCourses = db.Courses
             .AsNoTracking()
-            .OrderByDescending(c => c.UpdatedAt)
-            .Take(10)
-            .Select(c => _mapper.Map<CourseDetailResponse>(c))
+            .Where(c => c.IsPublished);
+
+        var featuredCourses = (await ProjectCourseDetails(publishedCourses
+                .OrderByDescending(c => c.Title)
+                .Take(10))
+            .ToListAsync(ct))
+        .ConvertAll(ToCourseDetailResponse);
+
+        var departmentCourses = await publishedCourses
+            .Where(c => c.Department != null)
+            .Select(c => new DepartmentCourseRow(
+                c.Department!.Name,
+                new CourseDetailRow(
+                    c.Id,
+                    c.InstructorId,
+                    c.Instructor.FirstName,
+                    c.Instructor.LastName,
+                    c.BackgroundFileId,
+                    c.Title,
+                    c.Description,
+                    c.Enrollments.Count,
+                    c.EnrollmentOpen)))
             .ToListAsync(ct);
+
+        var coursesByDepartment = departmentCourses
+            .GroupBy(c => c.DepartmentName)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(c => ToCourseDetailResponse(c.Course)).ToList());
+
+        var recentlyUpdated = (await ProjectCourseDetails(publishedCourses
+                .OrderByDescending(c => c.UpdatedAt)
+                .Take(10))
+            .ToListAsync(ct))
+        .ConvertAll(ToCourseDetailResponse);
 
         return new ExploreCourseResponse(featuredCourses, coursesByDepartment, recentlyUpdated);
     }
@@ -321,16 +340,46 @@ public class CourseService(
         return;
     }
 
-    // Placeholder
-    private async Task<List<CourseDetailResponse>> GetFeaturedCoursesAsync(AppDbContext db, CancellationToken ct = default)
-    {
-        return await db.Courses
-            .AsNoTracking()
-            .OrderByDescending(c => c.Title)
-            .Take(10)
-            .Select(c => _mapper.Map<CourseDetailResponse>(c))
-            .ToListAsync(ct);
-    }
+    private static IQueryable<CourseDetailRow> ProjectCourseDetails(IQueryable<Course> courses)
+        => courses.Select(c => new CourseDetailRow(
+            c.Id,
+            c.InstructorId,
+            c.Instructor.FirstName,
+            c.Instructor.LastName,
+            c.BackgroundFileId,
+            c.Title,
+            c.Description,
+            c.Enrollments.Count,
+            c.EnrollmentOpen));
+
+    private CourseDetailResponse ToCourseDetailResponse(CourseDetailRow course)
+        => new(
+            _sqidsEncoder.Encode(course.Id),
+            _sqidsEncoder.Encode(course.InstructorId),
+            course.InstructorFirstName,
+            course.InstructorLastName,
+            course.BackgroundFileId is long backgroundFileId
+                ? _sqidsEncoder.Encode(backgroundFileId)
+                : null,
+            course.Title,
+            course.Description,
+            course.EnrollmentCount,
+            course.EnrollmentOpen);
+
+    private sealed record CourseDetailRow(
+        long Id,
+        long InstructorId,
+        string InstructorFirstName,
+        string InstructorLastName,
+        long? BackgroundFileId,
+        string Title,
+        string? Description,
+        int EnrollmentCount,
+        bool EnrollmentOpen);
+
+    private sealed record DepartmentCourseRow(
+        string DepartmentName,
+        CourseDetailRow Course);
 
     private async Task<long> UploadBackgroundAsync(
         AppDbContext db,

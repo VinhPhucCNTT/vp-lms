@@ -84,7 +84,8 @@ export interface CourseDetailResponse {
     backgroundFileId?: string,
     title: string,
     description?: string,
-    enrollmentCount: number
+    enrollmentCount: number,
+    enrollmentOpen: boolean
 }
 
 export interface CourseProgress {
@@ -104,8 +105,15 @@ export interface InstructorCourseResponse {
 
 export interface ExploreCourseResponse {
     featured: CourseDetailResponse[],
-    byDepartment: Map<string, CourseDetailResponse[]>,
+    byDepartment: Record<string, CourseDetailResponse[]>,
     recent: CourseDetailResponse[]
+}
+
+export interface EnrollmentResponse {
+    id: string,
+    courseId: string,
+    userId: string,
+    role: number | string
 }
 
 //// MODULE
@@ -162,8 +170,12 @@ export interface ModuleSetResponse {
 
 export const courseApi = {
     // Student: list enrolled courses
-    async getEnrolledCourses(): Promise<PaginatedResponse<StudentCourseResponse>> {
-        const response = await api.get<PaginatedResponse<StudentCourseResponse>>("/api/course/student");
+    async getEnrolledCourses(pageNumber = 1, pageSize = 9): Promise<PaginatedResponse<StudentCourseResponse>> {
+        const params = new URLSearchParams({
+            pageNumber: pageNumber.toString(),
+            pageSize: pageSize.toString()
+        });
+        const response = await api.get<PaginatedResponse<StudentCourseResponse>>(`/api/course/student?${params}`);
         return response;
     },
 
@@ -171,6 +183,10 @@ export const courseApi = {
     async getPublishedCourses(): Promise<ExploreCourseResponse> {
         const response = await api.get<ExploreCourseResponse>("/api/course/explore");
         return response;
+    },
+
+    async getCurrentEnrollments(): Promise<EnrollmentResponse[]> {
+        return api.get<EnrollmentResponse[]>("/api/enrollment/user");
     },
 
     // Instructor: list courses created by the current instructor
@@ -231,8 +247,8 @@ export const courseApi = {
     // },
 
     // Enroll in a course
-    async enroll(courseId: string): Promise<void> {
-        await api.post(`/api/enrollment/enroll/${courseId}`);
+    async enroll(courseId: string): Promise<EnrollmentResponse> {
+        return api.post<EnrollmentResponse>(`/api/enrollment/enroll/${courseId}`);
     },
 
     // Unenroll from a course

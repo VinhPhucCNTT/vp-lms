@@ -23,21 +23,25 @@ public static class DevelopmentDataSeeder
             .GetRequiredService<IDbContextFactory<AppDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
 
+        // USERS
+
         var instructor = await EnsureUserAsync(
             db,
             InstructorEmail,
-            "Elton",
             "John",
+            "Doe (Devel)",
             InstructorPassword,
             UserRoles.Instructor);
 
         var student = await EnsureUserAsync(
             db,
             StudentEmail,
-            "Jack",
-            "Walter",
+            "Jane",
+            "Doe (Devel)",
             StudentPassword,
             UserRoles.Student);
+
+        // COURSES
 
         var course = await db.Courses
             .IgnoreQueryFilters()
@@ -58,6 +62,35 @@ public static class DevelopmentDataSeeder
             await db.SaveChangesAsync();
         }
 
+        // DEPARTMENTS
+
+        List<Department> departments = [
+            new Department { Name = "Department A" },
+            new Department { Name = "Department B" },
+            new Department { Name = "Department C" },
+        ];
+        List<long> departmentIds = [];
+
+        foreach (var department in departments)
+        {
+            var existing = await db.Departments.FirstOrDefaultAsync(d => d.Name.Equals(department.Name));
+            if (existing is null)
+            {
+                db.Departments.Add(department);
+                await db.SaveChangesAsync();
+                departmentIds.Add(department.Id);
+            }
+            else
+            {
+                departmentIds.Add(existing.Id);
+            }
+        }
+
+        // TEST COURSES
+        await EnsureTestCoursesAsync(db, instructor.Id, departmentIds);
+        await EnsureSampleCoursesAsync(db, instructor.Id);
+
+        // ENROLLMENTS
         var enrollmentExists = await db.Enrollments
             .IgnoreQueryFilters()
             .AnyAsync(x => x.CourseId == course.Id && x.UserId == student.Id);
@@ -292,6 +325,8 @@ public static class DevelopmentDataSeeder
         if (user is not null)
         {
             user.Role = role;
+            user.FirstName = firstname;
+            user.LastName = lastname;
             user.IsActive = true;
             user.IsDeleted = false;
             user.DeletedAt = null;
@@ -311,5 +346,284 @@ public static class DevelopmentDataSeeder
         db.Users.Add(user);
         await db.SaveChangesAsync();
         return user;
+    }
+
+    private static async Task EnsureTestCoursesAsync(AppDbContext db, long instructorId, List<long> departmentIds)
+    {
+        List<Course> courses =
+        [
+            new Course {
+                InstructorId = instructorId,
+                Title = "Test course 1",
+                Description = "Test empty course for development purposes, this one is published and open",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new Course {
+                InstructorId = instructorId,
+                Title = "Test course 2",
+                Description = "Test empty course for development purposes, this one is published and closed",
+                IsPublished = true,
+                EnrollmentOpen = false
+            },
+            new Course{
+                InstructorId = instructorId,
+                Title = "Test course 3",
+                Description = "Test empty course for development purposes, this one is unpublished and open",
+                IsPublished = false,
+                EnrollmentOpen = true
+            }
+        ];
+
+        foreach (var course in courses.Select((x, i) => new { Value = x, Index = i }))
+        {
+            var departmentId = departmentIds.Skip(course.Index).FirstOrDefault();
+
+            var existingCourse = await db.Courses.FirstOrDefaultAsync(c => c.Title == course.Value.Title);
+            if (existingCourse is not null)
+            {
+                existingCourse.DepartmentId = departmentId;
+                existingCourse.Description = course.Value.Description;
+                existingCourse.IsPublished = course.Value.IsPublished;
+                existingCourse.EnrollmentOpen = course.Value.EnrollmentOpen;
+
+                db.Courses.Update(existingCourse);
+            }
+            else
+            {
+                course.Value.DepartmentId = departmentId;
+
+                db.Courses.Add(course.Value);
+            }
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    // NOTE: Should be ran after ensuring departments
+    private static async Task EnsureSampleCoursesAsync(AppDbContext db, long instructorId)
+    {
+        var courses = new List<Course>
+        {
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 1,
+                Title = "Introduction to Programming",
+                Description = "Learn programming fundamentals, including variables, loops, conditionals, and functions.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 1,
+                Title = "Data Structures and Algorithms",
+                Description = "Explore arrays, linked lists, stacks, queues, trees, graphs, and common algorithms.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 1,
+                Title = "Object-Oriented Programming",
+                Description = "Understand classes, objects, inheritance, polymorphism, abstraction, and encapsulation.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 2,
+                Title = "Database Management Systems",
+                Description = "Learn relational databases, SQL queries, normalization, indexing, and transactions.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 2,
+                Title = "Web Development Fundamentals",
+                Description = "Build responsive websites using HTML, CSS, JavaScript, and modern web technologies.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 2,
+                Title = "Backend Development with ASP.NET Core",
+                Description = "Develop RESTful APIs using C#, ASP.NET Core, Entity Framework Core, and PostgreSQL.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 3,
+                Title = "Introduction to Computer Networks",
+                Description = "Study network protocols, TCP/IP, routing, switching, and network security fundamentals.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 3,
+                Title = "Operating Systems",
+                Description = "Explore processes, threads, memory management, file systems, and concurrency.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 3,
+                Title = "Software Engineering Principles",
+                Description = "Learn software design, requirements analysis, testing, version control, and Agile practices.",
+                IsPublished = true,
+                EnrollmentOpen = false
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 1,
+                Title = "Introduction to Artificial Intelligence",
+                Description = "Discover AI concepts, search algorithms, knowledge representation, and intelligent agents.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 2,
+                Title = "Cloud Computing Fundamentals",
+                Description = "Understand cloud architecture, virtualization, containers, deployment, and cloud services.",
+                IsPublished = false,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 3,
+                Title = "Cybersecurity Essentials",
+                Description = "Learn security principles, cryptography, authentication, common vulnerabilities, and defenses.",
+                IsPublished = false,
+                EnrollmentOpen = false
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 1,
+                Title = "Advanced C# Programming",
+                Description = "Explore generics, delegates, LINQ, asynchronous programming, and advanced C# features.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 2,
+                Title = "Frontend Development with React",
+                Description = "Build interactive web applications using React, TypeScript, hooks, and component-based architecture.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 2,
+                Title = "RESTful API Design",
+                Description = "Learn API architecture, HTTP methods, authentication, validation, and REST best practices.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 1,
+                Title = "Algorithm Design and Analysis",
+                Description = "Study algorithm complexity, divide-and-conquer, greedy algorithms, and dynamic programming.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 3,
+                Title = "Linux System Administration",
+                Description = "Learn Linux commands, shell scripting, process management, permissions, and server administration.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 2,
+                Title = "Introduction to DevOps",
+                Description = "Explore CI/CD pipelines, Docker, infrastructure automation, and deployment workflows.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 1,
+                Title = "Machine Learning Fundamentals",
+                Description = "Understand supervised learning, regression, classification, model evaluation, and feature engineering.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 3,
+                Title = "Distributed Systems",
+                Description = "Study distributed architectures, consistency, replication, fault tolerance, and messaging systems.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 2,
+                Title = "Software Testing and Quality Assurance",
+                Description = "Learn unit testing, integration testing, test automation, mocking, and software quality practices.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            },
+            new()
+            {
+                InstructorId = instructorId,
+                DepartmentId = 1,
+                Title = "Introduction to Data Science",
+                Description = "Explore data cleaning, exploratory analysis, visualization, statistics, and data-driven decision making.",
+                IsPublished = true,
+                EnrollmentOpen = true
+            }
+        };
+
+        foreach (var course in courses)
+        {
+            var existing = await db.Courses.FirstOrDefaultAsync(c => c.Title == course.Title);
+            if (existing is not null)
+            {
+                existing.DepartmentId = course.DepartmentId;
+                existing.Description = course.Description;
+                existing.IsPublished = course.IsPublished;
+                existing.EnrollmentOpen = course.EnrollmentOpen;
+
+                db.Courses.Update(existing);
+            }
+            else
+            {
+                db.Courses.Add(course);
+            }
+        }
+        await db.SaveChangesAsync();
+
+        // NOTE: May have to ensure that the courses are empty later.
     }
 }
