@@ -1,4 +1,5 @@
 using AutoMapper;
+using Backend.Api.Core.Authorization;
 using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Persistence.Data;
@@ -9,7 +10,7 @@ namespace Backend.Api.Services.Courses;
 
 public interface IModuleService
 {
-    public Task<PaginatedResponse<ModuleResponse>> GetCourseModulesAsync(long courseId, PageRequest page, CancellationToken ct = default);
+    public Task<PaginatedResponse<ModuleResponse>?> GetCourseModulesAsync(long courseId, PageRequest page, CancellationToken ct = default);
 
     public Task<ModuleSetResponse> CreateModuleAsync(long courseId, ModuleSetRequest dto, CancellationToken ct = default);
 
@@ -26,23 +27,30 @@ public interface IModuleService
 
 public class ModuleService(
     IDbContextFactory<AppDbContext> dbFactory,
-    IMapper mapper) : IModuleService
+    IMapper mapper,
+    ICourseAuthorization courseAuthorization) : IModuleService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<PaginatedResponse<ModuleResponse>> GetCourseModulesAsync(long courseId, PageRequest page, CancellationToken ct = default)
+    public async Task<PaginatedResponse<ModuleResponse>?> GetCourseModulesAsync(long courseId, PageRequest page, CancellationToken ct = default)
     {
+        var access = await courseAuthorization.GetReadAccessAsync(courseId, ct);
+        if (access is null)
+            return null;
+
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         var modules = db.CourseModules
             .AsNoTracking()
-            .Where(m => m.CourseId == courseId)
-            .Select(m => _mapper.Map<ModuleResponse>(m));
+            .Where(m => m.CourseId == courseId && !m.IsDeleted && !m.Course.IsDeleted)
+            .Where(m => access.IsOwner || m.IsPublished);
 
         var list = await modules
+            .OrderBy(m => m.OrderIndex).ThenBy(m => m.Id)
             .Skip((page.PageNumber - 1) * page.PageSize)
             .Take(page.PageSize)
+            .Select(m => _mapper.Map<ModuleResponse>(m))
             .ToListAsync(ct);
 
         return new PaginatedResponse<ModuleResponse>(

@@ -39,7 +39,10 @@ import { cn } from "@/lib/utils";
 import { useApi } from "@/lib/use-api";
 import { LoadingState, ErrorState } from "@/shared/components/api-states";
 import { courseApi } from "@/features/courses/api/course-api";
-import type { CourseModuleDto, CourseResourceDto, LessonDto, ResourceProgressDto } from "@/features/courses/api/course-api";
+import type { ModuleResponse } from "@/features/courses/api/course-api";
+import { ActivityType as ApiActivityType, type ActivityResponse } from "@/features/activity/activity-api";
+import type { PaginatedResponse } from "@/shared/types";
+import { ApiError } from "@/lib/api-client";
 import {
     courses,
     modules,
@@ -1048,248 +1051,219 @@ function MockCourseWorkspace() {
     );
 }
 
-function resourceTypeLabel(type: CourseResourceDto["type"]): string {
-    if (typeof type === "string") return type;
-    return ["Lesson", "Assignment", "Assessment", "Problem"][type] ?? "Resource";
+const WORKSPACE_PAGE_SIZE = 10;
+
+function resourceTypeLabel(type: ApiActivityType): string {
+    return ["Lesson", "Assignment", "Assessment", "Coding Problem"][type] ?? "Activity";
 }
 
-function resourceIcon(type: CourseResourceDto["type"], className?: string) {
+function resourceIcon(type: ApiActivityType, className?: string) {
     const cls = cn("size-4 shrink-0", className);
-    switch (resourceTypeLabel(type).toLowerCase()) {
-        case "lesson": return <PlayCircleIcon className={cls} />;
-        case "assignment": return <FileTextIcon className={cls} />;
-        case "assessment": return <ClipboardCheckIcon className={cls} />;
-        case "problem": return <CodeIcon className={cls} />;
+    switch (type) {
+        case ApiActivityType.Lesson: return <PlayCircleIcon className={cls} />;
+        case ApiActivityType.Assignment: return <FileTextIcon className={cls} />;
+        case ApiActivityType.Assessment: return <ClipboardCheckIcon className={cls} />;
+        case ApiActivityType.Problem: return <CodeIcon className={cls} />;
         default: return <BookOpenIcon className={cls} />;
     }
 }
 
-function RealCourseWorkspace() {
-    const { courseId } = useParams<{ courseId: string }>();
-    const { data, loading, error, reload } = useApi(
-        () => courseApi.getCourseDetail(courseId ?? ""),
-        [courseId],
-    );
-    const [selectedModuleId, setSelectedModuleId] = React.useState<string | null>(null);
-    const [selectedResourceId, setSelectedResourceId] = React.useState<string | null>(null);
-
-    const selectedModule = data?.modules.find((module) => module.id === selectedModuleId) ?? null;
-    const resourcesState = useApi<CourseResourceDto[]>(
-        () => selectedModuleId ? courseApi.getModuleResources(selectedModuleId) : Promise.resolve([]),
-        [selectedModuleId],
-    );
-    const selectedResource = resourcesState.data?.find((resource) => resource.id === selectedResourceId) ?? null;
-    const lessonState = useApi<LessonDto | null>(
-        () => selectedResourceId && resourceTypeLabel(selectedResource?.type ?? "Lesson").toLowerCase() === "lesson"
-            ? courseApi.getLesson(selectedResourceId)
-            : Promise.resolve(null),
-        [selectedResourceId, selectedResource?.type],
-    );
-    const progressState = useApi<ResourceProgressDto | null>(
-        () => selectedResourceId
-            ? courseApi.getResourceProgress(selectedResourceId)
-            : Promise.resolve(null),
-        [selectedResourceId],
-    );
-    const [completionOverride, setCompletionOverride] = React.useState<boolean | null>(null);
-    const [completing, setCompleting] = React.useState(false);
-    const [completionError, setCompletionError] = React.useState<string | null>(null);
-
-    React.useEffect(() => {
-        setCompletionOverride(null);
-        setCompletionError(null);
-    }, [selectedResourceId]);
-
-    if (loading) return <LoadingState label="Loading course..." />;
-    if (error) return <ErrorState message={error} onRetry={reload} />;
-    if (!data) return <ErrorState message="Course details are unavailable." onRetry={reload} />;
-
-    const { course, modules } = data;
-    const sortedModules = [...modules].sort((a, b) => a.orderIndex - b.orderIndex);
-    const sortedResources = [...(resourcesState.data ?? [])].sort((a, b) => a.orderIndex - b.orderIndex);
-    const currentResourceIndex = sortedResources.findIndex((resource) => resource.id === selectedResourceId);
-    const previousResource = currentResourceIndex > 0 ? sortedResources[currentResourceIndex - 1] : null;
-    const nextResource = currentResourceIndex >= 0 && currentResourceIndex < sortedResources.length - 1
-        ? sortedResources[currentResourceIndex + 1]
-        : null;
-
-    const openModule = (module: CourseModuleDto) => {
-        setSelectedModuleId(module.id);
-        setSelectedResourceId(null);
-    };
-    const openResource = (resource: CourseResourceDto) => setSelectedResourceId(resource.id);
-    const backToModules = () => {
-        setSelectedModuleId(null);
-        setSelectedResourceId(null);
-    };
-    const backToResources = () => setSelectedResourceId(null);
-    const isCompleted = completionOverride ?? progressState.data?.isCompleted ?? false;
-
-    const markComplete = async () => {
-        if (!selectedResourceId || isCompleted) return;
-
-        setCompleting(true);
-        setCompletionError(null);
-        try {
-            await courseApi.completeResource(selectedResourceId);
-            setCompletionOverride(true);
-            progressState.reload();
-        } catch (err: unknown) {
-            setCompletionError(err instanceof Error ? err.message : "Unable to update resource progress.");
-        } finally {
-            setCompleting(false);
+async function workspaceRead<T>(request: Promise<T>): Promise<T> {
+    try {
+        return await request;
+    } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+            throw new Error("This course or module is unavailable. It may no longer be published or accessible to your account.");
         }
+        throw error;
+    }
+}
+
+function WorkspacePagination({ page, total, onChange }: { page: number; total: number; onChange: (page: number) => void }) {
+    const totalPages = Math.max(1, Math.ceil(total / WORKSPACE_PAGE_SIZE));
+    if (totalPages === 1) return null;
+    return (
+        <nav aria-label="Content pages" className="flex items-center justify-center gap-3 pt-3">
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onChange(page - 1)}>
+                <ChevronLeftIcon className="size-4" /> Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
+            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => onChange(page + 1)}>
+                Next <ChevronRightIcon className="size-4" />
+            </Button>
+        </nav>
+    );
+}
+
+function WorkspaceModules({ courseId, page, initialPage, onPageChange, onOpen }: {
+    courseId: string;
+    page: number;
+    initialPage: PaginatedResponse<ModuleResponse> | null;
+    onPageChange: (page: number) => void;
+    onOpen: (module: ModuleResponse) => void;
+}) {
+    const { data, loading, error, reload } = useApi(() => initialPage
+        ? Promise.resolve(initialPage)
+        : workspaceRead(courseApi.getCourseModules(courseId, page, WORKSPACE_PAGE_SIZE)));
+    if (loading) return <LoadingState label="Loading modules..." />;
+    if (error) return <ErrorState message={error} onRetry={reload} />;
+    if (!data) return null;
+
+    return (
+        <div className="space-y-2">
+            {data.data.length === 0 && (
+                <Card><CardContent className="py-8 text-sm text-muted-foreground">No published modules are available on this page.</CardContent></Card>
+            )}
+            {data.data.map((module, index) => (
+                <button key={module.id} className="block w-full text-left rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" onClick={() => onOpen(module)}>
+                    <Card className="transition-all hover:border-primary/40 hover:shadow-sm">
+                        <CardContent className="flex items-center gap-3 py-4">
+                            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                                {(page - 1) * WORKSPACE_PAGE_SIZE + index + 1}
+                            </div>
+                            <div>
+                                <h3 className="font-medium">{module.title}</h3>
+                                {module.description && <p className="text-sm text-muted-foreground">{module.description}</p>}
+                            </div>
+                            <ChevronRightIcon className="ml-auto size-5 text-muted-foreground" />
+                        </CardContent>
+                    </Card>
+                </button>
+            ))}
+            <WorkspacePagination page={page} total={data.maxCount} onChange={onPageChange} />
+        </div>
+    );
+}
+
+function WorkspaceActivities({ module, page, onPageChange, onBack }: {
+    module: ModuleResponse;
+    page: number;
+    onPageChange: (page: number) => void;
+    onBack: () => void;
+}) {
+    const { data, loading, error, reload } = useApi(() =>
+        workspaceRead(courseApi.getModuleActivities(module.id, page, WORKSPACE_PAGE_SIZE)));
+    const [selectedActivity, setSelectedActivity] = React.useState<ActivityResponse | null>(null);
+
+    return (
+        <div className="space-y-3">
+            <Breadcrumb items={[
+                { label: "Modules", onClick: onBack },
+                { label: module.title, onClick: selectedActivity ? () => setSelectedActivity(null) : undefined },
+                ...(selectedActivity ? [{ label: selectedActivity.title }] : []),
+            ]} />
+            {loading ? <LoadingState label="Loading module activities..." /> : error ? (
+                <ErrorState message={error} onRetry={reload} />
+            ) : selectedActivity ? (
+                <div className="space-y-6">
+                    <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="gap-1.5">
+                            {resourceIcon(selectedActivity.type, "size-3")}
+                            {resourceTypeLabel(selectedActivity.type)}
+                        </Badge>
+                        <h2 className="text-2xl font-bold tracking-tight">{selectedActivity.title}</h2>
+                    </div>
+                    <Card><CardContent className="py-8 text-sm text-muted-foreground">
+                        You can browse this activity's title and type here. Its content and participation screen are not included in this workspace yet.
+                    </CardContent></Card>
+                    <Button variant="outline" onClick={() => setSelectedActivity(null)}>
+                        <ArrowLeftIcon className="size-4" /> Back to activities
+                    </Button>
+                </div>
+            ) : data ? (
+                <div className="space-y-2">
+                    {module.description && <p className="text-sm text-muted-foreground">{module.description}</p>}
+                    {data.data.length === 0 && (
+                        <Card><CardContent className="py-8 text-sm text-muted-foreground">No published activities are available on this page.</CardContent></Card>
+                    )}
+                    {data.data.map((activity, index) => (
+                        <button key={activity.id} onClick={() => setSelectedActivity(activity)} className="group w-full text-left flex items-center gap-4 rounded-lg border bg-card p-4 transition-all hover:border-primary/40 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                            <div className="size-10 rounded-lg flex items-center justify-center shrink-0 bg-muted text-muted-foreground">
+                                {resourceIcon(activity.type, "size-5")}
+                            </div>
+                            <div className="flex-1 min-w-0 space-y-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <h3 className="font-medium leading-tight">{activity.title}</h3>
+                                    <Badge variant="secondary" className="text-xs">{resourceTypeLabel(activity.type)}</Badge>
+                                </div>
+                                <p className="text-xs text-muted-foreground">Activity {(page - 1) * WORKSPACE_PAGE_SIZE + index + 1}</p>
+                            </div>
+                            <ChevronRightIcon className="size-5 text-muted-foreground shrink-0 group-hover:text-foreground" />
+                        </button>
+                    ))}
+                    <WorkspacePagination page={page} total={data.maxCount} onChange={onPageChange} />
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
+function RealCourseWorkspace({ courseId }: { courseId: string }) {
+    const { data, loading, error, reload } = useApi(async () => {
+        const [course, modules] = await workspaceRead(Promise.all([
+            courseApi.getCourseMetadata(courseId),
+            courseApi.getCourseModules(courseId, 1, WORKSPACE_PAGE_SIZE),
+        ]));
+        return { course, modules };
+    });
+    const [modulePage, setModulePage] = React.useState(1);
+    const [activityPage, setActivityPage] = React.useState(1);
+    const [selectedModule, setSelectedModule] = React.useState<ModuleResponse | null>(null);
+    // The initial page is used once; later visits fetch again to recheck visibility.
+    const [useInitialPage, setUseInitialPage] = React.useState(true);
+
+    const openModule = (module: ModuleResponse) => {
+        setUseInitialPage(false);
+        setActivityPage(1);
+        setSelectedModule(module);
+    };
+    const backToModules = () => {
+        setSelectedModule(null);
+        setActivityPage(1);
     };
 
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-3">
-                <Link to="/student/courses" className="text-muted-foreground hover:text-foreground">
+                <Link to="/student/courses" aria-label="Back to My Courses" className="text-muted-foreground hover:text-foreground">
                     <ArrowLeftIcon className="size-4" />
                 </Link>
-                <div>
-                    <div className="flex items-center gap-2">
-                        <Badge variant="outline">{course.code}</Badge>
+                {data && !loading && !error && (
+                    <div>
                         <Badge variant="success">Published</Badge>
-                    </div>
-                    <h1 className="mt-2 text-2xl font-bold tracking-tight">{course.title}</h1>
-                    <p className="text-sm text-muted-foreground">{course.creatorFullname || course.creatorUsername}</p>
-                </div>
-            </div>
-
-            {course.description && (
-                <Card>
-                    <CardHeader><CardTitle>About this course</CardTitle></CardHeader>
-                    <CardContent><p className="text-sm text-muted-foreground">{course.description}</p></CardContent>
-                </Card>
-            )}
-
-            <div className="space-y-3">
-                <div>
-                    {selectedModule && (
-                        <Breadcrumb
-                            items={[
-                                { label: "Modules", onClick: selectedResource ? backToModules : undefined },
-                                { label: selectedModule.title, onClick: selectedResource ? backToResources : undefined },
-                                ...(selectedResource ? [{ label: selectedResource.title }] : []),
-                            ]}
-                        />
-                    )}
-                    {!selectedModule && <h2 className="text-lg font-semibold">Modules</h2>}
-                    {!selectedModule && <p className="text-sm text-muted-foreground">Course content from the API.</p>}
-                </div>
-                {!selectedModule && sortedModules.length === 0 ? (
-                    <Card><CardContent className="py-8 text-sm text-muted-foreground">No published modules are available yet.</CardContent></Card>
-                ) : !selectedModule ? (
-                    <div className="space-y-2">
-                        {sortedModules.map((module) => (
-                            <button key={module.id} className="block w-full text-left" onClick={() => openModule(module)}>
-                                <Card className="transition-all hover:border-primary/40 hover:shadow-sm">
-                                    <CardContent className="flex items-center gap-3 py-4">
-                                        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                                            {module.orderIndex + 1}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-medium">{module.title}</h3>
-                                            {module.description && <p className="text-sm text-muted-foreground">{module.description}</p>}
-                                        </div>
-                                        <ChevronRightIcon className="ml-auto size-5 text-muted-foreground" />
-                                    </CardContent>
-                                </Card>
-                            </button>
-                        ))}
-                    </div>
-                ) : selectedResource ? (
-                    <div className="space-y-6">
-                        <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="gap-1.5">
-                                {resourceIcon(selectedResource.type, "size-3")}
-                                {resourceTypeLabel(selectedResource.type)}
-                            </Badge>
-                            <h2 className="text-2xl font-bold tracking-tight">{selectedResource.title}</h2>
-                        </div>
-                        {resourceTypeLabel(selectedResource.type).toLowerCase() !== "lesson" ? (
-                            <Card><CardContent className="py-8 text-sm text-muted-foreground">
-                                This resource type is available in the course, but its learning screen is not part of this integration.
-                            </CardContent></Card>
-                        ) : lessonState.loading ? (
-                            <LoadingState label="Loading lesson..." />
-                        ) : lessonState.error ? (
-                            <ErrorState message={lessonState.error} onRetry={lessonState.reload} />
-                        ) : lessonState.data ? (
-                            <Card>
-                                <CardContent className="pt-6">
-                                    <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
-                                        {lessonState.data.info.contentMarkdown}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ) : (
-                            <Card><CardContent className="py-8 text-sm text-muted-foreground">Lesson content is unavailable.</CardContent></Card>
-                        )}
-                        <div className="flex items-center justify-between gap-3 flex-wrap">
-                            <div className="text-sm">
-                                {progressState.loading ? (
-                                    <span className="text-muted-foreground">Checking completion...</span>
-                                ) : isCompleted ? (
-                                    <span className="inline-flex items-center gap-1.5 text-success font-medium">
-                                        <CheckCircle2Icon className="size-4" />
-                                        Completed
-                                    </span>
-                                ) : (
-                                    <span className="text-muted-foreground">Not completed</span>
-                                )}
-                                {completionError && <p className="text-destructive mt-1">{completionError}</p>}
-                            </div>
-                            {!isCompleted && (
-                                <Button onClick={markComplete} disabled={completing || progressState.loading} className="gap-2">
-                                    <CheckCircle2Icon className="size-4" />
-                                    {completing ? "Saving..." : "Mark as Complete"}
-                                </Button>
-                            )}
-                        </div>
-                        <Separator />
-                        <div className="flex items-center justify-between gap-2">
-                            <Button variant="outline" disabled={!previousResource} onClick={() => previousResource && openResource(previousResource)} className="gap-2 min-w-0">
-                                <ArrowLeftIcon className="size-4 shrink-0" />
-                                <span className="truncate">{previousResource?.title ?? "Previous"}</span>
-                            </Button>
-                            <Button variant={nextResource ? "default" : "outline"} disabled={!nextResource} onClick={() => nextResource && openResource(nextResource)} className="gap-2 min-w-0">
-                                <span className="truncate">{nextResource?.title ?? "Next"}</span>
-                                <ArrowRightIcon className="size-4 shrink-0" />
-                            </Button>
-                        </div>
-                    </div>
-                ) : resourcesState.loading ? (
-                    <LoadingState label="Loading module resources..." />
-                ) : resourcesState.error ? (
-                    <ErrorState message={resourcesState.error} onRetry={resourcesState.reload} />
-                ) : sortedResources.length === 0 ? (
-                    <Card><CardContent className="py-8 text-sm text-muted-foreground">No published learning resources are available in this module yet.</CardContent></Card>
-                ) : (
-                    <div className="space-y-2">
-                        {sortedResources.map((resource, index) => (
-                            <button key={resource.id} onClick={() => openResource(resource)} className="group w-full text-left flex items-center gap-4 rounded-lg border bg-card p-4 transition-all hover:border-primary/40 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                                <div className="size-10 rounded-lg flex items-center justify-center shrink-0 bg-muted text-muted-foreground">
-                                    {resourceIcon(resource.type, "size-5")}
-                                </div>
-                                <div className="flex-1 min-w-0 space-y-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <h3 className="font-medium leading-tight">{resource.title}</h3>
-                                        <Badge variant="secondary" className="text-xs">{resourceTypeLabel(resource.type)}</Badge>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">Resource {index + 1}</p>
-                                </div>
-                                <ChevronRightIcon className="size-5 text-muted-foreground shrink-0 group-hover:text-foreground" />
-                            </button>
-                        ))}
+                        <h1 className="mt-2 text-2xl font-bold tracking-tight">{data.course.title}</h1>
+                        <p className="text-sm text-muted-foreground">{`${data.course.instructorFirstName} ${data.course.instructorLastName}`.trim()}</p>
                     </div>
                 )}
             </div>
+            {loading ? <LoadingState label="Loading course..." /> : error ? (
+                <ErrorState message={error} onRetry={reload} />
+            ) : data ? (
+                <>
+                    {data.course.description && (
+                        <Card>
+                            <CardHeader><CardTitle>About this course</CardTitle></CardHeader>
+                            <CardContent><p className="text-sm text-muted-foreground">{data.course.description}</p></CardContent>
+                        </Card>
+                    )}
+                    {selectedModule ? (
+                        <WorkspaceActivities key={`${selectedModule.id}:${activityPage}`} module={selectedModule} page={activityPage} onPageChange={setActivityPage} onBack={backToModules} />
+                    ) : (
+                        <div className="space-y-3">
+                            <h2 className="text-lg font-semibold">Modules</h2>
+                            <WorkspaceModules key={modulePage} courseId={courseId} page={modulePage}
+                                initialPage={useInitialPage && modulePage === 1 ? data.modules : null}
+                                onPageChange={(page) => { setUseInitialPage(false); setModulePage(page); }} onOpen={openModule} />
+                        </div>
+                    )}
+                </>
+            ) : null}
         </div>
     );
 }
 
 export function CourseWorkspace() {
-    return <RealCourseWorkspace />;
+    const { courseId } = useParams<{ courseId: string }>();
+    // Remount all selection, pagination, and request state before a new course renders.
+    return <RealCourseWorkspace key={courseId} courseId={courseId ?? ""} />;
 }

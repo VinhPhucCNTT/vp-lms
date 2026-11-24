@@ -24,19 +24,21 @@ public static class ModuleEndpoints
     }
 
     private static async
-        Task<Results<Ok<PaginatedResponse<ActivityResponse>>, BadRequest>>
+        Task<Results<Ok<PaginatedResponse<ActivityResponse>>, BadRequest, NotFound>>
         HandleGetActivities(
             string moduleId,
-            [AsParameters] PageRequest page,
+            string? pageNumber,
+            string? pageSize,
             SqidsEncoder<long> sqidsEncoder,
-            IActivityService activityService)
+            IActivityService activityService,
+            CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(moduleId);
-        if (decoded.Count != 1)
+        if (decoded.Count != 1 || !PageRequest.TryCreate(pageNumber, pageSize, out var page))
             return TypedResults.BadRequest();
 
-        return TypedResults.Ok(
-            await activityService.GetPublishedActivitiesAsync(decoded[0], page));
+        var result = await activityService.GetPublishedActivitiesAsync(decoded[0], page, ct);
+        return result is not null ? TypedResults.Ok(result) : TypedResults.NotFound();
     }
 
 

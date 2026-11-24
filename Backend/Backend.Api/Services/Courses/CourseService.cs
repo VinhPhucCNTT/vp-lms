@@ -1,4 +1,5 @@
 using AutoMapper;
+using Backend.Api.Core.Authorization;
 using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Common;
@@ -43,7 +44,8 @@ public class CourseService(
     IFileService fileService,
     IMapper mapper,
     SqidsEncoder<long> sqidsEncoder,
-    ILogger<CourseService> logger) : ICourseService
+    ILogger<CourseService> logger,
+    ICourseAuthorization courseAuthorization) : ICourseService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
@@ -71,18 +73,20 @@ public class CourseService(
 
     public async Task<CourseDetailResponse?> GetDtoAsync(long courseId, CancellationToken ct = default)
     {
+        if (await courseAuthorization.GetReadAccessAsync(courseId, ct) is null)
+            return null;
+
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
-        var course = await db.Courses
-            .AsNoTracking()
-            .Where(c => c.Id == courseId)
+        var course = await ProjectCourseDetails(db.Courses.AsNoTracking()
+            .Where(c => c.Id == courseId))
             .FirstOrDefaultAsync(ct);
         if (course is null)
             return null;
 
-        await SetRecentCourseAsync(db, course, _currentUserService.UserId, ct);
+        await SetRecentCourseAsync(db, course.Id, _currentUserService.UserId, ct);
 
-        return _mapper.Map<CourseDetailResponse>(course);
+        return ToCourseDetailResponse(course);
     }
 
     public async Task<PaginatedResponse<StudentCourseResponse>> GetStudentCoursesAsync(PageRequest page, CancellationToken ct = default)
@@ -315,16 +319,16 @@ public class CourseService(
         return await records.ToListAsync(ct);
     }
 
-    public async Task SetRecentCourseAsync(AppDbContext db, Course course, long userId, CancellationToken ct = default)
+    private async Task SetRecentCourseAsync(AppDbContext db, long courseId, long userId, CancellationToken ct = default)
     {
-        var recent = await db.RecentCourses.FirstOrDefaultAsync(r => r.CourseId == course.Id && r.UserId == userId, ct);
+        var recent = await db.RecentCourses.FirstOrDefaultAsync(r => r.CourseId == courseId && r.UserId == userId, ct);
 
         if (recent is null)
         {
             recent = new RecentCourse
             {
                 UserId = userId,
-                CourseId = course.Id,
+                CourseId = courseId,
 
                 LastAccessedAt = DateTime.UtcNow
             };

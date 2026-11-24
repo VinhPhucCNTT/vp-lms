@@ -82,20 +82,21 @@ public static class CourseEndpoints
             await courseService.QueryCoursesAsync(query, ct));
 
     private static async
-        Task<Results<Ok<PaginatedResponse<ModuleResponse>>, BadRequest>>
+        Task<Results<Ok<PaginatedResponse<ModuleResponse>>, BadRequest, NotFound>>
         HandleGetModules(
             string courseId,
-            [AsParameters] PageRequest page,
+            string? pageNumber,
+            string? pageSize,
             SqidsEncoder<long> sqidsEncoder,
             IModuleService moduleService,
             CancellationToken ct)
     {
         var decoded = sqidsEncoder.Decode(courseId);
-        if (decoded.Count != 1)
+        if (decoded.Count != 1 || !PageRequest.TryCreate(pageNumber, pageSize, out var page))
             return TypedResults.BadRequest();
 
-        return TypedResults.Ok(
-            await moduleService.GetCourseModulesAsync(decoded[0], page, ct));
+        var result = await moduleService.GetCourseModulesAsync(decoded[0], page, ct);
+        return result is not null ? TypedResults.Ok(result) : TypedResults.NotFound();
     }
 
     private static async

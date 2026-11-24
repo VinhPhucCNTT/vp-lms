@@ -5,8 +5,8 @@ import { PaginatedResponse } from "@/shared/types";
 export class Course {
     id: string;
     title: string;
-    description?: string;
-    backgroundFileId?: string;
+    description?: string | null;
+    backgroundFileId?: string | null;
     instructorId: string;
     instructorFirstName: string;
     instructorLastName: string;

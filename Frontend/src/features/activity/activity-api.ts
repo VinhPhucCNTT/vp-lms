@@ -22,7 +22,7 @@ export interface ActivityResponse {
     id: string,
     type: ActivityType,
     title: string,
-    orderIndex: NonNegativeInteger<number>
+    orderIndex: number
 };
 
 // TODO: Implement

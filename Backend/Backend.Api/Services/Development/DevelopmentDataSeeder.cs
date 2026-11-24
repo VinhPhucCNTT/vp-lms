@@ -11,8 +11,15 @@ namespace Backend.Api.Services.Development;
 
 public static class DevelopmentDataSeeder
 {
+    public const string OtherInstructorEmail = "dev.instructor2@vp-lms.local";
+    public const string OtherInstructorPassword = "Instructor123!";
+
     public const string InstructorEmail = "dev.instructor@vp-lms.local";
     public const string InstructorPassword = "Instructor123!";
+
+    public const string OtherStudentEmail = "dev.student2@vp-lms.local";
+    public const string OtherStudentPassword = "Student123!";
+
     public const string StudentEmail = "dev.student@vp-lms.local";
     public const string StudentPassword = "Student123!";
 
@@ -33,12 +40,28 @@ public static class DevelopmentDataSeeder
             InstructorPassword,
             UserRoles.Instructor);
 
+        await EnsureUserAsync(
+            db,
+            OtherInstructorEmail,
+            "Kane",
+            "Smith (Devel)",
+            OtherInstructorPassword,
+            UserRoles.Instructor);
+
         var student = await EnsureUserAsync(
             db,
             StudentEmail,
             "Jane",
             "Doe (Devel)",
             StudentPassword,
+            UserRoles.Student);
+
+        await EnsureUserAsync(
+            db,
+            OtherStudentEmail,
+            "Jack",
+            "King (Devel)",
+            OtherStudentPassword,
             UserRoles.Student);
 
         // COURSES
@@ -89,6 +112,7 @@ public static class DevelopmentDataSeeder
         // TEST COURSES
         await EnsureTestCoursesAsync(db, instructor.Id, departmentIds);
         await EnsureSampleCoursesAsync(db, instructor.Id, [.. departmentIds.Take(3)]);
+        await EnsureSampleCourseContentAsync(db);
 
         // ENROLLMENTS
         var enrollmentExists = await db.Enrollments
@@ -625,7 +649,136 @@ public static class DevelopmentDataSeeder
             }
         }
         await db.SaveChangesAsync();
+    }
 
-        // NOTE: May have to ensure that the courses are empty later.
+    private static async Task EnsureSampleCourseContentAsync(AppDbContext db)
+    {
+        var course = await db.Courses.SingleAsync(
+            c => c.Title == "Introduction to Programming");
+
+        var moduleData = new (string Title, string Description)[]
+        {
+        (
+            "Getting Started with Programming",
+            "Understand what programming is and set up your development environment."
+        ),
+        (
+            "Variables and Data Types",
+            "Learn how to declare variables and work with primitive data types."
+        ),
+        (
+            "Operators and Expressions",
+            "Explore arithmetic, comparison, logical, and assignment operators."
+        ),
+        (
+            "Input and Output",
+            "Learn how to receive user input and display program output."
+        ),
+        (
+            "Conditional Statements",
+            "Control program execution using if, else, and switch statements."
+        ),
+        (
+            "Loops and Iteration",
+            "Repeat operations using for, while, and do-while loops."
+        ),
+        (
+            "Arrays and Collections",
+            "Store and manipulate groups of related values."
+        ),
+        (
+            "Strings and String Manipulation",
+            "Work with text, string operations, and formatting."
+        ),
+        (
+            "Functions and Methods",
+            "Organize reusable code using functions, parameters, and return values."
+        ),
+        (
+            "Error Handling and Debugging",
+            "Identify programming errors and handle exceptions."
+        ),
+        (
+            "Introduction to Recursion",
+            "Understand recursive functions, base cases, and recursive problem solving."
+        ),
+        (
+            "Final Programming Project",
+            "Apply programming fundamentals to build a complete application."
+        )
+        };
+
+        var firstModuleActivities = new (string Title, ActivityType Type)[]
+        {
+        ("What Is Programming?", ActivityType.Lesson),
+        ("How Computers Execute Programs", ActivityType.Lesson),
+        ("Introduction to Programming Languages", ActivityType.Lesson),
+        ("Setting Up Your Development Environment", ActivityType.Lesson),
+        ("Writing Your First Program", ActivityType.Lesson),
+        ("Understanding Program Structure", ActivityType.Lesson),
+        ("Comments and Code Readability", ActivityType.Lesson),
+        ("Programming Fundamentals Quiz", ActivityType.Assessment),
+        ("Hello World", ActivityType.Problem),
+        ("Print Your Name", ActivityType.Problem),
+        ("Print Multiple Lines", ActivityType.Problem),
+        ("Your First Programming Assignment", ActivityType.Assignment)
+        };
+
+        for (int i = 0; i < moduleData.Length; i++)
+        {
+            var data = moduleData[i];
+
+            var module = await db.CourseModules
+                .FirstOrDefaultAsync(m =>
+                    m.CourseId == course.Id &&
+                    m.Title == data.Title);
+
+            if (module is null)
+            {
+                module = new CourseModule
+                {
+                    CourseId = course.Id,
+                    Title = data.Title,
+                    Description = data.Description,
+                    OrderIndex = i,
+                    IsPublished = true
+                };
+
+                db.CourseModules.Add(module);
+                await db.SaveChangesAsync();
+            }
+
+            var activities = i == 0
+                ? firstModuleActivities
+                : new (string Title, ActivityType Type)[]
+                {
+                ($"Introduction to {data.Title}", ActivityType.Lesson),
+                ($"{data.Title} Practice", ActivityType.Problem)
+                };
+
+            for (int j = 0; j < activities.Length; j++)
+            {
+                var activityData = activities[j];
+
+                var exists = await db.CourseActivities
+                    .AnyAsync(a =>
+                        a.ModuleId == module.Id &&
+                        a.Title == activityData.Title);
+
+                if (exists)
+                    continue;
+
+                db.CourseActivities.Add(new CourseActivity
+                {
+                    ModuleId = module.Id,
+                    Title = activityData.Title,
+                    Type = activityData.Type,
+                    OrderIndex = j,
+                    IsPublished = true
+                });
+            }
+
+            await db.SaveChangesAsync();
+        }
     }
 }

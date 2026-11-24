@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Link } from "react-router-dom";
 import { BookOpenIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, UsersIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,11 +34,16 @@ function EnrolledCourseCard({ course }: { course: StudentCourseResponse }) {
           {course.info.description || "No description provided."}
         </p>
       </CardContent>
-      <CardFooter className="border-t pt-3">
+      <CardFooter className="border-t pt-3 justify-between gap-3">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <UsersIcon className="size-3" />
           <span>{course.info.enrollmentCount} students</span>
         </div>
+        <Button asChild size="sm" variant="outline">
+          <Link to={`/student/courses/${course.info.id}`} aria-label={`Open Course: ${course.info.title}`}>
+            Open Course
+          </Link>
+        </Button>
       </CardFooter>
     </Card>
   );

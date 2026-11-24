@@ -1,4 +1,5 @@
 using AutoMapper;
+using Backend.Api.Core.Authorization;
 using Backend.Api.Core.Common;
 using Backend.Api.Core.Types;
 using Backend.Api.Services.Common;
@@ -13,7 +14,7 @@ public interface IActivityService
 {
     public Task<ActivityDetailResponse?> GetActivityByIdAsync(long activityId, CancellationToken ct = default);
 
-    public Task<PaginatedResponse<ActivityResponse>> GetPublishedActivitiesAsync(long moduleId, PageRequest page, CancellationToken ct = default);
+    public Task<PaginatedResponse<ActivityResponse>?> GetPublishedActivitiesAsync(long moduleId, PageRequest page, CancellationToken ct = default);
 
     public Task<PaginatedResponse<ActivityResponse>> GetUnpublishedActivitiesAsync(long moduleId, PageRequest page, CancellationToken ct = default);
 
@@ -31,7 +32,8 @@ public interface IActivityService
 public class ActivityService(
     IDbContextFactory<AppDbContext> dbFactory,
     CurrentUserService currentUserService,
-    IMapper mapper) : IActivityService
+    IMapper mapper,
+    ICourseAuthorization courseAuthorization) : IActivityService
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
     private readonly CurrentUserService _currentUserService = currentUserService;
@@ -49,15 +51,28 @@ public class ActivityService(
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<PaginatedResponse<ActivityResponse>> GetPublishedActivitiesAsync(long moduleId, PageRequest page, CancellationToken ct = default)
+    public async Task<PaginatedResponse<ActivityResponse>?> GetPublishedActivitiesAsync(long moduleId, PageRequest page, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
+        var module = await db.CourseModules.AsNoTracking()
+            .Where(m => m.Id == moduleId && !m.IsDeleted && !m.Course.IsDeleted)
+            .Select(m => new { m.CourseId, m.IsPublished })
+            .FirstOrDefaultAsync(ct);
+        if (module is null)
+            return null;
+
+        var access = await courseAuthorization.GetReadAccessAsync(module.CourseId, ct);
+        if (access is null || (!access.IsOwner && !module.IsPublished))
+            return null;
+
         var activities = db.CourseActivities
             .AsNoTracking()
-            .Where(r => r.ModuleId == moduleId && r.IsPublished);
+            .Where(r => r.ModuleId == moduleId && !r.IsDeleted && !r.Module.IsDeleted && !r.Module.Course.IsDeleted)
+            .Where(r => access.IsOwner || r.IsPublished);
 
         var list = await activities
+            .OrderBy(r => r.OrderIndex).ThenBy(r => r.Id)
             .Skip((page.PageNumber - 1) * page.PageSize)
             .Take(page.PageSize)
             .Select(r => _mapper.Map<ActivityResponse>(r))

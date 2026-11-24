@@ -81,9 +81,9 @@ export interface CourseDetailResponse {
     instructorId: string,
     instructorFirstName: string,
     instructorLastName: string,
-    backgroundFileId?: string,
+    backgroundFileId: string | null,
     title: string,
-    description?: string,
+    description: string | null,
     enrollmentCount: number,
     enrollmentOpen: boolean
 }
@@ -133,8 +133,8 @@ export type ModuleSetRequest = z.infer<typeof moduleSetSchema>;
 export interface ModuleResponse {
     id: string,
     title: string,
-    description?: string,
-    orderIndex: NonNegativeInteger<number>
+    description: string | null,
+    orderIndex: number
 }
 
 export interface ModuleSetResponse {
@@ -169,6 +169,20 @@ export interface ModuleSetResponse {
 // API
 
 export const courseApi = {
+    async getCourseMetadata(courseId: string): Promise<CourseDetailResponse> {
+        return api.get<CourseDetailResponse>(`/api/course/${courseId}`);
+    },
+
+    async getCourseModules(courseId: string, pageNumber = 1, pageSize = 10): Promise<PaginatedResponse<ModuleResponse>> {
+        const params = new URLSearchParams({ pageNumber: String(pageNumber), pageSize: String(pageSize) });
+        return api.get<PaginatedResponse<ModuleResponse>>(`/api/course/${courseId}/modules?${params}`);
+    },
+
+    async getModuleActivities(moduleId: string, pageNumber = 1, pageSize = 10): Promise<PaginatedResponse<ActivityResponse>> {
+        const params = new URLSearchParams({ pageNumber: String(pageNumber), pageSize: String(pageSize) });
+        return api.get<PaginatedResponse<ActivityResponse>>(`/api/module/${moduleId}/activities?${params}`);
+    },
+
     // Student: list enrolled courses
     async getEnrolledCourses(pageNumber = 1, pageSize = 9): Promise<PaginatedResponse<StudentCourseResponse>> {
         const params = new URLSearchParams({
