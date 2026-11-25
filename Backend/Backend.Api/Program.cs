@@ -87,9 +87,6 @@ builder.Services.Configure<RabbitMqOptions>(
 
 // [[ AUTHENTICATION ]]
 
-var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = System.Text.Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
-
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -97,6 +94,8 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    var jwtSettings = builder.Configuration.GetSection("Jwt");
+    var key = System.Text.Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -208,3 +207,5 @@ app.AddDashboardEndpoints();
 app.AddSubmissionEndpoints();
 
 app.Run();
+
+public partial class Program { }
